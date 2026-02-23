@@ -1,13 +1,103 @@
-.table th {
-    background-color: #f8f9fa;
-    font-weight: bold;
+/* ===============================
+   CARD PRINCIPAL
+================================ */
+
+.users-card {
+    max-width: 1000px;
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
 }
 
-.table td, .table th {
-    vertical-align: middle;
+/* ===============================
+   BUSCADOR
+================================ */
+
+.users-search {
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 10px 14px;
 }
 
-#buscadorUsuarios {
-    max-width: 400px;
-    margin: 0 auto;
+.users-search:focus {
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    border-color: #2563eb;
+}
+
+/* ===============================
+   BOTÓN EXPORTAR
+================================ */
+
+.users-export-btn {
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+/* ===============================
+   TABLA MODERNA
+================================ */
+
+.users-table thead {
+    background: #f8fafc;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.users-table th {
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.users-table td {
+    border-top: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.users-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* ===============================
+   BOTONES ACCIONES PREMIUM
+================================ */
+
+.action-buttons .btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all .18s ease;
+}
+
+/* EDITAR */
+.action-buttons .btn-warning {
+    background: rgba(234,179,8,.15);
+    color: #ca8a04;
+}
+
+/* ELIMINAR */
+.action-buttons .btn-danger {
+    background: rgba(239,68,68,.15);
+    color: #dc2626;
+}
+
+/* CLAVE */
+.action-buttons .btn-primary {
+    background: rgba(37,99,235,.15);
+    color: #2563eb;
+}
+
+/* HOVER EFECTO PRO */
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,.08);
+}
+
+.action-buttons .btn:active {
+    transform: scale(.95);
 }

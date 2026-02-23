@@ -58,81 +58,110 @@ Usuarios
         </ul>
     </div>
     @endif
-    <div class="card mx-auto my-4" style="max-width: 900px;">
-    <div class="card-header text-center bg-primary text-white">
-        <h4 class="mb-0"><i class="fa-solid fa-users"></i> Lista de Usuarios</h4>
-    </div>
-    <div class="card-body">
-
-        <!-- Fila de buscador y botón Exportar -->
-        <div class="row mb-3">
-            <div class="col-md-8">
-                <input type="text" id="buscadorUsuarios" class="form-control" placeholder="Buscar por nombre, usuario o rol...">
-            </div>
-            <div class="col-md-4 text-md-end mt-2 mt-md-0">
-                <a href="{{ route('usuarios.exportarExcel') }}" class="btn btn-success w-100 w-md-auto">
-                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
-                </a>
-            </div>
+    <div class="card users-card mx-auto my-4">
+    
+        {{-- HEADER LIMPIO --}}
+        <div class="card-header bg-transparent border-0 text-center pt-4">
+            <h4 class="mb-0 fw-semibold">
+                <i class="fa-solid fa-users me-2 text-primary"></i>
+                Lista de Usuarios
+            </h4>
         </div>
 
-        <!-- Tabla de usuarios -->
-        <div class="table-responsive">
-            <table id="tablaUsuarios" class="table table-bordered table-striped align-middle text-center mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($usuarios as $usuario)
-                        <tr>
-                            <td>{{ $usuario->id }}</td>
-                            <td>{{ $usuario->nombre }}</td>
-                            <td>{{ $usuario->usuario }}</td>
-                            <td>{{ $usuario->rol->nombre ?? 'Sin rol' }}</td>
-                            <td>
-                                <div class="d-flex justify-content-center gap-1">
-                                    <button type="button"
-                                        class="btn btn-warning btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalEditarUsuario"
-                                        data-id="{{ $usuario->id }}"
-                                        data-nombre="{{ $usuario->nombre }}"
-                                        data-usuario="{{ $usuario->usuario }}"
-                                        data-email="{{ $usuario->email }}"  {{-- 👈 IMPORTANTE --}}
-                                        data-rol="{{ $usuario->rol_id }}">
-                                        <i class="fa fa-edit"></i>
-                                    </button>
-                                    <form action="{{ route('usuarios.destroy', $usuario->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                    </form>
+        <div class="card-body px-4 pb-4">
 
-                                    <button class="btn btn-primary btn-sm cambiar-clave-btn"
+            {{-- BUSCADOR + EXPORTAR --}}
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+
+                <div class="flex-grow-1" style="max-width: 400px;">
+                    <input type="text"
+                        id="buscadorUsuarios"
+                        class="form-control users-search"
+                        placeholder="Buscar por nombre, usuario o rol...">
+                </div>
+
+                <a href="{{ route('usuarios.exportarExcel') }}"
+                class="btn btn-success users-export-btn">
+                    <i class="fa-solid fa-file-excel me-1"></i>
+                    Exportar Excel
+                </a>
+
+            </div>
+
+            {{-- TABLA --}}
+            <div class="table-responsive">
+                <table id="tablaUsuarios"
+                    class="table table-hover align-middle mb-0 users-table">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach($usuarios as $usuario)
+                            <tr>
+                                <td>{{ $usuario->id }}</td>
+                                <td class="fw-semibold">{{ $usuario->nombre }}</td>
+                                <td>{{ $usuario->usuario }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        {{ $usuario->rol->nombre ?? 'Sin rol' }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2 action-buttons">
+
+                                        {{-- EDITAR --}}
+                                        <button type="button"
+                                            class="btn btn-warning btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalEditarUsuario"
                                             data-id="{{ $usuario->id }}"
                                             data-nombre="{{ $usuario->nombre }}"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#modalCambiarClave">
-                                        <i class="fa-solid fa-key"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+                                            data-usuario="{{ $usuario->usuario }}"
+                                            data-email="{{ $usuario->email }}"
+                                            data-rol="{{ $usuario->rol_id }}">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
 
+                                        {{-- ELIMINAR --}}
+                                        <form action="{{ route('usuarios.destroy', $usuario->id) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </form>
+
+                                        {{-- CAMBIAR CLAVE --}}
+                                        <button class="btn btn-primary btn-sm cambiar-clave-btn"
+                                                data-id="{{ $usuario->id }}"
+                                                data-nombre="{{ $usuario->nombre }}"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalCambiarClave">
+                                            <i class="fa-solid fa-key"></i>
+                                        </button>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
     </div>
-</div>
 
 
     <!-- Modal para Agregar Usuario -->
