@@ -1,0 +1,21 @@
+/* =================================
+   DIZANY UI – INPUTS GLOBAL
+================================= */
+
+.ui-input,
+.form-control.ui-input,
+.form-select.ui-input{
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: box-shadow .18s ease, border-color .18s ease;
+}
+
+.ui-input:focus,
+.form-control.ui-input:focus,
+.form-select.ui-input:focus{
+  border-color: rgba(37,99,235,.9);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.14);
+  outline: none;
+}

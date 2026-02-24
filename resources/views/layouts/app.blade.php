@@ -10,6 +10,12 @@
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/header-actions.css') }}">
+    <link href="{{ asset('css/ui/ui-botones.css') }}" rel="stylesheet" />
+    <link href="{{ asset('css/ui/ui-table.css') }}" rel="stylesheet" />
+    <link href="{{ asset('css/ui/ui-modal.css') }}" rel="stylesheet" />
+    <link href="{{ asset('css/ui/ui-inputs.css') }}" rel="stylesheet" />
+    <link href="{{ asset('css/ui/ui-card.css') }}" rel="stylesheet" />
+    <link href="{{ asset('css/ui/ui-variables.css') }}" rel="stylesheet" />
 
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

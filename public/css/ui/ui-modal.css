@@ -1,0 +1,100 @@
+/* =================================
+   DIZANY UI – MODALES + INPUTS
+================================= */
+
+/* Modal: caja */
+.modal-content{
+  border: 1px solid rgba(229,231,235,.9);
+  border-radius: 18px;
+  box-shadow: 0 25px 60px rgba(2,6,23,.18);
+  overflow: hidden;
+}
+
+/* Header */
+.modal-header{
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.modal-title{
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: .2px;
+}
+
+/* Botón X más fino */
+.modal-header .btn-close{
+  opacity: .55;
+  transform: scale(.95);
+}
+.modal-header .btn-close:hover{
+  opacity: .85;
+}
+
+/* Body */
+.modal-body{
+  padding: 18px 22px 10px 22px;
+}
+
+/* Footer */
+.modal-footer{
+  padding: 14px 22px;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+/* Labels */
+.modal-body label,
+.modal-body .form-label{
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+/* Inputs / selects / textarea (uniforme) */
+.modal-body .form-control,
+.modal-body .form-select,
+.modal-body textarea{
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fff;
+  transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.modal-body .form-control:focus,
+.modal-body .form-select:focus,
+.modal-body textarea:focus{
+  border-color: rgba(37,99,235,.9);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.14);
+  outline: none;
+}
+
+/* Inputs disabled */
+.modal-body .form-control:disabled,
+.modal-body .form-select:disabled{
+  background: #f8fafc;
+  color: #64748b;
+}
+
+/* Spacing de grupos */
+.modal-body .mb-3{
+  margin-bottom: 14px !important;
+}
+
+/* Animación suave */
+.modal.fade .modal-dialog{
+  transform: translateY(10px) scale(.98);
+  transition: transform .18s ease;
+}
+.modal.show .modal-dialog{
+  transform: translateY(0) scale(1);
+}
+
+/* Backdrop un poco más elegante */
+.modal-backdrop.show{
+  opacity: .55;
+}

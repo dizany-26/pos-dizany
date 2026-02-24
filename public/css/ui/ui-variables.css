@@ -1,0 +1,8 @@
+:root {
+    --ui-primary: #2563eb;
+    --ui-success: #16a34a;
+    --ui-danger: #dc2626;
+    --ui-warning: #ca8a04;
+    --ui-border: #e5e7eb;
+    --ui-radius: 12px;
+}

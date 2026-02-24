@@ -1,12 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- CSS personalizado para productos -->
-    <link href="{{ asset('css/productos.css') }}" rel="stylesheet" />
+   
     <link href="{{ asset('css/usuarios.css') }}" rel="stylesheet" />
 @endpush
 
@@ -89,9 +84,9 @@ Usuarios
             </div>
 
             {{-- TABLA --}}
-            <div class="table-responsive">
+            <div class="table-responsive ui-scroll" style="max-height: 500px; overflow-y:auto;">
                 <table id="tablaUsuarios"
-                    class="table table-hover align-middle mb-0 users-table">
+                    class="table table-hover align-middle mb-0 ui-table text-nowrap">
 
                     <thead>
                         <tr>
@@ -163,39 +158,41 @@ Usuarios
         </div>
     </div>
 
-
-    <!-- Modal para Agregar Usuario -->
+<!-- Modal para Agregar Usuario -->
 <div class="modal fade" id="modalNuevoUsuario" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-md">
         <form method="POST" action="{{ route('usuarios.store') }}" class="modal-content">
             @csrf
+
             <div class="modal-header">
                 <h5 class="modal-title">Nuevo Usuario</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
+
             <div class="modal-body">
                 <div class="mb-3">
-                    <label>Nombre</label>
-                    <input type="text" name="nombre" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label>Usuario</label>
-                    <input type="text" name="usuario" class="form-control" required>
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="nombre" class="form-control ui-input" required>
                 </div>
 
                 <div class="mb-3">
-                    <label>Correo Electrónico</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <label class="form-label">Usuario</label>
+                    <input type="text" name="usuario" class="form-control ui-input" required>
                 </div>
 
                 <div class="mb-3">
-                    <label>Contraseña</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" name="email" class="form-control ui-input" required>
                 </div>
 
                 <div class="mb-3">
-                    <label>Rol</label>
-                    <select name="rol_id" class="form-control" required>
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" name="password" class="form-control ui-input" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Rol</label>
+                    <select name="rol_id" class="form-select ui-input" required>
                         <option value="" disabled selected>Seleccione un rol</option>
                         @foreach($roles as $rol)
                             <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
@@ -203,16 +200,24 @@ Usuarios
                     </select>
                 </div>
             </div>
+
             <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Guardar</button>
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <button type="submit" class="btn-soft btn-soft-primary">
+                    Guardar cambios
+                </button>
             </div>
+
         </form>
     </div>
 </div>
 
 <!-- Modal para Editar Usuario -->
 <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-md">
         <form method="POST" id="formEditarUsuario" class="modal-content">
             @csrf
             @method('PUT')
@@ -224,23 +229,23 @@ Usuarios
                 <input type="hidden" name="id" id="editar-id">
                 
                 <div class="mb-3">
-                    <label>Nombre</label>
-                    <input type="text" name="nombre" id="editar-nombre" class="form-control" required>
+                    <label class="form-label">Nombre</label>
+                    <input type="text" name="nombre" id="editar-nombre" class="form-control ui-input" required>
                 </div>
 
                 <div class="mb-3">
-                    <label>Usuario</label>
-                    <input type="text" name="usuario" id="editar-usuario" class="form-control" required>
+                    <label class="form-label">Usuario</label>
+                    <input type="text" name="usuario" id="editar-usuario" class="form-control ui-input" required>
                 </div>
 
                 <div class="mb-3">
-                    <label>Correo Electrónico</label>
-                    <input type="email" name="email" id="editar-email" class="form-control" required>
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" name="email" id="editar-email" class="form-control ui-input" required>
                 </div>
 
                 <div class="mb-3">
-                    <label>Rol</label>
-                    <select name="rol_id" id="editar-rol" class="form-control" required>
+                    <label class="form-label">Rol</label>
+                    <select name="rol_id" id="editar-rol" class="form-select ui-input" required>
                         @foreach($roles as $rol)
                             <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
                         @endforeach
@@ -249,7 +254,10 @@ Usuarios
             </div>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Actualizar</button>
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+                <button type="submit" class="btn-soft btn-soft-primary">Actualizar</button>
             </div>
         </form>
     </div>
@@ -257,7 +265,7 @@ Usuarios
 
 <!-- Modal Cambiar Clave -->
 <div class="modal fade" id="modalCambiarClave" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-md">
         <form method="POST" action="{{ route('usuarios.cambiarClave') }}" class="modal-content">
             @csrf
             <input type="hidden" name="usuario_id" id="usuario_id_cambiar_clave">
@@ -268,12 +276,12 @@ Usuarios
             <div class="modal-body">
                 <p id="nombre_usuario_label"></p>
                 <div class="mb-3">
-                    <label>Nueva Contraseña</label>
-                    <input type="password" name="nueva_clave" class="form-control" required>
+                    <label class="form-label">Nueva Contraseña</label>
+                    <input type="password" name="nueva_clave" class="form-control ui-input" required>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">Actualizar</button>
+                <button type="submit" class="btn-soft btn-soft-primary">Actualizar</button>
             </div>
         </form>
     </div>
@@ -285,7 +293,6 @@ Usuarios
 @push('scripts')
 <!-- Bootstrap JS con Popper incluido -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script src="{{ asset('js/usuarios.js') }}"></script>
     
     

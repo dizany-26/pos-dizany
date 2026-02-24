@@ -1,0 +1,32 @@
+/* =================================
+   DIZANY UI – CARDS
+================================= */
+
+.ui-card,
+.card.ui-card{
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.ui-card:hover,
+.card.ui-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.09);
+}
+
+/* Header de card (si usas) */
+.ui-card .card-header,
+.card.ui-card .card-header{
+  background: transparent;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 18px 22px;
+}
+
+/* Body */
+.ui-card .card-body,
+.card.ui-card .card-body{
+  padding: 18px 22px;
+}

@@ -1,0 +1,47 @@
+/* =================================
+   DIZANY UI – TABLAS
+================================= */
+
+.ui-table {
+    font-size: 14px;
+}
+
+.ui-table thead th {
+    background: #1f6fd8;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 12px 14px;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.ui-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.ui-table td {
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Scroll fino */
+
+.ui-scroll::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.ui-scroll::-webkit-scrollbar-thumb {
+    background: rgba(37,99,235,.35);
+    border-radius: 10px;
+}
+
+.ui-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(37,99,235,.6);
+}
+
+.ui-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(37,99,235,.4) transparent;
+}
