@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('styles')
+<link href="{{ asset('css/crear_productos.css') }}" rel="stylesheet" />
+@endpush
+
 {{-- BOTÓN ATRÁS --}}
 @section('header-back')
 
@@ -31,17 +35,14 @@ Nuevo Producto
 
 
 @section('content')
-
-<link href="{{ asset('css/crear_productos.css') }}" rel="stylesheet" />
-
 <!-- Formulario en tarjeta -->
 <div class="card ui-card container-card my-4">
 
         <div class="card-header text-center pt-4">
             <h4 class="mb-0 fw-semibold">
-            <i class="fas fa-box-open"></i> Nuevo Producto
-        </h4>
-    </div>
+                <i class="fas fa-box-open me-2 text-primary"></i> Nuevo Producto
+            </h4>
+        </div>
     <div class="card-body pt-2 pb-4">
 
         {{-- Errores de validación --}}
@@ -101,9 +102,10 @@ Nuevo Producto
 
             {{-- ================= PRESENTACIONES ================= --}}
             <div class="col-12 mt-4">
-                <label class="form-label fw-bold text-primary">
-                    Presentaciones disponibles
-                </label>
+                <div class="ui-section-title">
+                    <i class="fas fa-layer-group me-2 text-primary"></i>
+                    Presentaciones
+                </div>
 
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" checked disabled>
@@ -130,7 +132,7 @@ Nuevo Producto
                     <label class="form-label">Unidades por paquete</label>
                     <input type="number"
                            name="unidades_por_paquete"
-                           class="form-control"
+                           class="form-control ui-input"
                            min="1">
                 </div>
 
@@ -138,7 +140,7 @@ Nuevo Producto
                     <label class="form-label">Paquetes por caja</label>
                     <input type="number"
                            name="paquetes_por_caja"
-                           class="form-control"
+                           class="form-control ui-input"
                            min="1">
                 </div>
 
@@ -146,7 +148,7 @@ Nuevo Producto
                     <label class="form-label">Unidades por caja</label>
                     <input type="number"
                            name="unidades_por_caja"
-                           class="form-control"
+                           class="form-control ui-input"
                            min="1">
                 </div>
 
@@ -170,13 +172,13 @@ Nuevo Producto
                 <label class="form-label d-flex justify-content-between">
                     <span>Categoría</span>
                     <button type="button"
-                            class="btn btn-sm btn-primary"
+                            class="btn-soft btn-soft-primary btn-soft-icon"
                             data-bs-toggle="modal"
                             data-bs-target="#modalNuevaCategoria">
                         <i class="fas fa-plus"></i>
                     </button>
                 </label>
-                <select name="categoria_id" id="categoria_id" class="form-select" required>
+                <select name="categoria_id" id="categoria_id" class="form-select ui-input" required>
                     <option value="">Seleccione</option>
                     @foreach($categorias as $categoria)
                         <option value="{{ $categoria->id }}">
@@ -190,13 +192,13 @@ Nuevo Producto
                 <label class="form-label d-flex justify-content-between">
                     <span>Marca</span>
                     <button type="button"
-                            class="btn btn-sm btn-primary"
+                            class="btn-soft btn-soft-primary btn-soft-icon"
                             data-bs-toggle="modal"
                             data-bs-target="#modalNuevaMarca">
                         <i class="fas fa-plus"></i>
                     </button>
                 </label>
-                <select name="marca_id" id="marca_id" class="form-select">
+                <select name="marca_id" id="marca_id" class="form-select ui-input">
                     <option value="">Seleccione</option>
                     @foreach($marcas as $marca)
                         <option value="{{ $marca->id }}">
@@ -212,12 +214,12 @@ Nuevo Producto
                 <input type="file"
                        name="imagen"
                        id="imagen"
-                       class="form-control"
+                       class="form-control ui-input"
                        accept="image/*">
 
                        <img id="preview_imagen"
                         src=""
-                        class="img-thumbnail d-none mt-2"
+                        class="ui-product-preview d-none mt-2"
                         style="max-height: 150px;">
             </div>
 
@@ -245,7 +247,7 @@ Nuevo Producto
         </div>
 
         <div class="mt-4 text-center">
-            <button type="submit" class="btn btn-primary px-5">
+            <button type="submit" class="btn-soft btn-soft-success px-5">
                 Guardar Producto
             </button>
         </div>
@@ -257,10 +259,10 @@ Nuevo Producto
 </div>
 <!-- Modal Nueva Categoría -->
 <div class="modal fade" id="modalNuevaCategoria" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header">
                 <h5 class="modal-title">Nueva Categoría</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -272,8 +274,8 @@ Nuevo Producto
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button class="btn btn-success" id="btnGuardarCategoria">Guardar</button>
+                <button class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cerrar</button>
+                <button class="btn-soft btn-soft-success" id="btnGuardarCategoria">Guardar</button>
             </div>
 
         </div>
@@ -281,10 +283,10 @@ Nuevo Producto
 </div>
 <!-- Modal Nueva Marca -->
 <div class="modal fade" id="modalNuevaMarca" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header">
                 <h5 class="modal-title">Nueva Marca</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -296,8 +298,8 @@ Nuevo Producto
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button class="btn btn-success" id="btnGuardarMarca">Guardar</button>
+                <button class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cerrar</button>
+                <button class="btn-soft btn-soft-success" id="btnGuardarMarca">Guardar</button>
             </div>
 
         </div>
