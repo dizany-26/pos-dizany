@@ -19,3 +19,11 @@
   box-shadow: 0 0 0 3px rgba(37,99,235,.14);
   outline: none;
 }
+
+.input-group-text {
+    border-right: 0;
+}
+
+.input-group .form-control {
+    border-left: 0;
+}

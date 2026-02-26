@@ -1,41 +1,21 @@
-.input-group-text {
-    background-color: #f8f8f8;
-    font-weight: bold;
+.ui-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #1e293b;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.form-container {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.form-group label {
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-.form-actions {
-    text-align: center;
-}
-
-.imagen-preview img {
-    border-radius: 8px;
-    max-width: 100%;
-    height: auto;
-}
-
-@media (max-width: 768px) {
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
+/* Preview imagen producto */
+.ui-product-preview {
+    max-height: 150px;
+    border-radius: 14px;
+    border: 2px solid #2563eb;
+    padding: 6px;
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    object-fit: contain;
 }
 /*validar codigo de barras*/
 /* Estilo para el mensaje de error */

@@ -1,5 +1,7 @@
 @extends('layouts.app')
+@push('styles')
 
+@endpush
 {{-- BOTÓN ATRÁS --}}
 @section('header-back')
 <button class="btn-header-back" onclick="history.back()">
@@ -20,133 +22,174 @@ Parametros
 @section('content')
 <div class="container py-4">
     <div class="row g-4">
-        <!-- Sección Categorías -->
+        
+    <!-- Sección Categorías -->
         <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="mb-0">Categorías</h5>
+            <div class="card ui-card container-card my-4">
+                <div class="card-header bg-white border-0 pb-3">
+                    <div class="d-flex align-items-center justify-content-between">
 
-                    <div class="flex-grow-1 px-3">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
-                            <input type="text" id="buscador-categoria" class="form-control" placeholder="Buscar categoría...">
+                        <!-- Título -->
+                        <h5 class="mb-0 fw-semibold d-flex align-items-center gap-2">
+                            <i class="fas fa-layer-group text-primary"></i>
+                            Categorías
+                        </h5>
+
+                        <!-- Buscador + Botón -->
+                        <div class="d-flex align-items-center gap-3">
+
+                            <div class="ui-search-wrapper" style="width: 260px;">
+                                <i class="fas fa-search ui-search-icon"></i>
+                                <input type="text"
+                                    id="buscador-categoria"
+                                    class="form-control ui-input ui-search-input"
+                                    placeholder="Buscar categoría...">
+                            </div>
+
+                            <button class="btn-soft btn-soft-success d-flex align-items-center gap-2 px-3"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalCategoria">
+                                <i class="fas fa-plus"></i>
+                                Nueva
+                            </button>
+
                         </div>
-                    </div>
 
-                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalCategoria">
-                        <i class="fas fa-plus"></i> Nueva
-                    </button>
+                    </div>
                 </div>
                 <div  class="card-body">
-                <div id="tabla-categorias" class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-bordered table-sm mb-0 text-center">    
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($categorias as $categoria)
-                            <tr>
-                                <td>{{ $categoria->id }}</td>
-                                <td>{{ $categoria->nombre }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-center gap-1">
+                    <div class="table-responsive ui-scroll" style="max-height: 500px; overflow-y:auto;">
+                        <div id="table-content">
 
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-primary btn-editar-categoria"
-                                                data-id="{{ $categoria->id }}"
-                                                data-nombre="{{ $categoria->nombre }}"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#modalEditarCategoria">
-                                            <i class="fas fa-pen"></i>
-                                        </button>
+                            <table class="table table-hover align-middle mb-0 ui-table text-nowrap">   
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center">ID</th>
+                                        <th class="text-start">Nombre</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-categorias">
+                                    @foreach($categorias as $categoria)
+                                    <tr>
+                                        <td class="text-center">{{ $categoria->id }}</td>
+                                        <td class="text-start">{{ $categoria->nombre }}</td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
 
-                                        <button type="button"
-                                                class="btn btn-sm btn-danger btn-eliminar-categoria"
-                                                data-id="{{ $categoria->id }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                                <button type="button"
+                                                        class="btn-soft btn-soft-warning btn-soft-icon btn-editar-categoria"
+                                                        data-id="{{ $categoria->id }}"
+                                                        data-nombre="{{ $categoria->nombre }}"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalEditarCategoria">
+                                                    <i class="fas fa-pen"></i>
+                                                </button>
 
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                            @if($categorias->isEmpty())
-                            <tr><td colspan="3" class="text-center text-muted">Sin categorías registradas.</td></tr>
-                            @endif
-                        </tbody>
-                    </table>
+                                                <button type="button"
+                                                        class="btn-soft btn-soft-danger btn-soft-icon btn-eliminar-categoria"
+                                                        data-id="{{ $categoria->id }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                    @if($categorias->isEmpty())
+                                    <tr><td colspan="3" class="text-center text-muted">Sin categorías registradas.</td></tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
 
         <!-- Sección Marcas -->
         <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="mb-0">Marcas</h5>
+            <div class="card ui-card container-card my-4">
+                <div class="card-header bg-white border-0 pb-3">
+                    <div class="d-flex align-items-center justify-content-between">
 
-                    <div class="flex-grow-1 px-3">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
-                            <input type="text" id="buscador-marca" class="form-control" placeholder="Buscar marca...">
+                        <!-- Título -->
+                        <h5 class="mb-0 fw-semibold d-flex align-items-center gap-2">
+                            <i class="fas fa-tags text-primary"></i>
+                            Marcas
+                        </h5>
+
+                        <!-- Buscador + Botón -->
+                        <div class="d-flex align-items-center gap-3">
+
+                            <div class="ui-search-wrapper" style="width: 260px;">
+                                <i class="fas fa-search ui-search-icon"></i>
+                                <input type="text"
+                                    id="buscador-marca"
+                                    class="form-control ui-input ui-search-input"
+                                    placeholder="Buscar marca...">
+                            </div>
+
+                            <button class="btn-soft btn-soft-success d-flex align-items-center gap-2 px-3"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalMarca">
+                                <i class="fas fa-plus"></i>
+                                Nueva
+                            </button>
+
                         </div>
-                    </div>
 
-                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalMarca">
-                        <i class="fas fa-plus"></i> Nueva
-                    </button>
+                    </div>
                 </div>
                 <div  class="card-body">
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-bordered table-sm mb-0 text-center"> 
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-marca">
-                            @foreach($marcas as $marca)
-                            <tr>
-                                <td>{{ $marca->id }}</td>
-                                <td>{{ $marca->nombre }}</td>
-                                <td>{{ $marca->descripcion }}</td>
-                                <td>
-                                    <div class="d-flex justify-content-center gap-1">
+                    <div class="table-responsive ui-scroll" style="max-height: 400px; overflow-y:auto;">
+                        <div id="table-content">
 
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-primary btn-editar-marca"
-                                                data-id="{{ $marca->id }}"
-                                                data-nombre="{{ $marca->nombre }}"
-                                                data-descripcion="{{ $marca->descripcion }}"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#modalEditarMarca">
-                                            <i class="fas fa-pen"></i>
-                                        </button>
+                            <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center">ID</th>
+                                        <th class="text-start">Nombre</th>
+                                        <th class="text-start">Descripción</th>
+                                        <th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-marca">
+                                    @foreach($marcas as $marca)
+                                    <tr>
+                                        <td class="text-center">{{ $marca->id }}</td>
+                                        <td class="text-start">{{ $marca->nombre }}</td>
+                                        <td class="text-start">{{ $marca->descripcion }}</td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
 
-                                        <button type="button"
-                                                class="btn btn-sm btn-danger btn-eliminar-marca"
-                                                data-id="{{ $marca->id }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                                <button type="button"
+                                                        class="btn-soft btn-soft-warning btn-soft-icon btn-editar-marca"
+                                                        data-id="{{ $marca->id }}"
+                                                        data-nombre="{{ $marca->nombre }}"
+                                                        data-descripcion="{{ $marca->descripcion }}"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modalEditarMarca">
+                                                    <i class="fas fa-pen"></i>
+                                                </button>
 
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                            @if($marcas->isEmpty())
-                            <tr><td colspan="4" class="text-center text-muted">Sin marcas registradas.</td></tr>
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
+                                                <button type="button"
+                                                        class="btn-soft btn-soft-danger btn-soft-icon btn-eliminar-marca"
+                                                        data-id="{{ $marca->id }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                    @if($marcas->isEmpty())
+                                    <tr><td colspan="4" class="text-center text-muted">Sin marcas registradas.</td></tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -155,7 +198,7 @@ Parametros
 
 <!-- Modal Nueva Categoría -->
 <div class="modal fade" id="modalCategoria" tabindex="-1" aria-labelledby="modalCategoriaLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-md">
         <form action="{{ route('parametros.categorias.store') }}" method="POST" class="modal-content">
             @csrf
             <div class="modal-header">
@@ -169,15 +212,15 @@ Parametros
 
             </div>
             <div class="modal-footer">
-                <button id="btn-guardar-categoria" class="btn btn-success mt-2" type="submit">Guardar</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button id="btn-guardar-categoria" class="btn-soft btn-soft-success btn-soft-icon px-5" type="submit">Guardar</button>
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </form>
     </div>
 </div>
 
 <div class="modal fade" id="modalEditarCategoria" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-md">
         <form method="POST" id="formEditarCategoria" class="modal-content">
             @csrf
             @method('PUT')
@@ -193,7 +236,7 @@ Parametros
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-success" type="submit">Guardar cambios</button>
+                <button class="btn-soft btn-soft-success" type="submit">Guardar cambios</button>
             </div>
         </form>
     </div>
@@ -201,7 +244,7 @@ Parametros
 
 <!-- Modal Nueva Marca -->
 <div class="modal fade" id="modalMarca" tabindex="-1" aria-labelledby="modalMarcaLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-md">
         <form action="{{ route('parametros.marcas.store') }}" method="POST" class="modal-content">
             @csrf
             <div class="modal-header">
@@ -217,15 +260,15 @@ Parametros
                 <textarea name="descripcion" class="form-control" rows="2"></textarea>
             </div>
             <div class="modal-footer">
-                <button id="btn-guardar-marca" class="btn btn-success mt-2" type="submit">Guardar</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button id="btn-guardar-marca" class="btn-soft btn-soft-success btn-soft-icon px-5" type="submit">Guardar</button>
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </form>
     </div>
 </div>
 
 <div class="modal fade" id="modalEditarMarca" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-md">
         <form method="POST" id="formEditarMarca" class="modal-content">
             @csrf
             @method('PUT')
@@ -244,7 +287,7 @@ Parametros
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-success" type="submit">Guardar cambios</button>
+                <button class="btn-soft btn-soft-success" type="submit">Guardar cambios</button>
             </div>
         </form>
     </div>
@@ -317,25 +360,27 @@ Parametros
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const buscador = document.getElementById('buscador-categoria');
-        buscador.addEventListener('input', () => {
-            const filtro = buscador.value.toLowerCase();
-            document.querySelectorAll('#tabla-categorias tbody tr').forEach(fila => {
-                const texto = fila.textContent.toLowerCase();
-                fila.style.display = texto.includes(filtro) ? '' : 'none';
-            });
-        });
-    });
-</script>
-<script>
-    document.getElementById('buscador-marca').addEventListener('input', function () {
-        const filtro = this.value.toLowerCase();
-        const filas = document.querySelectorAll('#tabla-marca tr');
 
-        filas.forEach(fila => {
-            const texto = fila.textContent.toLowerCase();
-            fila.style.display = texto.includes(filtro) ? '' : 'none';
-        });
+        function activarBuscador(inputId, tablaId) {
+
+            const input = document.getElementById(inputId);
+
+            input.addEventListener('input', () => {
+
+                const filtro = input.value.toLowerCase();
+                const filas = document.querySelectorAll(`#${tablaId} tr`);
+
+                filas.forEach(fila => {
+                    const texto = fila.textContent.toLowerCase();
+                    fila.style.display = texto.includes(filtro) ? '' : 'none';
+                });
+
+            });
+        }
+
+        activarBuscador('buscador-categoria', 'tabla-categorias');
+        activarBuscador('buscador-marca', 'tabla-marca');
+
     });
 </script>
 

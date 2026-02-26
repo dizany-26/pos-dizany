@@ -80,14 +80,11 @@ Productos
                 </div>
             </div>
 
-            <div class="col-md-2 d-flex gap-2 justify-content-end">
-                <button type="submit" class="btn-soft btn-soft-primary btn-soft-icon">
-                    <i class="fas fa-search"></i>
-                </button>
-
+            <div class="col-md-2 d-flex justify-content-start">
                 <a href="{{ route('productos.export') }}"
-                class="btn-soft btn-soft-success btn-soft-icon">
+                class="btn-soft btn-soft-success d-flex align-items-center gap-2 px-3">
                     <i class="fa-solid fa-file-excel"></i>
+                    <span>Exportar Excel</span>
                 </a>
             </div>
         </form>
@@ -97,19 +94,23 @@ Productos
             <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
                 <thead class="table-light">
                     <tr>
-                        <th>Imagen</th>
-                        <th>Código de Barras</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Precio Venta</th>
-                        <th>Stock</th>
-                        <th>Acciones</th>
+                        <th class="text-center">Imagen</th>
+                        <th class="text-center">Código de Barras</th>
+                        <th class="text-start">Nombre</th>
+                        <th class="text-start">Descripción</th>
+                        <th class="text-end">Precio Venta</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($productos as $producto)
-                        <tr>
-                            <td>
+                        <tr data-nombre="{{ strtolower($producto->nombre) }}"
+                            data-codigo="{{ strtolower($producto->codigo_barras) }}"
+                            data-categoria="{{ $producto->categoria_id }}"
+                            data-marca="{{ $producto->marca_id }}">
+
+                            <td class="text-center">
                                 @if($producto->imagen)
                                     <img src="{{ asset('uploads/productos/' . $producto->imagen) }}" 
                                         alt="Imagen actual" 
@@ -118,11 +119,11 @@ Productos
                                 @endif
 
                             </td>
-                            <td>{{ $producto->codigo_barras }}</td>
-                            <td>{{ $producto->nombre }}</td>
-                            <td>{{ $producto->descripcion }}</td>
-                            <td class="text-end">{{ number_format($producto->precio_venta_actual, 2) }}</td>
-                            <td>
+                            <td class="text-center">{{ $producto->codigo_barras }}</td>
+                            <td class="text-start">{{ $producto->nombre }}</td>
+                            <td class="text-start">{{ $producto->descripcion }}</td>
+                            <td class="text-center">{{ number_format($producto->precio_venta_actual, 2) }}</td>
+                            <td class="text-center">
                                 <span class="fw-bold">{{ $producto->stock_total }}</span>
                                 @if($producto->stock_total <= 5)
                                     <span class="ui-badge ui-badge-danger ms-2">Stock bajo</span>
@@ -130,7 +131,7 @@ Productos
                                     <span class="ui-badge ui-badge-warning ms-2">Poco stock</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2">
                                     <a href="{{ route('productos.edit', $producto->id) }}" class="btn-soft btn-soft-warning btn-soft-icon">
                                         <i class="fa-solid fa-pen"></i>
@@ -309,74 +310,119 @@ Productos
 </script>
 
 <script>
-function formatNumber(value) {
-    if (!value || value <= 0) return "0";
-    return new Intl.NumberFormat('es-PE').format(value);
-}
+    function formatNumber(value) {
+        if (!value || value <= 0) return "0";
+        return new Intl.NumberFormat('es-PE').format(value);
+    }
 
-$(document).on('click', '.ver-detalles', function () {
+    $(document).on('click', '.ver-detalles', function () {
 
-    const productoId = $(this).data('id');
+        const productoId = $(this).data('id');
 
-    $.get(`/producto/detalles/${productoId}`, function (r) {
+        $.get(`/producto/detalles/${productoId}`, function (r) {
 
-        if (!r.success) return;
+            if (!r.success) return;
 
-        /* =====================
-           INFO GENERAL
-        ===================== */
-        $('#modalId').val(r.id);
-        $('#modalCodigo').val(r.codigo_barras ?? '-');
-        $('#modalNombre').val(r.nombre);
-        $('#modalDescripcion').val(r.descripcion ?? '-');
-        $('#modalCategoria').val(r.categoria_nombre ?? '-');
-        $('#modalMarca').val(r.marca_nombre ?? '-');
-        $('#modalUbicacion').val(r.ubicacion ?? '-');
+            /* =====================
+            INFO GENERAL
+            ===================== */
+            $('#modalId').val(r.id);
+            $('#modalCodigo').val(r.codigo_barras ?? '-');
+            $('#modalNombre').val(r.nombre);
+            $('#modalDescripcion').val(r.descripcion ?? '-');
+            $('#modalCategoria').val(r.categoria_nombre ?? '-');
+            $('#modalMarca').val(r.marca_nombre ?? '-');
+            $('#modalUbicacion').val(r.ubicacion ?? '-');
 
-        $('#modalActivo').val(r.activo ? 'Sí' : 'No');
-        $('#modalVisibleCatalogo').val(r.visible_en_catalogo ? 'Sí' : 'No');
+            $('#modalActivo').val(r.activo ? 'Sí' : 'No');
+            $('#modalVisibleCatalogo').val(r.visible_en_catalogo ? 'Sí' : 'No');
 
-        /* =====================
-           PRESENTACIONES
-        ===================== */
-        $('#modalUnidadesPorPaquete').val(
-            r.unidades_por_paquete ? formatNumber(r.unidades_por_paquete) : '-'
-        );
+            /* =====================
+            PRESENTACIONES
+            ===================== */
+            $('#modalUnidadesPorPaquete').val(
+                r.unidades_por_paquete ? formatNumber(r.unidades_por_paquete) : '-'
+            );
 
-        $('#modalPaquetesPorCaja').val(
-            r.paquetes_por_caja ? formatNumber(r.paquetes_por_caja) : '-'
-        );
+            $('#modalPaquetesPorCaja').val(
+                r.paquetes_por_caja ? formatNumber(r.paquetes_por_caja) : '-'
+            );
 
-        $('#modalUnidadesPorCaja').val(
-            r.unidades_por_caja ? formatNumber(r.unidades_por_caja) : '-'
-        );
+            $('#modalUnidadesPorCaja').val(
+                r.unidades_por_caja ? formatNumber(r.unidades_por_caja) : '-'
+            );
 
-        $('#modalManejaVencimiento').val(
-            r.maneja_vencimiento ? 'Sí' : 'No'
-        );
+            $('#modalManejaVencimiento').val(
+                r.maneja_vencimiento ? 'Sí' : 'No'
+            );
 
-        /* =====================
-           INVENTARIO (RESUMEN)
-        ===================== */
-        $('#modalStockTotal').val(formatNumber(r.stock_total));
-        $('#modalCantidadLotes').val(formatNumber(r.lotes_activos));
+            /* =====================
+            INVENTARIO (RESUMEN)
+            ===================== */
+            $('#modalStockTotal').val(formatNumber(r.stock_total));
+            $('#modalCantidadLotes').val(formatNumber(r.lotes_activos));
 
-        /* =====================
-           IMAGEN
-        ===================== */
-        $('#modalImagen').attr(
-            'src',
-            r.imagen
-                ? `/uploads/productos/${r.imagen}`
-                : '/img/sin-imagen.png'
-        );
+            /* =====================
+            IMAGEN
+            ===================== */
+            $('#modalImagen').attr(
+                'src',
+                r.imagen
+                    ? `/uploads/productos/${r.imagen}`
+                    : '/img/sin-imagen.png'
+            );
 
-        /* =====================
-           MOSTRAR MODAL
-        ===================== */
-        new bootstrap.Modal(document.getElementById('productoModal')).show();
+            /* =====================
+            MOSTRAR MODAL
+            ===================== */
+            new bootstrap.Modal(document.getElementById('productoModal')).show();
+        });
     });
-});
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
 
+        const inputSearch = document.querySelector('input[name="search"]');
+        const selectCategoria = document.querySelector('select[name="categoria_id"]');
+        const selectMarca = document.querySelector('select[name="marca_id"]');
+        const rows = document.querySelectorAll('.ui-table tbody tr');
+
+        function filtrar() {
+
+            const texto = inputSearch.value.toLowerCase();
+            const categoria = selectCategoria.value;
+            const marca = selectMarca.value;
+
+            rows.forEach(row => {
+
+                const nombre = row.dataset.nombre || '';
+                const codigo = row.dataset.codigo || '';
+                const rowCategoria = row.dataset.categoria;
+                const rowMarca = row.dataset.marca;
+
+                let coincideBusqueda =
+                    nombre.includes(texto) ||
+                    codigo.includes(texto);
+
+                let coincideCategoria =
+                    categoria === 'todos' || categoria === rowCategoria;
+
+                let coincideMarca =
+                    marca === 'todos' || marca === rowMarca;
+
+                if (coincideBusqueda && coincideCategoria && coincideMarca) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+
+            });
+        }
+
+        inputSearch.addEventListener('input', filtrar);
+        selectCategoria.addEventListener('change', filtrar);
+        selectMarca.addEventListener('change', filtrar);
+
+    });
+</script>
 @endpush

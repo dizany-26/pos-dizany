@@ -229,6 +229,30 @@ class ProductoController extends Controller
         $validated['imagen'] = $imageName;
     }
 
+    // ===== LIMPIAR CONVERSIONES SEGÚN CHECKBOX =====
+
+    // Si NO usa paquete → limpiar todo lo relacionado
+    if (!$request->has('usa_paquete')) {
+        $validated['unidades_por_paquete'] = null;
+        $validated['paquetes_por_caja'] = null;
+    }
+
+    // Si NO usa caja → limpiar datos de caja
+    if (!$request->has('usa_caja')) {
+        $validated['paquetes_por_caja'] = null;
+        $validated['unidades_por_caja'] = null;
+    }
+
+    // Si usa caja pero también usa paquete → caja por paquetes
+    if ($request->has('usa_caja') && $request->has('usa_paquete')) {
+        $validated['unidades_por_caja'] = null;
+    }
+
+    // Si usa caja directa (sin paquete)
+    if ($request->has('usa_caja') && !$request->has('usa_paquete')) {
+        $validated['paquetes_por_caja'] = null;
+    }
+
     $producto->update($validated);
 
     return redirect()
