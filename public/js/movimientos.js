@@ -32,6 +32,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const toastWarn = (text) => toast('warning', text);
     const toastError = (text) => toast('error', text);
 
+    // 👇 AGREGA ESTO AQUÍ
+    function renderEstadoBadge(estado) {
+        switch (estado) {
+            case 'pagado':
+                return `<span class="ui-badge ui-badge-success">Pagado</span>`;
+            case 'pendiente':
+                return `<span class="ui-badge ui-badge-warning">Pendiente</span>`;
+            case 'credito':
+                return `<span class="ui-badge ui-badge-danger">Crédito</span>`;
+            default:
+                return `<span class="ui-badge ui-badge-secondary">—</span>`;
+        }
+    }
+
     // ===== Click en fila de movimientos =====
     document.addEventListener('click', async (e) => {
 
@@ -82,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             contenido.innerHTML = `
             <div id="panel-detalle">
 
-                <div class="card detalle-card mt-3">
+                <div class="card ui-card rounded-4 detalle-card mt-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-muted">${(v.tipo || v.tipo_comprobante || 'Venta')} • Valor total</span>
                         <div id="estadoVenta"></div>
@@ -129,7 +143,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                <h6 class="mt-4 fw-bold">Listado de productos</h6>
+                <h6 class="mt-4 fw-semibold text-muted small text-uppercase">
+                    Listado de productos
+                </h6>
 
                 <div class="listado-productos">
                     ${
@@ -155,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${
                         (estado === 'pendiente' || estado === 'credito')
                         ? `
-                            <button class="accion-btn warning" onclick="mostrarCobro()">
+                            <button class="btn-soft btn-soft-warning" onclick="mostrarCobro()">
                                 <i class="fas fa-cash-register"></i>
                                 <span>Cobrar</span>
                             </button>
@@ -163,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         : ''
                     }
 
-                    <button class="accion-btn dark" type="button">
+                    <button class="btn-soft btn-soft-primary" type="button">
                         <i class="fas fa-print"></i>
                         <span>Imprimir</span>
                     </button>
@@ -181,12 +197,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <input type="number"
                     id="cc_monto"
-                    class="form-control mb-2"
+                    class="form-control ui-input mb-2"
                     value="0"
                     min="0"
                     step="0.01">
 
-                <select id="cc_metodo" class="form-select mb-2">
+                <select id="cc_metodo" class="form-select ui-input mb-2">
                     <option value="">Seleccione método</option>
                     <option value="efectivo">Efectivo</option>
                     <option value="yape">Yape</option>
@@ -212,18 +228,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Badge estado
             const estadoEl = document.getElementById('estadoVenta');
-            if (estado === 'pagado') {
-                estadoEl.innerHTML = `<span class="badge bg-success">Pagado</span>`;
-            } else if (estado === 'pendiente') {
-                estadoEl.innerHTML = `<span class="badge bg-warning text-dark">Pendiente</span>`;
-            } else {
-                estadoEl.innerHTML = `<span class="badge bg-danger">Crédito</span>`;
-            }
+            estadoEl.innerHTML = renderEstadoBadge(estado);
 
-        } catch (err) {
-            console.error(err);
-            contenido.innerHTML = `<div class="text-danger">Error al cargar detalle</div>`;
-        }
+            } catch (err) {
+                console.error(err);
+                contenido.innerHTML = `<div class="text-danger">Error al cargar detalle</div>`;
+            }
     });
 
     // ===== Recalcular vuelto EN VIVO (funciona para pendiente y crédito) =====

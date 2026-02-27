@@ -28,157 +28,163 @@ Movimientos
 
 @section('content')
 
-<div class="container-fluid">
+<div class="card ui-card container-card my-4">
+    <div class="card-body">
 
-    {{-- ================= TABS PRINCIPALES ================= --}}
-    <div class="card mb-3">
-        <div class="card-body p-2 d-flex gap-2">
+        {{-- ================= TABS PRINCIPALES ================= --}}
+        <div class="d-flex gap-2 mb-4">
             <a href="{{ route('movimientos.index', array_merge(request()->query(), ['tipo' => 'transacciones'])) }}"
-               class="btn {{ request('tipo','transacciones') === 'transacciones' ? 'btn-dark' : 'btn-light' }} flex-fill">
+               class="btn-soft {{ request('tipo','transacciones') === 'transacciones' ? 'btn-soft-primary' : 'btn-soft-info' }} flex-fill text-center">
                 Transacciones
             </a>
 
             <a href="{{ route('movimientos.index', array_merge(request()->query(), ['tipo' => 'cierres'])) }}"
-               class="btn {{ request('tipo') === 'cierres' ? 'btn-dark' : 'btn-light' }} flex-fill">
+               class="btn-soft {{ request('tipo') === 'cierres' ? 'btn-soft-primary' : 'btn-soft-info' }} flex-fill text-center">
                 Cierres de caja
             </a>
         </div>
-    </div>
 
-    {{-- ================= FILTROS ================= --}}
-    <form method="GET"
-          action="{{ route('movimientos.index') }}"
-          class="row g-2 mb-3">
+        {{-- ================= FILTROS ================= --}}
+        <form method="GET"
+              action="{{ route('movimientos.index') }}"
+              class="row g-3 mb-4">
 
-        <input type="hidden" name="tipo" value="{{ request('tipo','transacciones') }}">
-        <input type="hidden" name="tab" value="{{ $tab }}">
+            <input type="hidden" name="tipo" value="{{ request('tipo','transacciones') }}">
+            <input type="hidden" name="tab" value="{{ $tab }}">
 
-        <div class="col-md-2">
-            <select name="rango"
-                    class="form-select"
-                    onchange="this.form.submit()">
-                <option value="diario" {{ $rango === 'diario' ? 'selected' : '' }}>Diario</option>
-                <option value="semanal" {{ $rango === 'semanal' ? 'selected' : '' }}>Semanal</option>
-                <option value="mensual" {{ $rango === 'mensual' ? 'selected' : '' }}>Mensual</option>
-                <option value="anual" {{ $rango === 'anual' ? 'selected' : '' }}>Anual</option>
-                <option value="personalizado" {{ $rango === 'personalizado' ? 'selected' : '' }}>Personalizado</option>
+            <div class="col-md-2">
+                <select name="rango"
+                        class="form-select ui-input"
+                        onchange="this.form.submit()">
+                    <option value="diario" {{ $rango === 'diario' ? 'selected' : '' }}>Diario</option>
+                    <option value="semanal" {{ $rango === 'semanal' ? 'selected' : '' }}>Semanal</option>
+                    <option value="mensual" {{ $rango === 'mensual' ? 'selected' : '' }}>Mensual</option>
+                    <option value="anual" {{ $rango === 'anual' ? 'selected' : '' }}>Anual</option>
+                    <option value="personalizado" {{ $rango === 'personalizado' ? 'selected' : '' }}>Personalizado</option>
+                </select>
+            </div>
 
-            </select>
-        </div>
+            <div class="col-md-2">
+                {{-- Wrapper relativo (CLAVE) --}}
+                <div class="position-relative" id="year-picker-wrapper">
 
-        <div class="col-md-2">
-            <!-- Wrapper relativo (CLAVE) -->
-            <div class="position-relative" id="year-picker-wrapper">
-
-                <!-- Tu input-group original (NO se rompe) -->
-                <div class="input-group" id="picker-wrapper">
-                    <input
-                        id="filter-date"
-                        name="fecha"
-                        class="form-control"
-                        value="{{ $rango === 'anual' ? substr($fecha, 0, 4) : $fecha }}"
-                        autocomplete="off"
-                        readonly
-                        data-input
-                    >
-                    <span class="input-group-text" data-toggle>
-                        <i class="fa fa-calendar"></i>
-                    </span>
-                </div>
-
-                @php
-                    $yearActivo = $rango === 'anual'
-                        ? substr($fecha, 0, 4)
-                        : now()->year;
-                @endphp
-
-                <div id="year-picker" class="year-picker d-none">
-                    @for ($y = now()->year - 10; $y <= now()->year + 10; $y++)
-                        <button
-                            type="button"
-                            class="year-btn {{ (string)$yearActivo === (string)$y ? 'active' : '' }}"
-                            data-year="{{ $y }}"
+                    {{-- Tu input-group original (NO se rompe) --}}
+                    <div class="input-group" id="picker-wrapper">
+                        <input
+                            id="filter-date"
+                            name="fecha"
+                            class="form-control ui-input"
+                            value="{{ $rango === 'anual' ? substr($fecha, 0, 4) : $fecha }}"
+                            autocomplete="off"
+                            readonly
+                            data-input
                         >
-                            {{ $y }}
-                        </button>
-                    @endfor
-                </div>
-            </div>
-        </div>
+                        <span class="input-group-text" data-toggle>
+                            <i class="fa fa-calendar"></i>
+                        </span>
+                    </div>
 
-        <div class="col-md-4">
-            <input type="text"
-                   name="buscar"
-                   value="{{ request('buscar') }}"
-                   class="form-control"
-                   placeholder="Buscar concepto..."
-                   onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
-        </div>
-    </form>
+                    @php
+                        $yearActivo = $rango === 'anual'
+                            ? substr($fecha, 0, 4)
+                            : now()->year;
+                    @endphp
 
-    {{-- ================= KPIs ================= --}}
-    <div class="row mb-4">
-
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3">📈</div>
-                    <div>
-                        <small class="text-muted">Balance</small>
-                        <h5 class="fw-bold mb-0">
-                            S/ {{ number_format($balance ?? 0, 2) }}
-                        </h5>
+                    <div id="year-picker" class="year-picker d-none">
+                        @for ($y = now()->year - 10; $y <= now()->year + 10; $y++)
+                            <button
+                                type="button"
+                                class="year-btn {{ (string)$yearActivo === (string)$y ? 'active' : '' }}"
+                                data-year="{{ $y }}"
+                            >
+                                {{ $y }}
+                            </button>
+                        @endfor
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3">💵</div>
-                    <div>
-                        <small class="text-muted">Ventas totales</small>
-                        <h5 class="fw-bold text-success mb-0">
-                            S/ {{ number_format($ventas ?? 0, 2) }}
-                        </h5>
+            <div class="col-md-4">
+                <input type="text"
+                       name="buscar"
+                       value="{{ request('buscar') }}"
+                       class="form-control ui-input"
+                       placeholder="Buscar concepto..."
+                       onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
+            </div>
+
+        </form>
+
+        {{-- ================= KPIs ================= --}}
+        <div class="row mb-4 g-3">
+
+            <div class="col-md-3">
+                <div class="card ui-card dashboard-card rounded-4 h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-soft icon-soft-primary">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Balance</small>
+                            <h5 class="fw-bold mb-0">
+                                S/ {{ number_format($balance ?? 0, 2) }}
+                            </h5>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-danger bg-opacity-10 p-3">💸</div>
-                    <div>
-                        <small class="text-muted">Gastos totales</small>
-                        <h5 class="fw-bold text-danger mb-0">
-                            S/ {{ number_format($gastos ?? 0, 2) }}
-                        </h5>
+            <div class="col-md-3">
+                <div class="card ui-card dashboard-card rounded-4 h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-soft icon-soft-success">
+                            <i class="fas fa-cash-register"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Ventas totales</small>
+                            <h5 class="fw-bold text-success mb-0">
+                                S/ {{ number_format($ventas ?? 0, 2) }}
+                            </h5>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Ganancias --}}
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3">💰</div>
-                    <div>
-                        <small class="text-muted">Ganancia</small>
-                        <h5 class="fw-bold {{ $ganancias >= 0 ? 'text-success' : 'text-danger' }}">
-                            S/ {{ number_format($ganancias ?? 0, 2) }}
-                        </h5>
+            <div class="col-md-3">
+                <div class="card ui-card dashboard-card rounded-4 h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-soft icon-soft-danger">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Gastos totales</small>
+                            <h5 class="fw-bold text-danger mb-0">
+                                S/ {{ number_format($gastos ?? 0, 2) }}
+                            </h5>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {{-- ================= SUB TABS ================= --}}
-    <ul class="nav nav-tabs mb-3">
+            <div class="col-md-3">
+                <div class="card ui-card dashboard-card rounded-4 h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-soft icon-soft-warning">
+                            <i class="fas fa-sack-dollar"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Ganancia</small>
+                            <h5 class="fw-bold {{ $ganancias >= 0 ? 'text-success' : 'text-danger' }} mb-0">
+                                S/ {{ number_format($ganancias ?? 0, 2) }}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- ================= SUBTABS ================= --}}
         @php
             $tabs = [
                 'ingresos'   => 'Ingresos',
@@ -188,86 +194,84 @@ Movimientos
             ];
         @endphp
 
-        @foreach($tabs as $key => $label)
-            <li class="nav-item">
-                <a class="nav-link {{ $tab === $key ? 'active' : '' }}"
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            @foreach($tabs as $key => $label)
+                <a class="btn-soft {{ $tab === $key ? 'btn-soft-primary' : 'btn-soft-info' }}"
                    href="{{ route('movimientos.index', array_merge(request()->query(), ['tab' => $key])) }}">
                     {{ $label }}
                 </a>
-            </li>
-        @endforeach
-    </ul>
-
-    {{-- ================= TABLA ================= --}}
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Concepto</th>
-                        <th>Método</th>
-                        <th>Estado</th>
-                        <th class="text-end">Monto</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                @forelse ($movimientos as $movimiento)
-                    <tr class="mov-row"
-                        style="cursor:pointer"
-                        data-ref-id="{{ $movimiento->referencia_id }}"
-                        data-ref-tipo="{{ $movimiento->referencia_tipo }}"
-                        data-mov-id="{{ $movimiento->id }}">
-
-                        <td>{{ \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y') }}</td>
-
-                        <td>{{ $movimiento->concepto }}</td>
-
-                        <td>{{ ucfirst($movimiento->metodo_pago) }}</td>
-
-                        <td>
-                            @if ($movimiento->estado === 'pagado')
-                                <span class="badge bg-success">Pagado</span>
-                            @elseif ($movimiento->estado === 'pendiente')
-                                <span class="badge bg-warning">Pendiente</span>
-                            @elseif ($movimiento->estado === 'anulado')
-                                <span class="badge bg-danger">Anulado</span>
-                            @endif
-                        </td>
-
-                        <td class="text-end fw-bold
-                            {{ $movimiento->tipo === 'ingreso' ? 'text-success' : 'text-danger' }}">
-                            {{ $movimiento->tipo === 'ingreso' ? '+' : '-' }}
-                            S/ {{ number_format($movimiento->monto, 2) }}
-                        </td>
-
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-secondary">
-                                👁
-                            </button>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6"
-                            class="text-center text-muted py-4">
-                            No hay movimientos para mostrar
-                        </td>
-                    </tr>
-                @endforelse
-
-                </tbody>
-            </table>
+            @endforeach
         </div>
 
-        {{-- ================= PAGINACIÓN ================= --}}
-        @if($movimientos instanceof \Illuminate\Pagination\LengthAwarePaginator)
-            <div class="card-footer d-flex justify-content-end">
-                {{ $movimientos->appends(request()->query())->links() }}
+        {{-- ================= TABLA ================= --}}
+        <div class="card ui-card rounded-4">
+            <div class="table-responsive ui-scroll">
+                <table class="table ui-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Método</th>
+                            <th>Estado</th>
+                            <th class="text-end">Monto</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    @forelse ($movimientos as $movimiento)
+                        <tr class="mov-row"
+                            style="cursor:pointer"
+                            data-ref-id="{{ $movimiento->referencia_id }}"
+                            data-ref-tipo="{{ $movimiento->referencia_tipo }}"
+                            data-mov-id="{{ $movimiento->id }}">
+
+                            <td data-label="Fecha">{{ \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y') }}</td>
+                            <td data-label="Concepto">{{ $movimiento->concepto }}</td>
+                            <td data-label="Método">{{ ucfirst($movimiento->metodo_pago) }}</td>
+
+                            <td data-label="Estado">
+                                @if ($movimiento->estado === 'pagado')
+                                    <span class="ui-badge ui-badge-success">Pagado</span>
+                                @elseif ($movimiento->estado === 'pendiente')
+                                    <span class="ui-badge ui-badge-warning">Pendiente</span>
+                                @elseif ($movimiento->estado === 'anulado')
+                                    <span class="ui-badge ui-badge-danger">Anulado</span>
+                                @endif
+                            </td>
+
+                            <td data-label="Monto"
+                                class="text-end fw-bold {{ $movimiento->tipo === 'ingreso' ? 'text-success' : 'text-danger' }}">
+                                {{ $movimiento->tipo === 'ingreso' ? '+' : '-' }}
+                                S/ {{ number_format($movimiento->monto, 2) }}
+                            </td>
+
+                            <td data-label="Acciones" class="text-center">
+                                <button class="btn-soft btn-soft-primary btn-soft-icon btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No hay movimientos para mostrar
+                            </td>
+                        </tr>
+                    @endforelse
+
+                    </tbody>
+                </table>
             </div>
-        @endif
+
+            {{-- ================= PAGINACIÓN ================= --}}
+            @if($movimientos instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                <div class="card-footer d-flex justify-content-end">
+                    {{ $movimientos->appends(request()->query())->links() }}
+                </div>
+            @endif
+        </div>
+
     </div>
 </div>
 

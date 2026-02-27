@@ -1,5 +1,16 @@
 @extends('layouts.app')
+{{-- ===================== STYLES ===================== --}}
+@push('styles')
+<style>
+    .fefo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    }
 
+</style>
+@endpush
 {{-- BOTÓN ATRÁS --}}
 @section('header-back')
 <button class="btn-header-back" onclick="history.back()">
@@ -9,24 +20,21 @@
 @section('header-title', 'Lotes de Productos')
 
 @section('content')
-<div class="container-fluid px-3 mt-4">
+<div class="card ui-card container-card my-4">
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-layer-group me-2"></i>
+        <div class="card-header text-center pt-4">
+            <h4 class="mb-0 fw-semibold">
+                <i class="fas fa-layer-group me-2 text-primary"></i>
                 Lotes registrados
-            </h5>
+            </h4>
         </div>
 
-        <div class="card-body p-0">
-
-            <div class="table-responsive">
+        <div class="card-body pt-2 pb-4">
                 {{-- FILTROS (van arriba de la tabla) --}}
-                <div class="filtros-lotes">
+                <div class="px-2 mb-4">
                     <div class="row mb-3 g-2">
                         <div class="col-md-2">
-                            <select id="filtroEstado" class="form-select">
+                            <select id="filtroEstado" class="form-select ui-input">
                                 <option value="">Estado</option>
                                 <option value="vencido">Vencidos</option>
                                 <option value="10">Vence ≤ 10 días</option>
@@ -37,7 +45,7 @@
                         </div>
 
                         <div class="col-md-2">
-                            <select id="filtroProducto" class="form-select">
+                            <select id="filtroProducto" class="form-select ui-input">
                                 <option value="">Producto</option>
                                 @foreach ($productos as $producto)
                                     <option value="{{ strtolower($producto->nombre) }}">
@@ -48,7 +56,7 @@
                         </div>
 
                         <div class="col-md-2">
-                            <select id="filtroStock" class="form-select">
+                            <select id="filtroStock" class="form-select ui-input">
                                 <option value="">Stock</option>
                                 <option value="con">Con stock</option>
                                 <option value="sin">Sin stock</option>
@@ -56,7 +64,7 @@
                         </div>
 
                         <div class="col-md-2">
-                            <select id="filtroFefo" class="form-select">
+                            <select id="filtroFefo" class="form-select ui-input">
                                 <option value="">FEFO</option>
                                 <option value="1">Prioridad FEFO</option>
                             </select>
@@ -66,7 +74,7 @@
                             <div class="dropdown">
                                 <button
                                     id="filtroMovimientosBtn"
-                                    class="btn btn-outline-secondary btn-icon"
+                                    class="btn-soft btn-soft-primary btn-soft-icon"
                                     type="button"
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false"
@@ -96,21 +104,24 @@
                         </div>
 
                         <div class="col-md-3 d-flex align-items-center gap-1">
-                            <input type="text" id="filtroBuscar" class="form-control"
+                            <input type="text" id="filtroBuscar" class="form-control ui-input"
                                 placeholder="Buscar lote o producto…">
 
                                 <button type="button"
                                         id="btnLimpiarFiltros"
-                                        class="btn btn-outline-secondary"
+                                        class="btn-soft btn-soft-info btn-soft-icon"
                                         title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </button>
                         </div>
                     </div>
                 </div>
+
+            <div class="table-responsive ui-scroll">
+                
                 <div class="tabla-scroll">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table ui-table align-middle mb-0">
+                    <thead>
                         <tr>
                             <th>Cód. Comprobante</th>
                             <th class="text-center" style="width:60px;">FEFO</th>
@@ -181,28 +192,28 @@
                                 ) }}"
                             >
                                 {{-- CODIGO COMPROBANTE --}}
-                                <td>
+                                <td data-label="Cód. Comprobante">
                                     <strong>{{ blank($lote->codigo_comprobante) ? '—' : $lote->codigo_comprobante }}</strong>
 
                                    @if ($lote->stock_actual > 0)
 
                                         @if (is_null($dias))
                                             <div>
-                                                <span class="badge bg-secondary mt-1">Sin vencimiento</span>
+                                                <span class="ui-badge ui-badge-secondary mt-1">Sin vencimiento</span>
                                             </div>
                                         @elseif ($dias < 0)
                                             <div>
-                                                <span class="badge bg-danger mt-1">Vencido</span>
+                                                <span class="ui-badge ui-badge-danger mt-1">Vencido</span>
                                             </div>
                                         @elseif ($dias <= 10)
                                             <div>
-                                                <span class="badge bg-danger mt-1">
+                                                <span class="ui-badge ui-badge-danger mt-1">
                                                     Vence en {{ $dias }} días
                                                 </span>
                                             </div>
                                         @elseif ($dias <= 30)
-                                            <div>
-                                                <span class="badge bg-warning text-dark mt-1">
+                                            <div class="mt-1">
+                                                <span class="ui-badge ui-badge-warning">
                                                     Vence en {{ $dias }} días
                                                 </span>
                                             </div>
@@ -212,17 +223,19 @@
                                 </td>
 
                                 {{-- FEFO --}}
-                                <td class="text-center">
+                                <td data-label="FEFO" class="text-center">
+                                    <span class="fefo-dot fefo-success">
                                     {!! $fefoIcon !!}
+                                    </span>
                                 </td>
 
                                 {{-- N° LOTE --}}
-                                <td class="text-center fw-bold">
+                                <td data-label="N° Lote" class="text-center fw-bold">
                                     LT-{{ str_pad($lote->numero_lote, 5, '0', STR_PAD_LEFT) }}
                                 </td>
 
                                 {{-- PRODUCTO --}}
-                                <td>
+                                <td data-label="Producto">
                                     <strong>{{ $lote->producto->nombre ?? '—' }}</strong><br>
                                     <small class="text-muted">
                                         {{ \Illuminate\Support\Str::limit($lote->producto->descripcion ?? '', 50) }}
@@ -230,12 +243,12 @@
                                 </td>
 
                                 {{-- PROVEEDOR --}}
-                                <td>
+                                <td data-label="Proveedor">
                                     {{ $lote->proveedor->nombre ?? '—' }}
                                 </td>
 
                                 {{-- STOCK --}}
-                                <td class="text-center fw-bold">
+                                <td data-label="Stock" class="text-center fw-bold">
                                     {{ $lote->stock_actual }}
                                     <small class="text-muted d-block">
                                         / {{ $lote->stock_inicial }}
@@ -243,12 +256,12 @@
                                 </td>
 
                                 {{-- INGRESO --}}
-                                <td>
+                                <td data-label="Ingreso">
                                     {{ \Carbon\Carbon::parse($lote->fecha_ingreso)->format('d/m/Y') }}
                                 </td>
 
                                 {{-- VENCIMIENTO --}}
-                                <td>
+                                <td data-label="Vencimiento">
                                     @if ($lote->fecha_vencimiento)
                                         {{ \Carbon\Carbon::parse($lote->fecha_vencimiento)->format('d/m/Y') }}
                                     @else
@@ -257,28 +270,28 @@
                                 </td>
 
                                 {{-- ESTADO --}}
-                                <td class="text-center">
+                                <td data-label="Estado" class="text-center">
                                     @if ($lote->stock_actual == 0)
-                                        <span class="badge bg-secondary">Agotado</span>
+                                        <span class="ui-badge ui-badge-secondary">Agotado</span>
                                     @elseif ($lote->fecha_vencimiento && \Carbon\Carbon::parse($lote->fecha_vencimiento)->isPast())
-                                        <span class="badge bg-danger">Vencido</span>
+                                        <span class="ui-badge ui-badge-danger">Vencido</span>
                                     @else
-                                        <span class="badge bg-success">Activo</span>
+                                        <span class="ui-badge ui-badge-success">Activo</span>
                                     @endif
                                 </td>
 
                                 {{-- ACCIONES --}}
-                                <td>
-                                    <div class="d-flex gap-1 acciones-lote">
+                                <td data-label="Acciones">
+                                    <div class="acciones-lote">
                                         <a href="{{ route('lotes.edit', $lote->id) }}"
-                                        class="btn btn-sm btn-outline-primary"
+                                        class="btn-soft btn-soft-warning btn-soft-icon btn-sm"
                                         title="Editar lote">
                                             <i class="fas fa-pen"></i>
                                         </a>
 
                                         @if (($lote->movimientos_count ?? 0) > 0)
                                             <a href="{{ route('lotes.movimientos', $lote->id) }}"
-                                            class="btn btn-sm btn-outline-info"
+                                            class="btn-soft btn-soft-primary btn-soft-icon btn-sm"
                                             title="Ver movimientos">
                                                 <i class="fas fa-list-alt"></i>
                                             </a>
@@ -300,151 +313,9 @@
             </div>
 
         </div>
-    </div>
 
 </div>
 @endsection
-
-{{-- ===================== STYLES ===================== --}}
-@push('styles')
-<style>
-    
-    .btn-outline-info:hover {
-        color: #fff;
-    }
-    /*FEFO*/
-    .badge.bg-danger {
-        animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: .6; }
-        100% { opacity: 1; }
-    }
-
-    /* =========================
-    FILTROS LOTES
-    ========================= */
-    .filtros-lotes {
-        background: #f8faff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 12px;
-    }
-
-    .filtros-lotes .form-select,
-    .filtros-lotes .form-control {
-        border-radius: 10px;
-        border: 1px solid #cfe2ff;
-        font-weight: 500;
-    }
-
-    .filtros-lotes .form-select:focus,
-    .filtros-lotes .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.15rem rgba(13,110,253,.15);
-    }
-
-    .filtros-lotes .form-select option:first-child {
-        color: #6c757d;
-    }
-
-    .filtro-activo {
-        border-color: #0d6efd !important;
-        background-color: #e7f1ff;
-    }
-    /* =========================
-    SCROLL HORIZONTAL PRO
-    ========================= */
-    .tabla-scroll {
-        overflow-x: auto;
-        scrollbar-width: thin;            /* Firefox */
-        scrollbar-color: #c1c9d6 transparent;
-    }
-
-    .tabla-scroll::-webkit-scrollbar {
-        height: 6px;
-    }
-
-    .tabla-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .tabla-scroll::-webkit-scrollbar-thumb {
-        background-color: #c1c9d6;
-        border-radius: 10px;
-    }
-
-    .tabla-scroll::-webkit-scrollbar-thumb:hover {
-        background-color: #9aa5b1;
-    }
-
-    #btnLimpiarFiltros {
-    padding: 0 12px;
-    height: 38px;
-    }
-
-    #btnLimpiarFiltros:hover {
-        background-color: #ffd20c;
-        border-color: #ffd20c;
-        color: #0c0c0c;
-    }
-
-</style>
-<style>
-    /* BOTÓN ICONO FILTRO MOVIMIENTOS */
-    .btn-icon {
-        width: 38px;
-        height: 38px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-    }
-
-    /* Quitar borde azul molesto */
-    .btn-icon:focus,
-    .btn-icon:active,
-    .btn-icon:focus-visible {
-        box-shadow: none !important;
-        outline: none !important;
-    }
-
-    /* Hover elegante */
-    .btn-icon:hover {
-        background-color: #eef4ff;
-        border-color: #0d6efd;
-        color: #0d6efd;
-    }
-
-    /* Cuando el filtro está activo */
-    .btn-icon.activo {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-        color: #fff;
-    }
-
-    /* COLUMNA ACCIONES LOTES */
-    .acciones-lote {
-        justify-content: flex-start; /* 👈 siempre a la izquierda */
-        min-height: 38px;            /* mismo alto visual */
-    }
-
-    /* Botones consistentes */
-    .acciones-lote .btn {
-        width: 34px;
-        height: 34px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-</style>
-@endpush
 
 {{-- ===================== SCRIPTS ===================== --}}
 @push('scripts')

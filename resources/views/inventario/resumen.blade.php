@@ -191,9 +191,15 @@ Resumen de Inventario
                         <tbody>
                             @foreach($productosStockBajo as $producto)
                                 <tr>
-                                    <td>{{ $producto->nombre }}</td>
-                                    <td class="fw-bold">{{ $producto->stock_total ?? 0 }}</td>
-                                    <td>
+                                    <td data-label="Producto">
+                                        {{ $producto->nombre }}
+                                    </td>
+
+                                    <td data-label="Stock" class="fw-bold">
+                                        {{ $producto->stock_total ?? 0 }}
+                                    </td>
+
+                                    <td data-label="Estado">
                                         @if(($producto->stock_total ?? 0) == 0)
                                             <span class="ui-badge ui-badge-danger">Sin stock</span>
                                         @else
@@ -230,13 +236,23 @@ Resumen de Inventario
                                     $dias = \Carbon\Carbon::now()->diffInDays($lote->fecha_vencimiento, false);
                                 @endphp
                                 <tr>
-                                    <td>LT-{{ $lote->numero_lote }}</td>
-                                    <td>{{ $lote->producto->nombre }}</td>
-                                    <td>{{ $lote->stock_actual }}</td>
-                                    <td class="fw-bold text-danger">
+                                    <td data-label="Lote">
+                                        LT-{{ $lote->numero_lote }}
+                                    </td>
+
+                                    <td data-label="Producto">
+                                        {{ $lote->producto->nombre }}
+                                    </td>
+
+                                    <td data-label="Stock">
+                                        {{ $lote->stock_actual }}
+                                    </td>
+
+                                    <td data-label="Vencimiento" class="fw-bold text-danger">
                                         {{ \Carbon\Carbon::parse($lote->fecha_vencimiento)->format('d/m/Y') }}
                                     </td>
-                                    <td>
+
+                                    <td data-label="Días">
                                         <span class="ui-badge ui-badge-danger">
                                             {{ $dias }} días
                                         </span>

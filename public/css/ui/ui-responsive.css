@@ -31,7 +31,7 @@
     }
 
     .ui-table td::before {
-        content: attr(data-label);
+        content: attr(data-label) ":";
         font-weight: 600;
         color: #6c757d;
     }
@@ -101,22 +101,48 @@
         justify-content: center;
     }
 
-    .dashboard-card {
-        min-height: 120px;
+    /* ==========================================
+   DASHBOARD TABLE → CARD (MOBILE)
+========================================== */
+
+    .dashboard-table thead {
+        display: none;
     }
 
-    .dashboard-card .fs-2 {
-        font-size: 28px !important;
+    .dashboard-table,
+    .dashboard-table tbody,
+    .dashboard-table tr {
+        display: block;
+        width: 100%;
     }
 
-    .card-icon {
-        opacity: 0.15;
-        font-size: 40px !important;
+    .dashboard-table tr {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 18px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
     }
 
-    .dashboard-card .card-icon {
-        font-size: 40px;
-        opacity: 0.12;
+    .dashboard-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border: none;
+        border-bottom: 1px dashed #f1f3f5;
+        font-size: 14px;
+    }
+
+    .dashboard-table td:last-child {
+        border-bottom: none;
+    }
+
+    .dashboard-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6c757d;
     }
 
 }

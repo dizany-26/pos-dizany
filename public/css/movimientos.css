@@ -29,11 +29,7 @@
   background:#0f172a;
   color:#fff;
 }
-.table thead th{
-  font-weight:600;
-  color:#334155;
-  background:#f8fafc;
-}
+
 /*PANEL*/
 .detalle-venta-panel {
     width: 420px;

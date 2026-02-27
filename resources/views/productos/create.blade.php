@@ -38,11 +38,12 @@ Nuevo Producto
 <!-- Formulario en tarjeta -->
 <div class="card ui-card container-card my-4">
 
-        <div class="card-header text-center pt-4">
-            <h4 class="mb-0 fw-semibold">
-                <i class="fas fa-box-open me-2 text-primary"></i> Nuevo Producto
-            </h4>
-        </div>
+    <div class="card-header text-center pt-4">
+        <h4 class="mb-0 fw-semibold">
+            <i class="fas fa-box-open me-2 text-primary"></i> Nuevo Producto
+        </h4>
+    </div>
+
     <div class="card-body pt-2 pb-4">
 
         {{-- Errores de validación --}}
@@ -57,203 +58,215 @@ Nuevo Producto
         @endif
 
         <form action="{{ route('productos.store') }}" method="POST" enctype="multipart/form-data">
-        @csrf
+            @csrf
 
-        <div class="row g-3">
+            <div class="row g-3">
 
-            {{-- ================= DATOS BÁSICOS ================= --}}
-            <div class="col-md-4">
-                <label class="form-label">Código de Barras</label>
-                <input type="text"
-                    name="codigo_barras"
-                    id="codigo_barras"
-                    class="form-control ui-input"
-                    value="{{ old('codigo_barras') }}">
+                {{-- ================= DATOS BÁSICOS ================= --}}
+                <div class="col-md-4">
+                    <label class="form-label">Código de Barras</label>
+                    <input type="text"
+                        name="codigo_barras"
+                        id="codigo_barras"
+                        class="form-control ui-input"
+                        value="{{ old('codigo_barras') }}">
 
-                <div id="codigo_barras_error"
-                    class="invalid-feedback d-none">
-                    Este código de barras ya está registrado.
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Nombre</label>
-                <input type="text"
-                       name="nombre"
-                       class="form-control ui-input"
-                       value="{{ old('nombre') }}"
-                       required>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Ubicación</label>
-                <input type="text"
-                       name="ubicacion"
-                       class="form-control ui-input"
-                       value="{{ old('ubicacion') }}">
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">Descripción</label>
-                <textarea name="descripcion"
-                          class="form-control ui-input"
-                          rows="2">{{ old('descripcion') }}</textarea>
-            </div>
-
-            {{-- ================= PRESENTACIONES ================= --}}
-            <div class="col-12 mt-4">
-                <div class="ui-section-title">
-                    <i class="fas fa-layer-group me-2 text-primary"></i>
-                    Presentaciones
+                    <div id="codigo_barras_error" class="invalid-feedback d-none">
+                        Este código de barras ya está registrado.
+                    </div>
                 </div>
 
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" checked disabled>
-                    <label class="form-check-label">
-                        Unidad (siempre disponible)
-                    </label>
+                <div class="col-md-4">
+                    <label class="form-label">Nombre</label>
+                    <input type="text"
+                        name="nombre"
+                        class="form-control ui-input"
+                        value="{{ old('nombre') }}"
+                        required>
                 </div>
 
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="chk_paquete">
-                    <label class="form-check-label">Paquete</label>
+                <div class="col-md-4">
+                    <label class="form-label">Ubicación</label>
+                    <input type="text"
+                        name="ubicacion"
+                        class="form-control ui-input"
+                        value="{{ old('ubicacion') }}">
                 </div>
 
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="chk_caja">
-                    <label class="form-check-label">Caja</label>
-                </div>
-            </div>
-
-            {{-- ================= CONVERSIONES ================= --}}
-            <div class="row mt-2">
-
-                <div class="col-md-4 d-none" id="grupo_unidades_paquete">
-                    <label class="form-label">Unidades por paquete</label>
-                    <input type="number"
-                           name="unidades_por_paquete"
-                           class="form-control ui-input"
-                           min="1">
+                <div class="col-12">
+                    <label class="form-label">Descripción</label>
+                    <textarea name="descripcion"
+                        class="form-control ui-input"
+                        rows="2">{{ old('descripcion') }}</textarea>
                 </div>
 
-                <div class="col-md-4 d-none" id="grupo_paquetes_caja">
-                    <label class="form-label">Paquetes por caja</label>
-                    <input type="number"
-                           name="paquetes_por_caja"
-                           class="form-control ui-input"
-                           min="1">
+                {{-- ================= PRESENTACIONES ================= --}}
+                <div class="col-12 mt-2">
+                    <div class="ui-section-box p-3 rounded-4 border bg-white">
+
+                        <div class="ui-section-title mb-2">
+                            <i class="fas fa-layer-group me-2 text-primary"></i>
+                            Presentaciones
+                        </div>
+
+                        <div class="d-flex flex-column gap-2">
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" checked disabled>
+                                <label class="form-check-label">
+                                    Unidad (siempre disponible)
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="chk_paquete">
+                                <label class="form-check-label">Paquete</label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="chk_caja">
+                                <label class="form-check-label">Caja</label>
+                            </div>
+
+                        </div>
+
+                        {{-- ================= CONVERSIONES ================= --}}
+                        <div class="row g-3 mt-2">
+
+                            <div class="col-md-4 d-none" id="grupo_unidades_paquete">
+                                <label class="form-label">Unidades por paquete</label>
+                                <input type="number"
+                                    name="unidades_por_paquete"
+                                    class="form-control ui-input"
+                                    min="1">
+                            </div>
+
+                            <div class="col-md-4 d-none" id="grupo_paquetes_caja">
+                                <label class="form-label">Paquetes por caja</label>
+                                <input type="number"
+                                    name="paquetes_por_caja"
+                                    class="form-control ui-input"
+                                    min="1">
+                            </div>
+
+                            <div class="col-md-4 d-none" id="grupo_unidades_caja">
+                                <label class="form-label">Unidades por caja</label>
+                                <input type="number"
+                                    name="unidades_por_caja"
+                                    class="form-control ui-input"
+                                    min="1">
+                            </div>
+
+                        </div>
+
+                    </div>
                 </div>
 
-                <div class="col-md-4 d-none" id="grupo_unidades_caja">
-                    <label class="form-label">Unidades por caja</label>
-                    <input type="number"
-                           name="unidades_por_caja"
-                           class="form-control ui-input"
-                           min="1">
+                {{-- ================= VENCIMIENTO ================= --}}
+                <div class="col-md-4 mt-2">
+                    <div class="form-check">
+                        <input class="form-check-input"
+                            type="checkbox"
+                            name="maneja_vencimiento"
+                            value="1">
+                        <label class="form-check-label">
+                            Maneja fecha de vencimiento
+                        </label>
+                    </div>
                 </div>
 
-            </div>
-
-            {{-- ================= VENCIMIENTO ================= --}}
-            <div class="col-md-4 mt-3">
-                <div class="form-check">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           name="maneja_vencimiento"
-                           value="1">
-                    <label class="form-check-label">
-                        Maneja fecha de vencimiento
-                    </label>
-                </div>
-            </div>
-
-            {{-- ================= CATEGORÍA / MARCA ================= --}}
-            <div class="col-md-4">
-                <label class="form-label d-flex justify-content-between">
-                    <span>Categoría</span>
-                    <button type="button"
+                {{-- ================= CATEGORÍA / MARCA ================= --}}
+                <div class="col-md-4">
+                    <label class="form-label d-flex justify-content-between align-items-center">
+                        <span>Categoría</span>
+                        <button type="button"
                             class="btn-soft btn-soft-primary btn-soft-icon"
                             data-bs-toggle="modal"
-                            data-bs-target="#modalNuevaCategoria">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </label>
-                <select name="categoria_id" id="categoria_id" class="form-select ui-input" required>
-                    <option value="">Seleccione</option>
-                    @foreach($categorias as $categoria)
-                        <option value="{{ $categoria->id }}">
-                            {{ $categoria->nombre }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+                            data-bs-target="#modalNuevaCategoria"
+                            title="Nueva categoría">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </label>
+                    <select name="categoria_id" id="categoria_id" class="form-select ui-input" required>
+                        <option value="">Seleccione</option>
+                        @foreach($categorias as $categoria)
+                            <option value="{{ $categoria->id }}">
+                                {{ $categoria->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <div class="col-md-4">
-                <label class="form-label d-flex justify-content-between">
-                    <span>Marca</span>
-                    <button type="button"
+                <div class="col-md-4">
+                    <label class="form-label d-flex justify-content-between align-items-center">
+                        <span>Marca</span>
+                        <button type="button"
                             class="btn-soft btn-soft-primary btn-soft-icon"
                             data-bs-toggle="modal"
-                            data-bs-target="#modalNuevaMarca">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </label>
-                <select name="marca_id" id="marca_id" class="form-select ui-input">
-                    <option value="">Seleccione</option>
-                    @foreach($marcas as $marca)
-                        <option value="{{ $marca->id }}">
-                            {{ $marca->nombre }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+                            data-bs-target="#modalNuevaMarca"
+                            title="Nueva marca">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </label>
+                    <select name="marca_id" id="marca_id" class="form-select ui-input">
+                        <option value="">Seleccione</option>
+                        @foreach($marcas as $marca)
+                            <option value="{{ $marca->id }}">
+                                {{ $marca->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            {{-- ================= IMAGEN ================= --}}
-            <div class="col-md-4">
-                <label class="form-label">Imagen</label>
-                <input type="file"
-                       name="imagen"
-                       id="imagen"
-                       class="form-control ui-input"
-                       accept="image/*">
+                {{-- ================= IMAGEN ================= --}}
+                <div class="col-md-4">
+                    <label class="form-label">Imagen</label>
+                    <input type="file"
+                        name="imagen"
+                        id="imagen"
+                        class="form-control ui-input"
+                        accept="image/*">
 
-                       <img id="preview_imagen"
+                    <img id="preview_imagen"
                         src=""
                         class="ui-product-preview d-none mt-2"
-                        style="max-height: 150px;">
-            </div>
-
-            {{-- ================= ESTADO ================= --}}
-            <div class="col-md-4 mt-3">
-                <div class="form-check">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           name="activo"
-                           value="1"
-                           checked>
-                    <label class="form-check-label">Activo</label>
+                        alt="Vista previa">
                 </div>
 
-                <div class="form-check mt-2">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           name="visible_en_catalogo"
-                           value="1"
-                           checked>
-                    <label class="form-check-label">Visible en catálogo</label>
+                {{-- ================= ESTADO ================= --}}
+                <div class="col-md-4 mt-2">
+                    <div class="d-flex flex-column gap-2">
+
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="activo"
+                                value="1"
+                                checked>
+                            <label class="form-check-label">Activo</label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="visible_en_catalogo"
+                                value="1"
+                                checked>
+                            <label class="form-check-label">Visible en catálogo</label>
+                        </div>
+
+                    </div>
                 </div>
+
             </div>
 
-        </div>
-
-        <div class="mt-4 text-center">
-            <button type="submit" class="btn-soft btn-soft-success px-5">
-                Guardar Producto
-            </button>
-        </div>
+            <div class="mt-4 text-center">
+                <button type="submit" class="btn-soft btn-soft-success px-5">
+                    Guardar Producto
+                </button>
+            </div>
 
         </form>
-
 
     </div>
 </div>

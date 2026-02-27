@@ -21,17 +21,16 @@ Ingreso de Mercadería
 @endsection
 
 @section('content')
-<div class="container-fluid px-3">
+<div class="card ui-card container-card my-4">
 
-    <div class="card mx-auto my-4" style="max-width: 1000px;">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-truck-loading me-2"></i>
+        <div class="card-header text-center pt-4">
+            <h4 class="mb-0 fw-semibold">
+                <i class="fas fa-truck-loading me-2 text-primary"></i>
                 Ingreso de mercadería por lote
-            </h5>
+            </h4>
         </div>
 
-        <div class="p-3 p-md-4">
+        <div class="card-body pt-2 pb-4">
 
             <form action="{{ route('inventario.lote.store') }}" method="POST">
                 @csrf
@@ -51,7 +50,7 @@ Ingreso de Mercadería
                             <div class="d-flex gap-2 align-items-stretch">
                                 <select name="producto_id"
                                         id="producto-select"
-                                        class="form-select inv-select"
+                                        class="form-select ui-input"
                                         required>
                                     <option value="">Buscar producto...</option>
                                     @foreach($productos as $producto)
@@ -64,7 +63,7 @@ Ingreso de Mercadería
                                 </select>
 
                                 <a href="{{ route('productos.create', ['from' => 'lotes']) }}"
-                                class="btn btn-outline-primary btn-icon-add"
+                                class="btn-soft btn-soft-primary btn-soft-icon"
                                 title="Agregar nuevo producto">
                                     <i class="fas fa-plus"></i>
                                 </a>
@@ -78,7 +77,7 @@ Ingreso de Mercadería
                             <div class="d-flex gap-2 align-items-stretch">
                                 <select name="proveedor_id"
                                         id="proveedor-select"
-                                        class="form-select inv-select">
+                                        class="form-select ui-input">
                                     <option value="">— Sin proveedor —</option>
                                     @foreach($proveedores as $proveedor)
                                         <option value="{{ $proveedor->id }}"
@@ -89,15 +88,16 @@ Ingreso de Mercadería
                                 </select>
 
                                 <a href="{{ route('proveedores.index') }}"
-                                class="btn btn-outline-success btn-icon-add"
+                                class="btn-soft btn-soft-success btn-soft-icon"
                                 title="Agregar nuevo proveedor">
                                     <i class="fas fa-plus"></i>
                                 </a>
                             </div>
                         </div>
 
-                        <div class="alert alert-info mt-3 mb-0" style="border-radius:12px;border:1px solid #dbe5f3;">
-                            <strong>Tip:</strong> Busca por nombre o presentación del producto.
+                        <div class="ui-tip mt-3">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <span>Busca por nombre o presentación del producto.</span>
                         </div>
                     </div>
 
@@ -116,7 +116,7 @@ Ingreso de Mercadería
                             </label>
                             <input type="text"
                                     name="codigo_comprobante"
-                                    class="form-control inv-input"
+                                    class="form-control ui-input"
                                     placeholder="E- 0000"
                                     value="{{ old('codigo_lote') }}">
                         </div>
@@ -124,17 +124,17 @@ Ingreso de Mercadería
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="inv-label">Cantidad (unds)</label>
-                                <input type="number" name="stock_inicial" class="form-control inv-input" min="1" required>
+                                <input type="number" name="stock_inicial" class="form-control ui-input" min="1" required>
                             </div>
 
                             <div class="col-md-4 mb-3">
                                 <label class="inv-label">Costo compra (S/)</label>
-                                <input type="number" name="precio_compra" class="form-control inv-input" step="0.001" min="0" required>
+                                <input type="number" name="precio_compra" class="form-control ui-input" step="0.001" min="0" required>
                             </div>
 
                             <div class="col-md-4 mb-3">
                                 <label class="inv-label">Precio unidad (S/)</label>
-                                <input type="number" name="precio_unidad" class="form-control inv-input" step="0.001" min="0" required>
+                                <input type="number" name="precio_unidad" class="form-control ui-input" step="0.001" min="0" required>
                             </div>
                         </div>
 
@@ -196,7 +196,7 @@ Ingreso de Mercadería
                                 <input
                                     type="text"
                                     name="fecha_ingreso"
-                                    class="form-control inv-input date-ingreso"
+                                    class="form-control ui-input date-ingreso"
                                     value="{{ now()->format('Y-m-d') }}"
                                     required
                                 >
@@ -207,7 +207,7 @@ Ingreso de Mercadería
                                 <input
                                     type="text"
                                     name="fecha_vencimiento"
-                                    class="form-control inv-input date-vencimiento"
+                                    class="form-control ui-input date-vencimiento"
                                 >
                             </div>
                         </div>
@@ -216,19 +216,18 @@ Ingreso de Mercadería
                 </div>
 
                 {{-- FOOTER --}}
-                <div class="inv-actions mt-4">
-                    <a href="{{ route('inventario.resumen') }}" class="btn btn-soft btn-cancel">
+                <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                    <a href="{{ route('inventario.resumen') }}" class="btn-soft btn-soft-info">
                         Cancelar
                     </a>
-                    <button type="submit" class="btn btn-soft btn-save">
-                        <i class="fas fa-save me-1"></i> Guardar lote
+                    <button type="submit" class="btn-soft btn-soft-success px-5">
+                        <i class="fas fa-save me-2"></i> Guardar lote
                     </button>
                 </div>
 
             </form>
 
         </div>
-    </div>
 
 </div>
 @endsection
