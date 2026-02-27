@@ -72,10 +72,16 @@ Parametros
                                 <tbody id="tabla-categorias">
                                     @foreach($categorias as $categoria)
                                     <tr>
-                                        <td class="text-center">{{ $categoria->id }}</td>
-                                        <td class="text-start">{{ $categoria->nombre }}</td>
-                                        <td class="text-center">
-                                            <div class="d-flex justify-content-center gap-1">
+                                        <td data-label="ID" class="text-center">
+                                            {{ $categoria->id }}
+                                        </td>
+
+                                        <td data-label="Nombre" class="text-start fw-semibold">
+                                            {{ $categoria->nombre }}
+                                        </td>
+
+                                        <td data-label="Acciones" class="text-center">
+                                            <div class="d-flex justify-content-center gap-1 action-buttons">
 
                                                 <button type="button"
                                                         class="btn-soft btn-soft-warning btn-soft-icon btn-editar-categoria"
@@ -96,8 +102,13 @@ Parametros
                                         </td>
                                     </tr>
                                     @endforeach
+
                                     @if($categorias->isEmpty())
-                                    <tr><td colspan="3" class="text-center text-muted">Sin categorías registradas.</td></tr>
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">
+                                            Sin categorías registradas.
+                                        </td>
+                                    </tr>
                                     @endif
                                 </tbody>
                             </table>
@@ -157,11 +168,21 @@ Parametros
                                 <tbody id="tabla-marca">
                                     @foreach($marcas as $marca)
                                     <tr>
-                                        <td class="text-center">{{ $marca->id }}</td>
-                                        <td class="text-start">{{ $marca->nombre }}</td>
-                                        <td class="text-start">{{ $marca->descripcion }}</td>
-                                        <td class="text-center">
-                                            <div class="d-flex justify-content-center gap-1">
+
+                                        <td data-label="ID" class="text-center">
+                                            {{ $marca->id }}
+                                        </td>
+
+                                        <td data-label="Nombre" class="text-start fw-semibold">
+                                            {{ $marca->nombre }}
+                                        </td>
+
+                                        <td data-label="Descripción" class="text-start">
+                                            {{ $marca->descripcion }}
+                                        </td>
+
+                                        <td data-label="Acciones" class="text-center">
+                                            <div class="d-flex justify-content-center gap-1 action-buttons">
 
                                                 <button type="button"
                                                         class="btn-soft btn-soft-warning btn-soft-icon btn-editar-marca"
@@ -181,10 +202,16 @@ Parametros
 
                                             </div>
                                         </td>
+
                                     </tr>
                                     @endforeach
+
                                     @if($marcas->isEmpty())
-                                    <tr><td colspan="4" class="text-center text-muted">Sin marcas registradas.</td></tr>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">
+                                            Sin marcas registradas.
+                                        </td>
+                                    </tr>
                                     @endif
                                 </tbody>
                             </table>

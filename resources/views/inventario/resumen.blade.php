@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('styles')
+<link href="{{ asset('css/resumen.css') }}" rel="stylesheet" />
+@endpush
+
 {{-- BOTÓN ATRÁS --}}
 @section('header-back')
 <button class="btn-header-back" onclick="history.back()">
@@ -12,12 +16,6 @@
 Resumen de Inventario
 @endsection
 
-@push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<link href="{{ asset('css/resumen.css') }}" rel="stylesheet" />
-@endpush
-
 @section('content')
 
 <div class="container py-4">
@@ -26,7 +24,7 @@ Resumen de Inventario
     <div class="row g-3 mb-4 align-items-stretch">
 
         {{-- Sin stock --}}
-        <div class="col">
+        <div class="col-12 col-md">
             <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-danger text-white h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
@@ -44,13 +42,13 @@ Resumen de Inventario
                 </div>
 
                 <!-- Línea 3 (icono decorativo) -->
-                <i class="bi bi-x-circle card-icon"></i>
+                <i class="fa-solid fa-circle-xmark card-icon"></i>
 
             </div>
         </div>
 
         {{-- Stock bajo --}}
-        <div class="col">
+        <div class="col-12 col-md">
             <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-warning text-dark h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
@@ -68,13 +66,13 @@ Resumen de Inventario
                 </div>
 
                 <!-- Icono decorativo -->
-                <i class="bi bi-exclamation-triangle card-icon text-dark"></i>
+                <i class="fa-solid fa-triangle-exclamation card-icon text-dark"></i>
 
             </div>
         </div>
 
         {{-- Por vencer --}}
-        <div class="col">
+        <div class="col-12 col-md">
             <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-info text-white h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
@@ -92,13 +90,13 @@ Resumen de Inventario
                 </div>
 
                 <!-- Icono decorativo -->
-                <i class="bi bi-calendar-event card-icon"></i>
+                <i class="fa-solid fa-calendar-days card-icon"></i>
 
             </div>
         </div>
 
         {{-- Total unidades --}}
-        <div class="col">
+        <div class="col-12 col-md">
             <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-success text-white h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
@@ -116,13 +114,13 @@ Resumen de Inventario
                 </div>
 
                 <!-- Icono decorativo -->
-                <i class="bi bi-box-seam card-icon"></i>
+                <i class="fa-solid fa-box-open card-icon"></i>
 
             </div>
         </div>
 
         {{-- Tarjeta financiera --}}
-        <div class="col-md-5">
+        <div class="col-12 col-md-5">
             <div class="card border-0 shadow-sm rounded-4 bg-dark text-white h-100">
                 <div class="card-body py-3 px-4">
 
@@ -182,7 +180,7 @@ Resumen de Inventario
                     Productos críticos
                 </div>
                 <div class="card-body table-responsive">
-                    <table class="table align-middle">
+                    <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
                         <thead class="table-light">
                             <tr>
                                 <th>Producto</th>
@@ -197,9 +195,9 @@ Resumen de Inventario
                                     <td class="fw-bold">{{ $producto->stock_total ?? 0 }}</td>
                                     <td>
                                         @if(($producto->stock_total ?? 0) == 0)
-                                            <span class="badge bg-danger">Sin stock</span>
+                                            <span class="ui-badge ui-badge-danger">Sin stock</span>
                                         @else
-                                            <span class="badge bg-warning text-dark">Bajo</span>
+                                            <span class="ui-badge ui-badge-warning">Stock bajo</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -216,7 +214,7 @@ Resumen de Inventario
                     Lotes próximos a vencer (30 días)
                 </div>
                 <div class="card-body table-responsive">
-                    <table class="table align-middle">
+                    <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
                         <thead class="table-light">
                             <tr>
                                 <th>Lote</th>
@@ -239,7 +237,7 @@ Resumen de Inventario
                                         {{ \Carbon\Carbon::parse($lote->fecha_vencimiento)->format('d/m/Y') }}
                                     </td>
                                     <td>
-                                        <span class="badge bg-danger">
+                                        <span class="ui-badge ui-badge-danger">
                                             {{ $dias }} días
                                         </span>
                                     </td>

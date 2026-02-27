@@ -67,28 +67,43 @@ Clientes
 
                         <tbody>
                             @foreach($clientes as $cliente)
-                                <tr>
-                                    <td>{{ $cliente->id }}</td>
-                                    <td class="fw-semibold">{{ $cliente->nombre }}</td>
-                                    <td>{{ $cliente->direccion ?? 'No disponible' }}</td>
-                                    <td>{{ $cliente->telefono ?? 'No disponible' }}</td>
-                                    <td>{{ $cliente->ruc ?? 'No disponible' }}</td>
-                                    <td>{{ $cliente->dni ?? 'No disponible' }}</td>
-                                    <td>
-                                        <div class="d-flex justify-content-center action-buttons">
+                            <tr>
+                                <td data-label="ID">{{ $cliente->id }}</td>
 
-                                            <a href="javascript:void(0);"
+                                <td data-label="Nombre" class="fw-semibold">
+                                    {{ $cliente->nombre }}
+                                </td>
+
+                                <td data-label="Dirección">
+                                    {{ $cliente->direccion ?? 'No disponible' }}
+                                </td>
+
+                                <td data-label="Teléfono">
+                                    {{ $cliente->telefono ?? 'No disponible' }}
+                                </td>
+
+                                <td data-label="RUC">
+                                    {{ $cliente->ruc ?? 'No disponible' }}
+                                </td>
+
+                                <td data-label="DNI">
+                                    {{ $cliente->dni ?? 'No disponible' }}
+                                </td>
+
+                                <td data-label="Acciones">
+                                    <div class="d-flex justify-content-center action-buttons">
+
+                                        <a href="javascript:void(0);"
                                             class="btn-soft btn-soft-warning btn-soft-icon btn-edit"
                                             data-id="{{ $cliente->id }}">
-                                                <i class="fa fa-edit"></i>
-                                            </a>
+                                            <i class="fa fa-edit"></i>
+                                        </a>
 
-                                        </div>
-                                    </td>
-                                </tr>
+                                    </div>
+                                </td>
+                            </tr>
                             @endforeach
                         </tbody>
-
                     </table>
 
                     {{-- PAGINACIÓN --}}

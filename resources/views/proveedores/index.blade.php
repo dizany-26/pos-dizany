@@ -66,37 +66,53 @@ Proveedores
 
                         <tbody>
                             @forelse($proveedores as $proveedor)
-                                <tr>
-                                    <td class="fw-semibold">{{ $proveedor->nombre }}</td>
-                                    <td>{{ $proveedor->tipo_documento }} {{ $proveedor->numero_documento }}</td>
-                                    <td>{{ $proveedor->contacto ?? '—' }}</td>
-                                    <td>{{ $proveedor->telefono ?? '—' }}</td>
-                                    <td>{{ $proveedor->email ?? '—' }}</td>
-                                    <td>
-                                        @if($proveedor->estado)
-                                            <span class="ui-badge ui-badge-success">Activo</span>
-                                        @else
-                                            <span class="ui-badge ui-badge-secondary">Inactivo</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-center gap-2 action-buttons">
-                                            <button type="button"
-                                                    class="btn-soft btn-soft-warning btn-soft-icon"
-                                                    data-id="{{ $proveedor->id }}"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#modalEditarProveedor">
-                                                <i class="fas fa-pen"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td data-label="Nombre" class="fw-semibold">
+                                    {{ $proveedor->nombre }}
+                                </td>
+
+                                <td data-label="Documento">
+                                    {{ $proveedor->tipo_documento }} {{ $proveedor->numero_documento }}
+                                </td>
+
+                                <td data-label="Contacto">
+                                    {{ $proveedor->contacto ?? '—' }}
+                                </td>
+
+                                <td data-label="Teléfono">
+                                    {{ $proveedor->telefono ?? '—' }}
+                                </td>
+
+                                <td data-label="Email">
+                                    {{ $proveedor->email ?? '—' }}
+                                </td>
+
+                                <td data-label="Estado">
+                                    @if($proveedor->estado)
+                                        <span class="ui-badge ui-badge-success">Activo</span>
+                                    @else
+                                        <span class="ui-badge ui-badge-secondary">Inactivo</span>
+                                    @endif
+                                </td>
+
+                                <td data-label="Acciones">
+                                    <div class="d-flex justify-content-center gap-2 action-buttons">
+                                        <button type="button"
+                                                class="btn-soft btn-soft-warning btn-soft-icon"
+                                                data-id="{{ $proveedor->id }}"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalEditarProveedor">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                             @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        No hay proveedores registrados
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    No hay proveedores registrados
+                                </td>
+                            </tr>
                             @endforelse
                         </tbody>
                     </table>

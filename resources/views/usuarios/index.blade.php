@@ -30,7 +30,7 @@ Usuarios
 
 
 @section('content')
-<!-- alerta de confirmacion -->
+<!-- alerta de confirmacion 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -52,7 +52,7 @@ Usuarios
             @endforeach
         </ul>
     </div>
-    @endif
+    @endif -->
 <div class="card ui-card container-card my-4">
 
         <div class="card-header text-center pt-4">
@@ -293,8 +293,6 @@ Usuarios
 @endsection
 
 @push('scripts')
-<!-- Bootstrap JS con Popper incluido -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/usuarios.js') }}"></script>
     
     

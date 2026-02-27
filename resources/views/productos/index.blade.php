@@ -105,67 +105,88 @@ Productos
                 </thead>
                 <tbody>
                     @forelse($productos as $producto)
-                        <tr data-nombre="{{ strtolower($producto->nombre) }}"
-                            data-codigo="{{ strtolower($producto->codigo_barras) }}"
-                            data-categoria="{{ $producto->categoria_id }}"
-                            data-marca="{{ $producto->marca_id }}">
+                    <tr data-nombre="{{ strtolower($producto->nombre) }}"
+                        data-codigo="{{ strtolower($producto->codigo_barras) }}"
+                        data-categoria="{{ $producto->categoria_id }}"
+                        data-marca="{{ $producto->marca_id }}">
 
-                            <td class="text-center">
-                                @if($producto->imagen)
-                                    <img src="{{ asset('uploads/productos/' . $producto->imagen) }}" 
-                                        alt="Imagen actual" 
-                                        class="img-thumbnail" 
-                                        style="width: 80px; height: 80px; object-fit: contain; background-color: #f8f9fa;">
-                                @endif
+                        <td data-label="Imagen" class="text-center ui-card-image">
+                            @if($producto->imagen)
+                                <img src="{{ asset('uploads/productos/' . $producto->imagen) }}" 
+                                    alt="Imagen actual" 
+                                    class="img-thumbnail" 
+                                    style="width: 80px; height: 80px; object-fit: contain; background-color: #f8f9fa;">
+                            @endif
+                        </td>
 
-                            </td>
-                            <td class="text-center">{{ $producto->codigo_barras }}</td>
-                            <td class="text-start">{{ $producto->nombre }}</td>
-                            <td class="text-start">{{ $producto->descripcion }}</td>
-                            <td class="text-center">{{ number_format($producto->precio_venta_actual, 2) }}</td>
-                            <td class="text-center">
-                                <span class="fw-bold">{{ $producto->stock_total }}</span>
-                                @if($producto->stock_total <= 5)
-                                    <span class="ui-badge ui-badge-danger ms-2">Stock bajo</span>
-                                @elseif($producto->stock_total <= 10)
-                                    <span class="ui-badge ui-badge-warning ms-2">Poco stock</span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center gap-2">
-                                    <a href="{{ route('productos.edit', $producto->id) }}" class="btn-soft btn-soft-warning btn-soft-icon">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </a>
+                        <td data-label="Código" class="text-center">
+                            {{ $producto->codigo_barras }}
+                        </td>
 
-                                    <!-- Botón de Activar/Desactivar -->
-                                    <form action="{{ route('productos.toggleEstado', $producto->id) }}" method="POST">
-                                        @csrf
-                                        @method('PATCH')
-                                        @if($producto->activo)
-                                            <button type="submit" class="btn-soft btn-soft-success btn-soft-icon" title="Activo: clic para desactivar">
-                                                <i class="fas fa-toggle-on"></i>
-                                            </button>
-                                        @else
-                                            <button type="submit" class="btn-soft btn-soft-danger btn-soft-icon" title="Inactivo: clic para activar">
-                                                <i class="fas fa-toggle-off"></i>
-                                            </button>
-                                        @endif
-                                    </form>
-                                     <!-- Coloca este código dentro de tu tabla de productos, en la columna de acciones -->
-                                    
-                                        <div class="d-flex justify-content-center gap-2 action-buttons">
-                                            <a href="javascript:void(0);" class="btn-soft btn-soft-info btn-soft-icon ver-detalles" data-id="{{ $producto->id }}">
-                                                <i class="fa-solid fa-eye"></i>
-                                            </a>
-                                        </div>
-                                    
-                                </div>
-                            </td>
-                        </tr>
+                        <td data-label="Nombre" class="text-start fw-semibold">
+                            {{ $producto->nombre }}
+                        </td>
+
+                        <td data-label="Descripción" class="text-start">
+                            {{ $producto->descripcion }}
+                        </td>
+
+                        <td data-label="Precio" class="text-center">
+                            {{ number_format($producto->precio_venta_actual, 2) }}
+                        </td>
+
+                        <td data-label="Stock" class="text-center">
+                            <span class="fw-bold">{{ $producto->stock_total }}</span>
+
+                            @if($producto->stock_total <= 5)
+                                <span class="ui-badge ui-badge-danger ms-2">Stock bajo</span>
+                            @elseif($producto->stock_total <= 10)
+                                <span class="ui-badge ui-badge-warning ms-2">Poco stock</span>
+                            @endif
+                        </td>
+
+                        <td data-label="Acciones" class="text-center">
+                            <div class="d-flex justify-content-center gap-2 action-buttons">
+
+                                <a href="{{ route('productos.edit', $producto->id) }}"
+                                    class="btn-soft btn-soft-warning btn-soft-icon">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+
+                                <form action="{{ route('productos.toggleEstado', $producto->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    @if($producto->activo)
+                                        <button type="submit"
+                                            class="btn-soft btn-soft-success btn-soft-icon"
+                                            title="Activo: clic para desactivar">
+                                            <i class="fas fa-toggle-on"></i>
+                                        </button>
+                                    @else
+                                        <button type="submit"
+                                            class="btn-soft btn-soft-danger btn-soft-icon"
+                                            title="Inactivo: clic para activar">
+                                            <i class="fas fa-toggle-off"></i>
+                                        </button>
+                                    @endif
+                                </form>
+
+                                <a href="javascript:void(0);"
+                                    class="btn-soft btn-soft-info btn-soft-icon ver-detalles"
+                                    data-id="{{ $producto->id }}">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+
+                            </div>
+                        </td>
+
+                    </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">No se encontraron productos.</td>
-                        </tr>
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            No se encontraron productos.
+                        </td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>

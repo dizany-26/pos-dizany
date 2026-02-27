@@ -16,7 +16,16 @@
 
 
 .dashboard-card {
-    transition: 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-card .card-icon {
+    position: absolute;
+    right: 15px;
+    bottom: 10px;
+    font-size: 50px;
+    opacity: 0.15;
 }
 
 .dashboard-card:hover {
