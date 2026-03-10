@@ -163,6 +163,16 @@ const cdrUrl = v.cdr_url || v.url_cdr || v.cdr || v.cdrPath || null;
                 <!-- ===== DATOS ===== -->
                 <div class="card ui-card rounded-4 mt-3 p-3">
                     <div class="detalle-item">
+                        <i class="far fa-user-circle"></i>
+                        <span>Vendedor</span>
+                        <strong class="d-flex align-items-center gap-2">
+                            <span class="bg-success rounded-circle" 
+                                style="width:8px;height:8px;display:inline-block;"></span>
+                            ${v.vendedor ?? '—'}
+                        </strong>
+                    </div>
+                    
+                    <div class="detalle-item">
                         <i class="far fa-calendar"></i>
                         <span>Fecha y hora</span>
                         <strong>${v.fecha_formato ?? '—'}</strong>
@@ -226,7 +236,7 @@ const cdrUrl = v.cdr_url || v.url_cdr || v.cdr || v.cdrPath || null;
                     Listado de productos
                 </h6>
 
-                <div class="card ui-card rounded-4 mt-6 p-3 listado-productos">
+                <div class="card ui-card rounded-4 mt-3 p-3 listado-productos">
                     ${
                         Array.isArray(v.productos) && v.productos.length
                         ? v.productos.map(p => `

@@ -456,8 +456,7 @@ public function registrarVenta(Request $request)
 // VentaController.php
 public function detalle($id)
 {
-    $venta = Venta::with(['cliente', 'detalleVentas.producto'])
-        ->findOrFail($id);
+    $venta = Venta::with(['usuario', 'cliente', 'detalleVentas.producto'])->findOrFail($id);
 
     return response()->json([
         'id' => $venta->id,
@@ -479,9 +478,7 @@ public function detalle($id)
         'saldo'    => (float) $venta->saldo,
 
         // === Fecha ===
-        'fecha_formato' => $venta->fecha
-            ? $venta->fecha->format('h:i A | d F Y')
-            : null,
+        'fecha_formato' => ucfirst(optional($venta->fecha)->locale('es')->translatedFormat('h:i A | d F Y')),
 
         // === Método pago ===
         'metodo_pago' => $venta->metodo_pago,
@@ -496,6 +493,8 @@ public function detalle($id)
         'cliente_doc' => optional($venta->cliente)->ruc
             ?? optional($venta->cliente)->dni
             ?? null,
+
+        'vendedor' => $venta->usuario->nombre ?? '—',
 
         // === Ganancia ===
         'ganancia' => (float) $venta->detalleVentas->sum('ganancia'),
