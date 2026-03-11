@@ -7,6 +7,18 @@
     <meta name="google" content="notranslate">
     <title>@yield('title', 'Vista - Panel')</title>
 
+    <script>
+        (function () {
+            const STORAGE_KEY = 'dizany-theme';
+            const saved = localStorage.getItem(STORAGE_KEY);
+            const theme = saved === 'dark' ? 'theme-dark' : 'theme-light';
+            document.documentElement.classList.remove('theme-light', 'theme-dark');
+            document.documentElement.classList.add(theme);
+            document.documentElement.style.colorScheme = theme === 'theme-dark' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/header-actions.css') }}">
@@ -27,7 +39,7 @@
     @stack('styles')
 </head>
 
-<body class="{{ $tema == 'oscuro' ? 'theme-dark' : 'theme-light' }}">
+<body class="theme-light">
 
     {{-- HEADER --}}
     @include('components.header')
@@ -54,6 +66,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- JS HEADER ACTIONS (NUEVO SISTEMA) -->
     <script src="{{ asset('js/header-actions.js') }}"></script>
+    <script src="{{ asset('js/theme-toggle.js') }}"></script>
 
     <!-- Script: Toggle Sidebar -->
     <script>

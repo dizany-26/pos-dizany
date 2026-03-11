@@ -34,6 +34,15 @@
 
     <!-- TODO LO DERECHO -->
     <div class="d-flex align-items-center ms-auto">
+        <button
+            type="button"
+            id="themeToggle"
+            class="theme-toggle"
+            role="switch"
+            aria-checked="false"
+            aria-label="Cambiar tema claro u oscuro">
+        </button>
+
     <!-- BOTÓN MÁS OPCIONES (SOLO MÓVIL) -->
         <button class="btn-header-more" id="btnHeaderMore" type="button" aria-label="Más opciones">
             <i class="fas fa-ellipsis-v"></i>
