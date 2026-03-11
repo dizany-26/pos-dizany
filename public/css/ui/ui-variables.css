@@ -1,8 +1,10 @@
 :root {
-    --ui-primary: #2563eb;
-    --ui-success: #16a34a;
-    --ui-danger: #dc2626;
-    --ui-warning: #ca8a04;
-    --ui-border: #e5e7eb;
+    --ui-primary: var(--primary-color, #2563eb);
+    --ui-success: var(--success-color, #16a34a);
+    --ui-danger: var(--danger-color, #dc2626);
+    --ui-warning: var(--warning-color, #ca8a04);
+    --ui-border: var(--border-color, #e5e7eb);
     --ui-radius: 12px;
+    --ui-surface: var(--bg-card, #ffffff);
+    --ui-text: var(--text-main, #0f172a);
 }
