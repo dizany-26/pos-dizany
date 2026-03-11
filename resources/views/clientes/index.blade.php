@@ -28,7 +28,7 @@ Clientes
         <div class="card-header text-center pt-4">
             <h4 class="mb-0 fw-semibold">
                 <i class="fas fa-user-friends me-2 text-primary"></i>
-                Lista de Clientes ROBUSTOS
+                Lista de Clientes
             </h4>
         </div>
 
