@@ -7,7 +7,6 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 
-use App\Models\Configuracion;
 use App\Models\Producto;
 use App\Models\Lote;
 
@@ -24,12 +23,6 @@ class AppServiceProvider extends ServiceProvider
     Paginator::useBootstrapFive();
 
     View::composer('*', function ($view) {
-
-        // =========================
-        // TEMA
-        // =========================
-        $config = Configuracion::first();
-        $tema = $config ? $config->tema : 'claro';
 
         // =========================
         // ALERTAS INVENTARIO
@@ -49,7 +42,6 @@ class AppServiceProvider extends ServiceProvider
         $totalAlertas = $alertaStockBajo + $alertaPorVencer;
 
         $view->with(compact(
-            'tema',
             'alertaStockBajo',
             'alertaPorVencer',
             'totalAlertas'
