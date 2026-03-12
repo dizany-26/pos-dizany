@@ -366,3 +366,79 @@
 .btn-header-back:hover {
     text-decoration: none !important;
 }
+
+
+/* =========================================================
+   TOGGLE TEMA (SOL/LUNA)
+========================================================= */
+.theme-toggle-btn {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    line-height: 0;
+}
+
+.theme-toggle-track {
+    position: relative;
+    width: 92px;
+    height: 44px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: #f3f4f6;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.1), 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #0f172a;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+    transition: transform 0.25s ease;
+}
+
+.theme-icon-sun,
+.theme-icon-moon {
+    font-size: 18px;
+    z-index: 1;
+}
+
+.theme-icon-sun {
+    color: #111827;
+}
+
+.theme-icon-moon {
+    color: #f8fafc;
+}
+
+:root[data-theme='light'] .theme-toggle-track {
+    background: #f3f4f6;
+}
+
+:root[data-theme='light'] .theme-toggle-thumb {
+    transform: translateX(0);
+    background: #171717;
+}
+
+:root[data-theme='dark'] .theme-toggle-track {
+    background: #161b22;
+}
+
+:root[data-theme='dark'] .theme-toggle-thumb {
+    transform: translateX(48px);
+    background: #f8fafc;
+}
+
+:root[data-theme='dark'] .theme-icon-sun {
+    color: #f8fafc;
+}
+
+:root[data-theme='dark'] .theme-icon-moon {
+    color: #111827;
+}

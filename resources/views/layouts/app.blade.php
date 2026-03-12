@@ -7,6 +7,14 @@
     <meta name="google" content="notranslate">
     <title>@yield('title', 'Vista - Panel')</title>
 
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('dizany-theme');
+            const theme = savedTheme === 'dark' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/header-actions.css') }}">
@@ -27,7 +35,7 @@
     @stack('styles')
 </head>
 
-<body class="{{ $tema == 'oscuro' ? 'theme-dark' : 'theme-light' }}">
+<body class="theme-shell">
 
     {{-- HEADER --}}
     @include('components.header')

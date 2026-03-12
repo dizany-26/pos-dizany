@@ -95,3 +95,30 @@ document.addEventListener("DOMContentLoaded", () => {
     restoreActionsToDesktop();
   }
 });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const root = document.documentElement;
+  const toggle = document.getElementById("themeToggle");
+
+  function applyTheme(theme) {
+    root.setAttribute("data-theme", theme);
+    localStorage.setItem("dizany-theme", theme);
+    if (toggle) {
+      const isDark = theme === "dark";
+      toggle.setAttribute("aria-pressed", String(isDark));
+      toggle.setAttribute("title", isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+    }
+  }
+
+  const savedTheme = localStorage.getItem("dizany-theme");
+  const initialTheme = savedTheme === "dark" ? "dark" : "light";
+  applyTheme(initialTheme);
+
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      const current = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    });
+  }
+});
