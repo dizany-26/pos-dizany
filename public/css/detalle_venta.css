@@ -140,7 +140,7 @@
 .monto-total {
     font-size: 3rem;        /* Tamaño grande del número */
     font-weight: bold;      /* Negrita */
-    color: #212529;         /* Color oscuro para buen contraste */
+    color: #212529;         /* Color de alto contraste */
 }
 
 .estado-pago {

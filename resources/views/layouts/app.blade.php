@@ -27,7 +27,7 @@
     @stack('styles')
 </head>
 
-<body class="{{ $tema == 'oscuro' ? 'theme-dark' : 'theme-light' }}">
+<body>
 
     {{-- HEADER --}}
     @include('components.header')
