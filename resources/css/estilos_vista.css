@@ -422,3 +422,83 @@ footer {
     text-overflow: ellipsis;
     max-width: 200px;   /* evita desbordes */
 }
+
+
+/* ============================================
+   GLOBAL DARK MODE
+============================================ */
+:root[data-theme='dark'] {
+    --content-bg: #0f172a;
+    color-scheme: dark;
+}
+
+:root[data-theme='dark'] body {
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+:root[data-theme='dark'] #content {
+    background: #0f172a;
+}
+
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .modal-content,
+:root[data-theme='dark'] .offcanvas,
+:root[data-theme='dark'] .dropdown-menu,
+:root[data-theme='dark'] .list-group-item,
+:root[data-theme='dark'] .table,
+:root[data-theme='dark'] .table-responsive,
+:root[data-theme='dark'] .form-control,
+:root[data-theme='dark'] .form-select,
+:root[data-theme='dark'] .input-group-text,
+:root[data-theme='dark'] .alert,
+:root[data-theme='dark'] .pagination .page-link,
+:root[data-theme='dark'] .swal2-popup {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+    border-color: #334155 !important;
+}
+
+:root[data-theme='dark'] .table thead th,
+:root[data-theme='dark'] .table-light,
+:root[data-theme='dark'] .table-light > th,
+:root[data-theme='dark'] .table-light > td,
+:root[data-theme='dark'] .card-header,
+:root[data-theme='dark'] .card-footer {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #334155 !important;
+}
+
+:root[data-theme='dark'] .table td,
+:root[data-theme='dark'] .table th,
+:root[data-theme='dark'] .table tr {
+    border-color: #334155 !important;
+    color: #e5e7eb !important;
+}
+
+:root[data-theme='dark'] .text-dark,
+:root[data-theme='dark'] .text-muted {
+    color: #cbd5e1 !important;
+}
+
+:root[data-theme='dark'] .bg-white,
+:root[data-theme='dark'] .bg-light {
+    background-color: #111827 !important;
+}
+
+:root[data-theme='dark'] .border,
+:root[data-theme='dark'] .border-top,
+:root[data-theme='dark'] .border-bottom,
+:root[data-theme='dark'] .border-start,
+:root[data-theme='dark'] .border-end {
+    border-color: #334155 !important;
+}
+
+:root[data-theme='dark'] a {
+    color: #93c5fd;
+}
+
+:root[data-theme='dark'] .btn-close {
+    filter: invert(1) grayscale(100%);
+}

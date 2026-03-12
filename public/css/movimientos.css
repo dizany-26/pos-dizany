@@ -202,16 +202,6 @@
     box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
 
-/* ================= DARK MODE ================= */
-.theme-dark .estado-pagado {
-    background-color: #16a34a;
-    color: #ffffff;
-}
-
-.theme-dark .estado-pendiente {
-    background-color: #eab308;
-    color: #1f1f1f;
-}
 /* ✅ OFFCANVAS: permitir scroll real */
 .detalle-venta-panel .offcanvas-body{
     overflow-y: auto !important;

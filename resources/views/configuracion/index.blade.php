@@ -54,13 +54,6 @@ Panel General
                         <input type="number" step="0.01" name="igv" id="igv" class="form-control" value="{{ $config->igv }}">
                     </div>
 
-                    <div class="mb-3">
-                        <label for="tema" class="form-label">Tema:</label>
-                        <select name="tema" id="tema" class="form-control">
-                            <option value="claro" {{ $config->tema == 'claro' ? 'selected' : '' }}>Claro</option>
-                            <option value="oscuro" {{ $config->tema == 'oscuro' ? 'selected' : '' }}>Oscuro</option>
-                        </select>
-                    </div>
                 </div>
 
                 <!-- Columna derecha -->

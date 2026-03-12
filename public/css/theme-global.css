@@ -1,0 +1,187 @@
+/* =========================================================
+   TEMA GLOBAL CLARO / OSCURO
+   - Cubre tablas, campos y texto faltante
+   - NO fuerza colores de badges, botones ni iconos
+========================================================= */
+
+:root[data-theme='light'] {
+    color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+    --dm-bg: #0f172a;
+    --dm-surface: #111827;
+    --dm-surface-2: #1f2937;
+    --dm-border: #334155;
+    --dm-text: #e5e7eb;
+    --dm-text-soft: #cbd5e1;
+    --dm-input: #0b1324;
+}
+
+/* Base shell */
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] #layout-wrapper,
+:root[data-theme='dark'] #content {
+    background: var(--dm-bg) !important;
+    color: var(--dm-text);
+}
+
+:root[data-theme='dark'] header,
+:root[data-theme='dark'] #sidebar,
+:root[data-theme='dark'] footer {
+    background: #0a1a32 !important;
+}
+
+:root[data-theme='dark'] #sidebar .submenu-items {
+    background: #0f2547 !important;
+}
+
+/* Superficies principales */
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .card-body,
+:root[data-theme='dark'] .modal-content,
+:root[data-theme='dark'] .offcanvas,
+:root[data-theme='dark'] .dropdown-menu,
+:root[data-theme='dark'] .list-group-item,
+:root[data-theme='dark'] .swal2-popup,
+:root[data-theme='dark'] .bg-white,
+:root[data-theme='dark'] .bg-light {
+    background-color: var(--dm-surface) !important;
+    border-color: var(--dm-border) !important;
+}
+
+:root[data-theme='dark'] .card-header,
+:root[data-theme='dark'] .card-footer,
+:root[data-theme='dark'] .table thead th,
+:root[data-theme='dark'] .table-light,
+:root[data-theme='dark'] .table-light > th,
+:root[data-theme='dark'] .table-light > td {
+    background-color: var(--dm-surface-2) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-border) !important;
+}
+
+/* Texto global (sin tocar badges/botones/iconos) */
+:root[data-theme='dark'] #content,
+:root[data-theme='dark'] #content p,
+:root[data-theme='dark'] #content small,
+:root[data-theme='dark'] #content strong,
+:root[data-theme='dark'] #content em,
+:root[data-theme='dark'] #content label,
+:root[data-theme='dark'] #content .form-label,
+:root[data-theme='dark'] #content .text-dark,
+:root[data-theme='dark'] #content .text-muted,
+:root[data-theme='dark'] #content h1,
+:root[data-theme='dark'] #content h2,
+:root[data-theme='dark'] #content h3,
+:root[data-theme='dark'] #content h4,
+:root[data-theme='dark'] #content h5,
+:root[data-theme='dark'] #content h6,
+:root[data-theme='dark'] .brand-name,
+:root[data-theme='dark'] .titulo-venta,
+:root[data-theme='dark'] .user-info-header,
+:root[data-theme='dark'] #sidebar a,
+:root[data-theme='dark'] #sidebar .submenu-toggle {
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] #content .text-muted,
+:root[data-theme='dark'] #content .text-secondary,
+:root[data-theme='dark'] #content .form-text,
+:root[data-theme='dark'] #content .small {
+    color: var(--dm-text-soft) !important;
+}
+
+/* Links de contenido */
+:root[data-theme='dark'] #content a:not(.btn):not(.badge) {
+    color: #93c5fd;
+}
+
+/* Tablas completas */
+:root[data-theme='dark'] .table,
+:root[data-theme='dark'] .table-responsive {
+    background-color: var(--dm-surface) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-border) !important;
+}
+
+:root[data-theme='dark'] .table td,
+:root[data-theme='dark'] .table th,
+:root[data-theme='dark'] .table tr,
+:root[data-theme='dark'] .table > :not(caption) > * > * {
+    color: var(--dm-text) !important;
+    border-color: var(--dm-border) !important;
+}
+
+:root[data-theme='dark'] .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #0e1b31 !important;
+}
+
+:root[data-theme='dark'] .table-hover > tbody > tr:hover > * {
+    background-color: #16243e !important;
+}
+
+/* Campos y filtros */
+:root[data-theme='dark'] .form-control,
+:root[data-theme='dark'] .form-select,
+:root[data-theme='dark'] .input-group-text,
+:root[data-theme='dark'] textarea,
+:root[data-theme='dark'] input[type='text'],
+:root[data-theme='dark'] input[type='number'],
+:root[data-theme='dark'] input[type='email'],
+:root[data-theme='dark'] input[type='search'],
+:root[data-theme='dark'] input[type='date'],
+:root[data-theme='dark'] input[type='password'],
+:root[data-theme='dark'] select {
+    background-color: var(--dm-input) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-border) !important;
+}
+
+:root[data-theme='dark'] .form-control::placeholder,
+:root[data-theme='dark'] input::placeholder,
+:root[data-theme='dark'] textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+:root[data-theme='dark'] select option {
+    background-color: var(--dm-input);
+    color: var(--dm-text);
+}
+
+:root[data-theme='dark'] .form-control:focus,
+:root[data-theme='dark'] .form-select:focus,
+:root[data-theme='dark'] input:focus,
+:root[data-theme='dark'] textarea:focus,
+:root[data-theme='dark'] select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 .2rem rgba(59,130,246,.18) !important;
+}
+
+/* Bordes utilitarios */
+:root[data-theme='dark'] .border,
+:root[data-theme='dark'] .border-top,
+:root[data-theme='dark'] .border-bottom,
+:root[data-theme='dark'] .border-start,
+:root[data-theme='dark'] .border-end,
+:root[data-theme='dark'] hr {
+    border-color: var(--dm-border) !important;
+}
+
+/* Importante: mantener colores originales de badges/botones/iconos */
+:root[data-theme='dark'] .btn,
+:root[data-theme='dark'] .btn *,
+:root[data-theme='dark'] .badge,
+:root[data-theme='dark'] .badge *,
+:root[data-theme='dark'] i,
+:root[data-theme='dark'] svg,
+:root[data-theme='dark'] svg *,
+:root[data-theme='dark'] [class^='fa-'],
+:root[data-theme='dark'] [class*=' fa-'] {
+    filter: none !important;
+}
+
+:root[data-theme='dark'] .btn-close {
+    filter: invert(1) grayscale(100%);
+}
