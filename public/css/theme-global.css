@@ -1,0 +1,334 @@
+/* =========================================================
+   DIZANY THEME SYSTEM (GLOBAL PREMIUM)
+========================================================= */
+
+:root[data-theme='light'] {
+    color-scheme: light;
+
+    --lt-bg: #f4f7fb;
+    --lt-surface: #ffffff;
+    --lt-surface-soft: #f8fbff;
+    --lt-border: #d9e1ee;
+    --lt-text: #11243f;
+    --lt-text-soft: #526581;
+    --lt-shadow-sm: 0 2px 10px rgba(15, 35, 65, 0.08);
+}
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --dm-bg: #0b1220;
+    --dm-surface: #101a2d;
+    --dm-surface-soft: #142038;
+    --dm-surface-strong: #1b2a44;
+    --dm-border: #2d4060;
+    --dm-divider: #263752;
+
+    --dm-text: #e8eef9;
+    --dm-text-soft: #b7c4da;
+    --dm-text-muted: #8fa2c2;
+
+    --dm-input-bg: #0d1729;
+    --dm-input-border: #325179;
+    --dm-focus: #4f8ff7;
+
+    --dm-shadow-sm: 0 2px 10px rgba(2, 8, 20, 0.45);
+    --dm-shadow-md: 0 8px 28px rgba(2, 8, 20, 0.45);
+}
+
+/* =========================================================
+   LIGHT MODE — Header/Sidebar/Footer white premium
+========================================================= */
+:root[data-theme='light'] body,
+:root[data-theme='light'] #layout-wrapper,
+:root[data-theme='light'] #content {
+    background: var(--lt-bg) !important;
+    color: var(--lt-text) !important;
+}
+
+:root[data-theme='light'] header,
+:root[data-theme='light'] #sidebar,
+:root[data-theme='light'] footer {
+    background: #ffffff !important;
+    color: var(--lt-text) !important;
+    border-color: var(--lt-border) !important;
+    box-shadow: var(--lt-shadow-sm);
+}
+
+:root[data-theme='light'] #sidebar .submenu-items {
+    background: #f5f8fc !important;
+}
+
+:root[data-theme='light'] #sidebar a,
+:root[data-theme='light'] #sidebar .submenu-toggle,
+:root[data-theme='light'] .brand-name,
+:root[data-theme='light'] .titulo-venta,
+:root[data-theme='light'] .user-info-header,
+:root[data-theme='light'] .nav-link {
+    color: var(--lt-text) !important;
+}
+
+:root[data-theme='light'] #sidebar a:hover,
+:root[data-theme='light'] #sidebar .active,
+:root[data-theme='light'] #sidebar .submenu-toggle:hover {
+    background: #eaf1fb !important;
+    color: #0b3f99 !important;
+}
+
+:root[data-theme='light'] .btn-header-back,
+:root[data-theme='light'] #btn-toggle-sidebar,
+:root[data-theme='light'] .btn-header-more,
+:root[data-theme='light'] .user-info-header,
+:root[data-theme='light'] .btn-pos-espera,
+:root[data-theme='light'] .btn-ordenar,
+:root[data-theme='light'] .btn-gasto,
+:root[data-theme='light'] .btn-movimientos-primary,
+:root[data-theme='light'] .btn-movimientos-outline {
+    color: var(--lt-text) !important;
+    border-color: var(--lt-border) !important;
+    background: #fff !important;
+}
+
+:root[data-theme='light'] .card,
+:root[data-theme='light'] .modal-content,
+:root[data-theme='light'] .offcanvas,
+:root[data-theme='light'] .dropdown-menu,
+:root[data-theme='light'] .list-group-item,
+:root[data-theme='light'] .bg-white,
+:root[data-theme='light'] .bg-light {
+    background: #fff !important;
+    border-color: var(--lt-border) !important;
+    box-shadow: var(--lt-shadow-sm);
+}
+
+/* =========================================================
+   GLOBAL CARD ROUNDING / CONSISTENCY (both themes)
+========================================================= */
+.card,
+.modal-content,
+.offcanvas,
+.dropdown-menu,
+.list-group,
+.table-responsive,
+.form-control,
+.form-select,
+.input-group-text,
+.select2-container .select2-selection--single,
+.select2-container .select2-selection--multiple {
+    border-radius: 14px !important;
+}
+
+/* =========================================================
+   DARK MODE — Shell + hierarchy
+========================================================= */
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] #layout-wrapper,
+:root[data-theme='dark'] #content {
+    background: var(--dm-bg) !important;
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] header,
+:root[data-theme='dark'] #sidebar,
+:root[data-theme='dark'] footer {
+    background: #0d1d36 !important;
+    box-shadow: var(--dm-shadow-sm);
+}
+
+:root[data-theme='dark'] #sidebar .submenu-items {
+    background: #122746 !important;
+}
+
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .card-body,
+:root[data-theme='dark'] .modal-content,
+:root[data-theme='dark'] .offcanvas,
+:root[data-theme='dark'] .dropdown-menu,
+:root[data-theme='dark'] .list-group-item,
+:root[data-theme='dark'] .swal2-popup,
+:root[data-theme='dark'] .bg-white,
+:root[data-theme='dark'] .bg-light {
+    background-color: var(--dm-surface) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text) !important;
+    box-shadow: var(--dm-shadow-sm);
+}
+
+:root[data-theme='dark'] .card-header,
+:root[data-theme='dark'] .card-footer {
+    background-color: var(--dm-surface-strong) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] #content,
+:root[data-theme='dark'] #content p,
+:root[data-theme='dark'] #content label,
+:root[data-theme='dark'] #content .form-label,
+:root[data-theme='dark'] #content h1,
+:root[data-theme='dark'] #content h2,
+:root[data-theme='dark'] #content h3,
+:root[data-theme='dark'] #content h4,
+:root[data-theme='dark'] #content h5,
+:root[data-theme='dark'] #content h6,
+:root[data-theme='dark'] #content li,
+:root[data-theme='dark'] #content td,
+:root[data-theme='dark'] #content th,
+:root[data-theme='dark'] .brand-name,
+:root[data-theme='dark'] .titulo-venta,
+:root[data-theme='dark'] .user-info-header,
+:root[data-theme='dark'] #sidebar a,
+:root[data-theme='dark'] #sidebar .submenu-toggle {
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] #content .text-muted,
+:root[data-theme='dark'] #content .text-secondary,
+:root[data-theme='dark'] #content .form-text,
+:root[data-theme='dark'] #content small {
+    color: var(--dm-text-soft) !important;
+}
+
+:root[data-theme='dark'] #content a:not(.btn):not(.badge):not([class*='btn-']) {
+    color: #9dc7ff;
+}
+
+/* =========================================================
+   Enterprise tables + forms (dark)
+========================================================= */
+:root[data-theme='dark'] .table,
+:root[data-theme='dark'] .table-responsive {
+    background-color: var(--dm-surface) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-border) !important;
+}
+
+:root[data-theme='dark'] .table thead th,
+:root[data-theme='dark'] .table-light,
+:root[data-theme='dark'] .table-light > th,
+:root[data-theme='dark'] .table-light > td {
+    background: var(--dm-surface-strong) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-border) !important;
+    font-weight: 600;
+}
+
+:root[data-theme='dark'] #content table tbody tr {
+    background: var(--dm-surface-soft) !important;
+}
+
+:root[data-theme='dark'] #content table tbody tr:nth-child(even) {
+    background: var(--dm-surface) !important;
+}
+
+:root[data-theme='dark'] #content table tbody tr > * {
+    color: var(--dm-text) !important;
+    border-color: var(--dm-divider) !important;
+    background: transparent !important;
+}
+
+:root[data-theme='dark'] #content table tbody tr:hover > * {
+    background: #1f365a !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .form-control,
+:root[data-theme='dark'] .form-select,
+:root[data-theme='dark'] .input-group-text,
+:root[data-theme='dark'] textarea,
+:root[data-theme='dark'] input[type='text'],
+:root[data-theme='dark'] input[type='number'],
+:root[data-theme='dark'] input[type='email'],
+:root[data-theme='dark'] input[type='search'],
+:root[data-theme='dark'] input[type='date'],
+:root[data-theme='dark'] input[type='time'],
+:root[data-theme='dark'] input[type='password'],
+:root[data-theme='dark'] select {
+    background: var(--dm-input-bg) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-input-border) !important;
+}
+
+:root[data-theme='dark'] .form-control::placeholder,
+:root[data-theme='dark'] input::placeholder,
+:root[data-theme='dark'] textarea::placeholder {
+    color: var(--dm-text-muted) !important;
+}
+
+:root[data-theme='dark'] .form-control:focus,
+:root[data-theme='dark'] .form-select:focus,
+:root[data-theme='dark'] input:focus,
+:root[data-theme='dark'] textarea:focus,
+:root[data-theme='dark'] select:focus {
+    border-color: var(--dm-focus) !important;
+    box-shadow: 0 0 0 .2rem rgba(79,143,247,.2) !important;
+}
+
+/* File input + select2 fixes */
+:root[data-theme='dark'] input[type='file'] {
+    background: var(--dm-input-bg) !important;
+    color: var(--dm-text) !important;
+    border: 1px solid var(--dm-input-border) !important;
+    border-radius: 12px !important;
+}
+
+:root[data-theme='dark'] .select2-container--default .select2-selection--single,
+:root[data-theme='dark'] .select2-container--default .select2-selection--multiple,
+:root[data-theme='dark'] .select2-dropdown,
+:root[data-theme='dark'] .select2-search__field {
+    background: var(--dm-input-bg) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-input-border) !important;
+}
+
+:root[data-theme='dark'] .select2-container--default .select2-results__option {
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background: #5d92e6 !important;
+    color: #fff !important;
+}
+
+/* POS ventas premium */
+:root[data-theme='dark'] .ventas-treinta,
+:root[data-theme='dark'] .treinta-header,
+:root[data-theme='dark'] .ventas-categorias,
+:root[data-theme='dark'] .venta-step,
+:root[data-theme='dark'] .productos-grid,
+:root[data-theme='dark'] .producto-card,
+:root[data-theme='dark'] .crear-producto-card,
+:root[data-theme='dark'] .carrito-panel,
+:root[data-theme='dark'] #carrito-lista,
+:root[data-theme='dark'] .carrito-item,
+:root[data-theme='dark'] .detalle-card,
+:root[data-theme='dark'] .card-soft {
+    background-color: var(--dm-surface) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text) !important;
+    box-shadow: var(--dm-shadow-sm);
+}
+
+:root[data-theme='dark'] .producto-card:hover,
+:root[data-theme='dark'] .crear-producto-card:hover,
+:root[data-theme='dark'] .carrito-item:hover {
+    box-shadow: var(--dm-shadow-md) !important;
+    border-color: #466693 !important;
+}
+
+/* Keep original action palette */
+:root[data-theme='dark'] .btn,
+:root[data-theme='dark'] .btn *,
+:root[data-theme='dark'] [class*='btn-'],
+:root[data-theme='dark'] [class*='btn-'] *,
+:root[data-theme='dark'] .badge,
+:root[data-theme='dark'] .badge *,
+:root[data-theme='dark'] i,
+:root[data-theme='dark'] svg,
+:root[data-theme='dark'] svg * {
+    filter: none !important;
+}
+
+:root[data-theme='dark'] .btn-close {
+    filter: invert(1) grayscale(100%);
+}

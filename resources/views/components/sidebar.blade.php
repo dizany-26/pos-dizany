@@ -201,6 +201,5 @@
     });
 </script>
 
-<!-- Estilos internos aplicables al modo claro/oscuro -->
 
 
