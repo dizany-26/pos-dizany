@@ -40,8 +40,22 @@
         </button>
         <!-- DERECHA: campana + usuario -->
         <div class="d-flex align-items-center ms-3">
+            <button
+                type="button"
+                id="themeToggle"
+                class="theme-toggle me-2"
+                role="switch"
+                aria-checked="false"
+                aria-label="Cambiar entre tema claro y oscuro"
+                title="Cambiar tema">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span class="toggle-thumb" aria-hidden="true">
+                    <i class="fas fa-sun" id="themeToggleIcon"></i>
+                </span>
+            </button>
+
             <!-- Campanita -->
-            <div class="position-relative me-4">
+            <div class="position-relative me-3">
                 <a class="nav-link position-relative text-white"
                 href="#"
                 id="notificacionesDropdown"

@@ -14,33 +14,33 @@
 
 /* Cards suaves */
 .card-soft{
-  border: 1px solid rgba(0,0,0,.06);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+  box-shadow: var(--shadow-soft);
 }
 .nav-tabs .nav-link{
   border: none;
-  color:#556;
+  color: var(--text-muted);
   padding: 10px 16px;
   border-radius: 10px;
 }
 .nav-tabs .nav-link.active{
-  background:#0f172a;
-  color:#fff;
+  background: var(--text-main);
+  color: var(--text-inverse);
 }
 
 /*PANEL*/
 .detalle-venta-panel {
     width: 420px;
-    background: #fff;
+    background: var(--bg-card);
 }
 
 .icon-circle {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #e6f7ee;
-    color: #16a34a;
+    background: color-mix(in srgb, var(--success-color) 20%, var(--bg-card));
+    color: var(--success-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -48,7 +48,7 @@
 
 .divider-green {
     height: 3px;
-    background: #16a34a;
+    background: var(--success-color);
     margin: 0 16px;
     border-radius: 3px;
 }
@@ -59,7 +59,7 @@
 
 .detalle-card {
     border-radius: 14px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     padding: 14px;
 }
 .detalle-card .divider-green{
@@ -74,8 +74,8 @@
 }
 
 .badge-success-soft {
-    background: #e6f7ee;
-    color: #16a34a;
+    background: color-mix(in srgb, var(--success-color) 20%, var(--bg-card));
+    color: var(--success-color);
     font-weight: 600;
     padding: 5px 10px;
     border-radius: 8px;
@@ -91,12 +91,12 @@
 
 .detalle-item i {
     width: 18px;
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 .detalle-item span {
     flex: 1;
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 .producto-item {
@@ -104,7 +104,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 0;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-soft);
 }
 
 .producto-item img {
@@ -124,8 +124,8 @@
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    border: 2px solid #0f172a;
-    background: white;
+    border: 2px solid var(--text-main);
+    background: var(--bg-card);
     border-radius: 50%;
     width: 58px;
     height: 58px;
@@ -138,7 +138,7 @@
 }
 
 .accion-btn.dark {
-    background: #0f172a;
+    background: var(--text-main);
     color: white;
 }
 
@@ -190,28 +190,18 @@
 
 /* ================= PAGADO ================= */
 .estado-pagado {
-    background-color: #22c55e; /* verde fuerte */
-    color: #ffffff;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+    background-color: color-mix(in srgb, var(--success-color) 20%, var(--bg-card));
+    color: var(--success-color);
+    box-shadow: none;
 }
 
 /* ================= PENDIENTE ================= */
 .estado-pendiente {
-    background-color: #facc15; /* amarillo real */
-    color: #3f2d00;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    background-color: color-mix(in srgb, var(--warning-color) 24%, var(--bg-card));
+    color: color-mix(in srgb, var(--warning-color) 70%, var(--text-main));
+    box-shadow: none;
 }
 
-/* ================= DARK MODE ================= */
-.theme-dark .estado-pagado {
-    background-color: #16a34a;
-    color: #ffffff;
-}
-
-.theme-dark .estado-pendiente {
-    background-color: #eab308;
-    color: #1f1f1f;
-}
 /* ✅ OFFCANVAS: permitir scroll real */
 .detalle-venta-panel .offcanvas-body{
     overflow-y: auto !important;
@@ -235,7 +225,7 @@
     align-items: center;
     gap: 12px;
     padding: 10px 0;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--border-soft);
 }
 
 .producto-img {
@@ -243,7 +233,7 @@
     height: 48px;
     object-fit: contain;
     border-radius: 8px;
-    background: #f8fafc;
+    background: var(--bg-soft);
 }
 
 .producto-info {
@@ -258,13 +248,13 @@
 
 .producto-desc {
     font-size: 12px;
-    color: #6b7280;
+    color: var(--text-muted);
     line-height: 1.2;
 }
 
 .producto-cantidad {
     font-size: 12px;
-    color: #374151;
+    color: var(--text-main);
     margin-top: 2px;
 }
 
@@ -284,7 +274,7 @@
     top: calc(100% + 6px);
     left: 0;
     width: 260px;
-    background: #fff;
+    background: var(--bg-card);
     border-radius: 12px;
     padding: 12px;
     display: grid;
@@ -303,11 +293,11 @@
 }
 
 .year-btn:hover {
-    background: #f1f5f9;
+    background: var(--bg-soft);
 }
 
 .year-btn.active {
-    background: #facc15;
+    background: var(--warning-color);
     font-weight: bold;
 }
 
