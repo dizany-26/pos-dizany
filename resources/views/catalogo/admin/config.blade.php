@@ -2,18 +2,18 @@
 
 @section('content')
 
-<div class="container mt-4">
+<div class="container-fluid px-3">
 
-    <div class="card shadow-sm border-0">
+    <div class="card ui-card container-card my-4">
 
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-store me-2"></i>
+        <div class="card-header text-center pt-4">
+            <h4 class="mb-0 fw-semibold">
+                <i class="fas fa-store me-2 text-primary"></i>
                 Panel de Configuración del Catálogo
-            </h5>
+            </h4>
         </div>
 
-        <div class="card-body">
+        <div class="card-body px-4 pb-4">
 
             <form action="{{ route('catalogo.admin.config.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
