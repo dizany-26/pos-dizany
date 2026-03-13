@@ -1,0 +1,54 @@
+.catalogo-admin-subtitle {
+  color: #60748f;
+  font-size: .95rem;
+}
+
+.catalogo-kpi {
+  border: 1px solid #d7e2f1;
+  border-radius: 14px;
+  background: #f8fbff;
+  padding: 14px;
+}
+
+.catalogo-kpi .kpi-label {
+  color: #60748f;
+  font-size: .82rem;
+  margin-bottom: 2px;
+}
+
+.catalogo-kpi .kpi-value {
+  color: #102844;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 6px;
+}
+
+.catalogo-admin-panel .ui-card {
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .catalogo-admin-subtitle {
+  color: #a7bddc;
+}
+
+:root[data-theme='dark'] .catalogo-kpi {
+  border-color: #2f4f7d;
+  background: linear-gradient(180deg, #112a4c 0%, #0d2240 100%);
+}
+
+:root[data-theme='dark'] .catalogo-kpi .kpi-label {
+  color: #b6cae7;
+}
+
+:root[data-theme='dark'] .catalogo-kpi .kpi-value {
+  color: #edf4ff;
+}
+
+:root[data-theme='dark'] .catalogo-admin-panel .card.ui-card {
+  background: #0f2342 !important;
+  border-color: #2e4f7e !important;
+}
+
+:root[data-theme='dark'] .catalogo-admin-panel .ui-table tbody tr > * {
+  color: #e9f1ff !important;
+}

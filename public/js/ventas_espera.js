@@ -65,6 +65,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 padding:14px; text-align:center;
                 color:#777; font-size:13px;
             }
+            :root[data-theme='dark'] .pos-espera-panel{
+                background: linear-gradient(180deg, #0f223f 0%, #0b1c35 100%);
+                border: 1px solid #2d4e7a;
+                color:#eaf2ff;
+                box-shadow: 0 20px 38px rgba(2,8,22,.58);
+            }
+            :root[data-theme='dark'] .pos-espera-item{
+                border-color: #355a8a;
+                background: #122a4c;
+            }
+            :root[data-theme='dark'] .pos-espera-item.active{
+                border-color: #5ea0ff;
+                background: rgba(53,118,232,.26);
+            }
+            :root[data-theme='dark'] .pos-espera-item .info strong{ color:#f1f6ff; }
+            :root[data-theme='dark'] .pos-espera-item .info span{ color:#adc7ea; }
+            :root[data-theme='dark'] .pos-espera-item .delete{
+                background: rgba(239,68,68,.2);
+                color:#ff8e9b;
+            }
+            :root[data-theme='dark'] .pos-espera-empty{ color:#b7cae7; }
         `;
         document.head.appendChild(st);
     })();
