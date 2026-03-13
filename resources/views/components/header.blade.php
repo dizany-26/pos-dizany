@@ -98,8 +98,8 @@
                 aria-label="Cambiar tema"
                 title="Cambiar tema">
                 <span class="theme-toggle-track">
-                    <i class="fas fa-sun theme-icon-sun" aria-hidden="true"></i>
-                    <i class="fas fa-moon theme-icon-moon" aria-hidden="true"></i>
+                    <i class="fas fa-sun theme-track-icon theme-track-icon-sun" aria-hidden="true"></i>
+                    <i class="fas fa-moon theme-track-icon theme-track-icon-moon" aria-hidden="true"></i>
                     <span class="theme-toggle-thumb" aria-hidden="true"></span>
                 </span>
             </button>

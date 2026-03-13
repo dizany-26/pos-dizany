@@ -115,7 +115,23 @@
 .input-group-text,
 .select2-container .select2-selection--single,
 .select2-container .select2-selection--multiple {
-    border-radius: 14px !important;
+    border-radius: 16px !important;
+}
+
+.table-responsive,
+.offcanvas,
+.modal-content {
+    overflow: hidden;
+}
+
+.card > .card-header:first-child {
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+}
+
+.card > .card-footer:last-child {
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
 }
 
 /* =========================================================
@@ -159,6 +175,12 @@
     background-color: var(--dm-surface-strong) !important;
     border-color: var(--dm-border) !important;
     color: var(--dm-text) !important;
+}
+
+
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .table-responsive {
+    border-radius: 16px !important;
 }
 
 :root[data-theme='dark'] #content,
@@ -331,4 +353,13 @@
 
 :root[data-theme='dark'] .btn-close {
     filter: invert(1) grayscale(100%);
+}
+
+
+/* EXCEPCIÓN: no modificar la interfaz de ventas */
+.ventas-treinta .card,
+.ventas-treinta .card-header,
+.ventas-treinta .card-footer,
+.ventas-treinta .table-responsive {
+    border-radius: 10px !important;
 }
