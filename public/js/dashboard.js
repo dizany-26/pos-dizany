@@ -20,6 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     gradientRed.addColorStop(0, 'rgba(239,68,68,0.9)');
     gradientRed.addColorStop(1, 'rgba(239,68,68,0.4)');
 
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const legendColor = isDark ? '#dbe8ff' : '#334155';
+    const tickColor = isDark ? '#b8cdef' : '#64748b';
+    const gridColor = isDark ? 'rgba(120,151,194,0.20)' : 'rgba(148,163,184,0.15)';
+    const tooltipBg = isDark ? '#0b1f3a' : '#0f172a';
+
     window.flujoChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -56,11 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     labels: {
                         usePointStyle: true,
                         boxWidth: 8,
-                        padding: 20
+                        padding: 20,
+                        color: legendColor
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#0f172a',
+                    backgroundColor: tooltipBg,
                     padding: 12,
                     borderWidth: 0,
                     titleColor: '#fff',
@@ -76,15 +83,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(148,163,184,0.15)'
+                        color: gridColor
                     },
                     ticks: {
-                        callback: value => `S/ ${value}`
+                        callback: value => `S/ ${value}`,
+                        color: tickColor
                     }
                 },
                 x: {
                     grid: {
                         display: false
+                    },
+                    ticks: {
+                        color: tickColor
                     }
                 }
             }
