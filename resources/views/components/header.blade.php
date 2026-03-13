@@ -90,6 +90,20 @@
                 </ul>
             </div>
 
+            <!-- Toggle tema -->
+            <button
+                type="button"
+                id="themeToggle"
+                class="theme-toggle-btn me-3"
+                aria-label="Cambiar tema"
+                title="Cambiar tema">
+                <span class="theme-toggle-track">
+                    <i class="fas fa-sun theme-icon-sun" aria-hidden="true"></i>
+                    <i class="fas fa-moon theme-icon-moon" aria-hidden="true"></i>
+                    <span class="theme-toggle-thumb" aria-hidden="true"></span>
+                </span>
+            </button>
+
             <!-- Usuario -->
             <div class="user-info-header">
                 <i class="fa-solid fa-user-check"></i>
