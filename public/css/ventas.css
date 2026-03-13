@@ -934,3 +934,137 @@ select.form-select-sm,
     }
 }
 
+
+/* ============================================================
+   DARK MODE PREMIUM — VENTAS
+============================================================ */
+:root[data-theme='dark'] .ventas-treinta {
+    background: linear-gradient(180deg, #0b1d3a 0%, #0a1730 100%) !important;
+}
+
+:root[data-theme='dark'] .treinta-col.izquierda {
+    border-right-color: #23416b !important;
+}
+
+:root[data-theme='dark'] .contenedor-buscador {
+    background: #10284a !important;
+    border: 1px solid #274a79 !important;
+    box-shadow: 0 12px 28px rgba(4, 12, 29, 0.42) !important;
+}
+
+:root[data-theme='dark'] .contenedor-buscador .form-control {
+    background: #071934 !important;
+    color: #f1f6ff !important;
+    border-color: #2e5b92 !important;
+}
+
+:root[data-theme='dark'] .contenedor-buscador .form-control::placeholder {
+    color: #9ab4d8 !important;
+}
+
+:root[data-theme='dark'] .btn-filtro-categoria {
+    background: #0f2341 !important;
+    border-color: #2c4d7c !important;
+    color: #d8e6fb !important;
+}
+
+:root[data-theme='dark'] .btn-filtro-categoria.active,
+:root[data-theme='dark'] .btn-filtro-categoria:hover {
+    background: linear-gradient(135deg, #2b77ff, #184cb8) !important;
+    border-color: #4d8dff !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .product-card,
+:root[data-theme='dark'] .crear-producto-card {
+    background: linear-gradient(180deg, #102746 0%, #0c213d 100%) !important;
+    border: 1px solid #2a4c79 !important;
+    box-shadow: 0 8px 22px rgba(3, 10, 24, 0.38) !important;
+}
+
+:root[data-theme='dark'] .product-img-wrapper,
+:root[data-theme='dark'] .product-img {
+    background: #0a1b33 !important;
+}
+
+:root[data-theme='dark'] .product-name {
+    color: #f5f9ff !important;
+}
+
+:root[data-theme='dark'] .product-desc {
+    color: #a9c1e3 !important;
+}
+
+:root[data-theme='dark'] .treinta-col.derecha .card {
+    background: linear-gradient(180deg, #102746 0%, #0c213e 100%) !important;
+    border: 1px solid #2a4c79 !important;
+    box-shadow: 0 10px 24px rgba(4, 12, 29, 0.42) !important;
+}
+
+:root[data-theme='dark'] .treinta-col.derecha .card-header {
+    background: linear-gradient(180deg, #1f365f 0%, #182c50 100%) !important;
+    color: #f2f7ff !important;
+    border-bottom-color: #2e4f7c !important;
+}
+
+:root[data-theme='dark'] #step-1 .card-header a {
+    color: #dce9ff !important;
+}
+
+:root[data-theme='dark'] #carrito-lista {
+    background: #0a1c36 !important;
+    border-left: 1px solid #294771;
+    border-right: 1px solid #294771;
+}
+
+:root[data-theme='dark'] .carrito-item {
+    border-bottom: 1px solid #254264 !important;
+    color: #ecf4ff !important;
+}
+
+:root[data-theme='dark'] .resumen-box {
+    border-top-color: #2f4c77 !important;
+    border-bottom-color: #2f4c77 !important;
+}
+
+:root[data-theme='dark'] .resumen-label {
+    color: #c2d6f3 !important;
+}
+
+:root[data-theme='dark'] .resumen-value,
+:root[data-theme='dark'] #resumen-op-gravadas,
+:root[data-theme='dark'] #resumen-igv-monto,
+:root[data-theme='dark'] #resumen-total {
+    color: #f4f8ff !important;
+    text-shadow: 0 0 14px rgba(88, 148, 255, 0.25);
+}
+
+:root[data-theme='dark'] .resumen-total {
+    border-top-color: #365883 !important;
+}
+
+:root[data-theme='dark'] .metodo-pago-opciones .metodo-pago-item {
+    background: linear-gradient(180deg, #132c4f 0%, #102646 100%) !important;
+    border: 1px solid #365d8f !important;
+    color: #dbe9ff !important;
+}
+
+:root[data-theme='dark'] .metodo-pago-item .label {
+    color: #dbe9ff !important;
+    font-weight: 600;
+}
+
+:root[data-theme='dark'] .metodo-pago-item.active {
+    background: linear-gradient(180deg, #133f2e 0%, #0f2f25 100%) !important;
+    border: 1px solid #36d988 !important;
+    color: #b6ffd9 !important;
+    box-shadow: 0 0 0 1px rgba(44, 229, 134, 0.28), 0 8px 20px rgba(7, 24, 17, 0.45);
+}
+
+:root[data-theme='dark'] .metodo-pago-item.active .label {
+    color: #b6ffd9 !important;
+}
+
+:root[data-theme='dark'] #step-2 label.fw-bold {
+    color: #f4f8ff !important;
+}
