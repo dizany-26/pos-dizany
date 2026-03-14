@@ -18,11 +18,14 @@ Panel General
 @endsection
 
 @section('content')
-<div class="card mx-auto my-4" style="max-width: 1000px;">
-    <div class="card-header text-center bg-primary text-white">
-        <h4 class="mb-0"><i class="fas fa-cog"></i> Panel de Configuración General</h4>
+<div class="card ui-card container-card my-4 mx-auto" style="max-width: 1000px;">
+    <div class="card-header text-center pt-4">
+        <h4 class="mb-0 fw-semibold">
+            <i class="fas fa-cog me-2 text-primary"></i>
+            Panel de Configuración General
+        </h4>
     </div>
-    <div class="card-body">
+    <div class="card-body px-4 pb-4">
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -84,7 +87,7 @@ Panel General
             </div>
 
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn-soft btn-soft-success px-4">
                     <i class="fas fa-save me-1"></i> Guardar Cambios
                 </button>
             </div>
