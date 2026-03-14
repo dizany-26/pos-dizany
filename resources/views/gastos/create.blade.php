@@ -24,12 +24,15 @@ Nuevo Gasto
 @endsection
 
 @section('content')
-<div class="card mx-auto my-4" style="max-width: 900px;">
-    <div class="card-header text-center bg-primary text-white">
-        <h4 class="mb-0"><i class="fas fa-money-bill-wave"></i> Registrar Gasto</h4>
-    </div>
-    <div class="card-body">
-        <div class="container">
+<div class="container-fluid px-3">
+    <div class="card ui-card container-card my-4 mx-auto" style="max-width: 900px;">
+        <div class="card-header text-center pt-4">
+            <h4 class="mb-0 fw-semibold">
+                <i class="fas fa-money-bill-wave me-2 text-primary"></i>
+                Registrar Gasto
+            </h4>
+        </div>
+        <div class="card-body px-4 pb-4">
 
             <form action="{{ route('gastos.store') }}" method="POST">
                 @csrf
@@ -73,8 +76,10 @@ Nuevo Gasto
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-success">Registrar</button>
-                <a href="{{ route('gastos.index') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-soft btn-soft-success px-4">
+                    <i class="fas fa-save"></i> Registrar gasto
+                </button>
+                <a href="{{ route('gastos.index') }}" class="btn-soft btn-soft-info">Cancelar</a>
             </form>
         </div>
     </div>
