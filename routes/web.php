@@ -276,7 +276,45 @@ Route::get('/catalogo', function () {
 Route::prefix('catalogo-admin')->middleware('auth')->group(function () {
 
     Route::get('/', function () {
-        return view('catalogo.admin.index');
+        $config = ConfiguracionCatalogo::first();
+
+        $productosVisibles = Producto::where('visible_en_catalogo', 1)
+            ->where('activo', 1)
+            ->count();
+
+        $productosOcultos = Producto::where('visible_en_catalogo', 0)
+            ->where('activo', 1)
+            ->count();
+
+        $categoriasPublicas = Categoria::whereHas('productos', function ($q) {
+            $q->where('visible_en_catalogo', 1)
+              ->where('activo', 1);
+        })->count();
+
+        $camposConfig = [
+            'nombre_empresa',
+            'rubro',
+            'telefono',
+            'correo',
+            'direccion',
+            'mensaje_bienvenida',
+            'texto_boton_whatsapp',
+            'logo',
+        ];
+
+        $camposCompletos = collect($camposConfig)->filter(function ($campo) use ($config) {
+            return $config && !empty($config->{$campo});
+        })->count();
+
+        $porcentajeConfig = (int) round(($camposCompletos / count($camposConfig)) * 100);
+
+        return view('catalogo.admin.index', compact(
+            'config',
+            'productosVisibles',
+            'productosOcultos',
+            'categoriasPublicas',
+            'porcentajeConfig'
+        ));
         })->name('catalogo.admin.index');
 
     Route::get('/configuracion', function () {
