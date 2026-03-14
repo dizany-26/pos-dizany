@@ -4,6 +4,11 @@
         @auth
             @if(auth()->user()->rol->nombre == 'Administrador')
 
+                <div class="sidebar-section-title">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Módulo POS</span>
+                </div>
+
                 <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-home"></i>
@@ -112,6 +117,11 @@
                     <i class="fas fa-cog"></i>
                     <span class="menu-text">Configuración</span>
                 </a>
+
+                <div class="sidebar-section-title sidebar-section-catalogo">
+                    <i class="fas fa-store"></i>
+                    <span>Módulo Catálogo</span>
+                </div>
                 <!-- configuracion de Catálogo -->
                 <div class="submenu">
                     <button class="submenu-toggle {{ request()->is('catalogo-admin*') ? 'active' : '' }}">
@@ -200,6 +210,4 @@
         });
     });
 </script>
-
-
 

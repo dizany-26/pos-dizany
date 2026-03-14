@@ -68,6 +68,12 @@ body {
 ====================================== */
 @media (max-width: 768px) {
 
+    .sidebar-section-title {
+        margin: 10px 10px 6px;
+        padding: 6px 8px;
+        font-size: 10px;
+    }
+
     #content {
         margin-left: 0 !important;
         padding-left: 16px;
@@ -192,34 +198,103 @@ header .nav-btn {
     border-radius: 4px;
 }
 
+
+
+/* TÍTULOS DE BLOQUE (POS / CATÁLOGO) */
+.sidebar-section-title {
+    margin: 14px 12px 8px;
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .65px;
+    text-transform: uppercase;
+    color: rgba(194, 214, 245, 0.92);
+    border: 1px solid rgba(125, 165, 230, 0.25);
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(24, 53, 95, 0.75) 0%, rgba(17, 41, 77, 0.75) 100%);
+}
+
+.sidebar-section-title i {
+    font-size: 11px;
+    opacity: 0.95;
+}
+
+.sidebar-section-catalogo {
+    margin-top: 14px;
+    border-color: rgba(90, 174, 144, 0.28);
+    color: rgba(179, 232, 211, 0.95);
+    background: linear-gradient(180deg, rgba(20, 73, 70, 0.55) 0%, rgba(14, 58, 58, 0.55) 100%);
+}
+
 #sidebar a {
     color: #fff;
-    padding: 12px 20px;
-    display: block;
+    padding: 10px 14px;
+    margin: 3px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     text-decoration: none;
-    font-size: 16px;
+    font-size: 14px;
+    border-radius: 10px;
+    font-weight: 500;
+    letter-spacing: .2px;
+    transition: all .2s ease;
+}
+
+#sidebar a i,
+#sidebar .submenu-toggle i {
+    width: 16px;
+    text-align: center;
+    font-size: 13px;
+    opacity: .92;
+}
+
+#sidebar .menu-text {
+    line-height: 1.15;
 }
 
 #sidebar a:hover,
+#sidebar .submenu-toggle:hover,
 #sidebar .active {
     background: var(--sidebar-bg-hover);
 }
 
+#sidebar a.active,
+#sidebar .submenu-toggle.active,
+#sidebar .submenu-items a.active {
+    border: 1px solid rgba(122, 170, 245, 0.55);
+    box-shadow: inset 3px 0 0 #4f8ff7, 0 6px 14px rgba(9, 26, 52, 0.35);
+    background: linear-gradient(90deg, rgba(34, 68, 120, 0.9) 0%, rgba(23, 49, 90, 0.9) 100%);
+}
+
+#sidebar .submenu-items a.active {
+    margin: 3px 10px 3px 26px;
+}
+
 /* SUBMENÚS */
 .submenu-toggle {
-    width: 100%;
+    width: calc(100% - 20px);
+    margin: 3px 10px;
     text-align: left;
     color: white;
     background: none;
     border: none;
-    padding: 12px 20px;
-    font-size: 16px;
+    padding: 10px 14px;
+    font-size: 14px;
+    border-radius: 10px;
     cursor: pointer;
+    transition: all .2s ease;
 }
 
 .submenu-items {
     display: none;
+    margin: 2px 10px 8px;
+    padding: 6px 0;
     background: #102c54;
+    border-radius: 10px;
 }
 
 .submenu-items.show {
@@ -227,7 +302,9 @@ header .nav-btn {
 }
 
 .submenu-items a {
-    padding-left: 40px;
+    margin: 2px 8px;
+    padding-left: 14px;
+    font-size: 13px;
 }
 
 .toggle-icon.rotated {
@@ -243,6 +320,10 @@ header .nav-btn {
 }
 
 /* Ocultar textos */
+.sidebar-collapsed #sidebar .sidebar-section-title {
+    display: none;
+}
+
 .sidebar-collapsed #sidebar .menu-text {
     opacity: 0;
     width: 0;
@@ -285,20 +366,17 @@ header .nav-btn {
 .submenu-left {
     display: flex;
     align-items: center;
-    gap: 10px; /* Ajusta el espacio entre el icono y el texto */
+    gap: 10px;
 }
 
 /* Botón de submenu */
 .submenu-toggle {
-    width: 100%;
-    padding: 10px 18px;
     background: transparent;
     border: none;
     color: #fff;
     display: flex;
-    justify-content: space-between; /* texto izquierda, flecha derecha */
+    justify-content: space-between;
     align-items: center;
-    cursor: pointer;
 }
 
 /* Íconos más alineados */
