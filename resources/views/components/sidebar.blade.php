@@ -4,11 +4,15 @@
         @auth
             @if(auth()->user()->rol->nombre == 'Administrador')
 
+                <div class="sidebar-section-title">INICIO</div>
+
                 <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-home"></i>
-                    <span class="menu-text">Inicio</span>
+                    <span class="menu-text">Dashboard</span>
                 </a>
+
+                <div class="sidebar-section-title">GESTIÓN</div>
 
                 <a href="{{ route('usuarios.index') }}"
                 class="{{ request()->routeIs('usuarios.index') ? 'active' : '' }}">
@@ -28,9 +32,10 @@
                     <span class="menu-text">Proveedores</span>
                 </a>
 
-                <!-- Menú desplegable Productos -->
+                <div class="sidebar-section-title">INVENTARIO</div>
+
                 <div class="submenu">
-                    <button class="submenu-toggle {{ request()->is('productos*') ? 'active' : '' }}">    
+                    <button class="submenu-toggle {{ request()->is('productos*') ? 'active' : '' }}">
                         <div class="submenu-left">
                             <i class="fas fa-box me-2"></i>
                             <span class="menu-text">Productos</span>
@@ -53,7 +58,6 @@
                     </div>
                 </div>
 
-                <!-- Inventario -->
                 <div class="submenu">
                     <button class="submenu-toggle {{ request()->is('inventario*') ? 'active' : '' }}">
                         <div class="submenu-left">
@@ -64,24 +68,21 @@
                     </button>
 
                     <div class="submenu-items {{ request()->is('inventario*') ? 'show' : '' }}">
-
-                        <!-- Resumen -->
                         <a href="{{ route('inventario.resumen') }}"
                         class="{{ request()->routeIs('inventario.resumen') ? 'active' : '' }}">
                             <i class="fas fa-chart-pie me-1"></i>
                             <span class="menu-text">Resumen</span>
                         </a>
 
-                        <!-- Ingreso por Lote -->
                         <a href="{{ route('inventario.lote') }}"
                         class="{{ request()->routeIs('inventario.lote') ? 'active' : '' }}">
                             <i class="fas fa-truck-loading me-1"></i>
                             <span class="menu-text">Ingreso de Lotes</span>
                         </a>
-
                     </div>
                 </div>
 
+                <div class="sidebar-section-title">OPERACIONES</div>
 
                 <a href="{{ route('ventas.index') }}"
                 class="{{ request()->routeIs('ventas.index') ? 'active' : '' }}">
@@ -94,12 +95,14 @@
                     <i class="fas fa-coins"></i>
                     <span class="menu-text">Movimientos</span>
                 </a>
-                
+
                 <a href="{{ route('gastos.index') }}"
                 class="{{ request()->routeIs('gastos.index') ? 'active' : '' }}">
                     <i class="fas fa-money-bill-wave"></i>
                     <span class="menu-text">Gastos</span>
                 </a>
+
+                <div class="sidebar-section-title">ANÁLISIS</div>
 
                 <a href="{{ route('reportes.index') }}"
                 class="{{ request()->routeIs('reportes.index') ? 'active' : '' }}">
@@ -107,12 +110,15 @@
                     <span class="menu-text">Reportes</span>
                 </a>
 
+                <div class="sidebar-section-title">SISTEMA</div>
+
                 <a href="{{ route('configuracion.index') }}"
                 class="{{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
                     <span class="menu-text">Configuración</span>
                 </a>
-                <!-- configuracion de Catálogo -->
+
+                <div class="sidebar-section-title sidebar-section-catalogo">CATÁLOGO WEB</div>
                 <div class="submenu">
                     <button class="submenu-toggle {{ request()->is('catalogo-admin*') ? 'active' : '' }}">
                         <div class="submenu-left">
@@ -123,24 +129,19 @@
                     </button>
 
                     <div class="submenu-items {{ request()->is('catalogo-admin*') ? 'show' : '' }}">
-
-                        <!-- Ver Catálogo -->
                         <a href="{{ route('catalogo.admin.index') }}"
                         class="{{ request()->routeIs('catalogo.admin.index') ? 'active' : '' }}">
                             <i class="fas fa-eye me-1"></i>
-                            <span class="menu-text">Vista Catálogo</span>
+                            <span class="menu-text">Vista catálogo</span>
                         </a>
 
-                        <!-- Configuración -->
                         <a href="{{ route('catalogo.admin.config') }}"
                         class="{{ request()->routeIs('catalogo.admin.config') ? 'active' : '' }}">
                             <i class="fas fa-cog me-1"></i>
-                            <span class="menu-text">Configurar Catalago</span>
+                            <span class="menu-text">Configurar catálogo</span>
                         </a>
-
                     </div>
                 </div>
-
 
             @elseif(auth()->user()->rol->nombre == 'Empleado')
 
@@ -200,6 +201,4 @@
         });
     });
 </script>
-
-
 

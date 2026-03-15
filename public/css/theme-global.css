@@ -75,6 +75,67 @@
     color: #0b3f99 !important;
 }
 
+
+:root[data-theme='light'] #sidebar {
+    border-right: 1px solid #d9e2ee !important;
+}
+
+:root[data-theme='light'] #sidebar .sidebar-section-title {
+    color: #0f1726 !important;
+    font-weight: 800 !important;
+}
+
+:root[data-theme='light'] #sidebar .sidebar-section-catalogo {
+    color: #0f1726 !important;
+}
+
+:root[data-theme='light'] #sidebar a:hover,
+:root[data-theme='light'] #sidebar .submenu-toggle:hover {
+    background: #e9f0fb !important;
+    color: #0b1220 !important;
+}
+
+:root[data-theme='light'] #sidebar .submenu-items {
+    background: #f3f7fd !important;
+}
+
+:root[data-theme='light'] #sidebar a,
+:root[data-theme='light'] #sidebar .submenu-toggle,
+:root[data-theme='light'] #sidebar .submenu-items a {
+    color: #0b1220 !important;
+}
+
+:root[data-theme='light'] #sidebar a.active,
+:root[data-theme='light'] #sidebar .submenu-toggle.active,
+:root[data-theme='light'] #sidebar .submenu-items a.active {
+    border-color: #cddbf0 !important;
+    box-shadow: inset 3px 0 0 #3b82f6 !important;
+    background: #e8f0fb !important;
+    color: #0b1220 !important;
+}
+
+:root[data-theme='light'] #sidebar a i,
+:root[data-theme='light'] #sidebar .submenu-toggle i,
+:root[data-theme='light'] #sidebar .sidebar-section-title i {
+    color: #111827 !important;
+}
+
+
+:root[data-theme='light'] #sidebar .sidebar-footer {
+    background: #eef3fa !important;
+    border-color: #d7e2f1 !important;
+    color: #132a4a !important;
+}
+
+:root[data-theme='light'] #sidebar .sidebar-footer:hover {
+    background: #e4edf9 !important;
+}
+:root[data-theme='light'] #header .titulo-venta,
+:root[data-theme='light'] #header h5.titulo-venta {
+    color: #111827 !important;
+    font-weight: 700 !important;
+}
+
 :root[data-theme='light'] .btn-header-back,
 :root[data-theme='light'] #btn-toggle-sidebar,
 :root[data-theme='light'] .btn-header-more,
@@ -115,7 +176,43 @@
 .input-group-text,
 .select2-container .select2-selection--single,
 .select2-container .select2-selection--multiple {
-    border-radius: 14px !important;
+    border-radius: 16px !important;
+}
+
+.table-responsive,
+.offcanvas,
+.modal-content {
+    overflow: hidden;
+}
+
+.card > .card-header:first-child {
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+}
+
+.card > .card-footer:last-child {
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+}
+
+
+/* Asegura curvas elegantes también cuando el body del card define fondo propio */
+.card > .card-body:first-child {
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+}
+
+.card > .card-body:last-child,
+.card > .card-body.px-4.pb-4 {
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+}
+
+/* Respeta excepción de ventas */
+.ventas-treinta .card > .card-body:last-child,
+.ventas-treinta .card > .card-body.px-4.pb-4 {
+    border-bottom-left-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
 }
 
 /* =========================================================
@@ -139,6 +236,61 @@
     background: #122746 !important;
 }
 
+
+:root[data-theme='dark'] #sidebar {
+    border-right: 1px solid #1f3658 !important;
+}
+
+:root[data-theme='dark'] #sidebar .sidebar-section-title {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+}
+
+:root[data-theme='dark'] #sidebar a,
+:root[data-theme='dark'] #sidebar .submenu-toggle,
+:root[data-theme='dark'] #sidebar .submenu-items a {
+    color: #f8fbff !important;
+}
+
+:root[data-theme='dark'] #sidebar .sidebar-section-catalogo {
+    color: #ffffff !important;
+}
+
+:root[data-theme='dark'] #sidebar a:hover,
+:root[data-theme='dark'] #sidebar .submenu-toggle:hover {
+    background: #1a3253 !important;
+    color: #e0ecff !important;
+}
+
+:root[data-theme='dark'] #sidebar .submenu-items {
+    background: #10233f !important;
+}
+
+:root[data-theme='dark'] #sidebar a.active,
+:root[data-theme='dark'] #sidebar .submenu-toggle.active,
+:root[data-theme='dark'] #sidebar .submenu-items a.active {
+    border-color: #3e6ea8 !important;
+    box-shadow: inset 3px 0 0 #64a3ff !important;
+    background: #203f69 !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='dark'] #sidebar a i,
+:root[data-theme='dark'] #sidebar .submenu-toggle i,
+:root[data-theme='dark'] #sidebar .sidebar-section-title i {
+    color: #d7e8ff !important;
+}
+
+
+:root[data-theme='dark'] #sidebar .sidebar-footer {
+    background: #142b4d !important;
+    border-color: #28456d !important;
+    color: #e2edff !important;
+}
+
+:root[data-theme='dark'] #sidebar .sidebar-footer:hover {
+    background: #1a3863 !important;
+}
 :root[data-theme='dark'] .card,
 :root[data-theme='dark'] .card-body,
 :root[data-theme='dark'] .modal-content,
@@ -159,6 +311,12 @@
     background-color: var(--dm-surface-strong) !important;
     border-color: var(--dm-border) !important;
     color: var(--dm-text) !important;
+}
+
+
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .table-responsive {
+    border-radius: 16px !important;
 }
 
 :root[data-theme='dark'] #content,
@@ -331,4 +489,65 @@
 
 :root[data-theme='dark'] .btn-close {
     filter: invert(1) grayscale(100%);
+}
+
+
+/* EXCEPCIÓN: no modificar la interfaz de ventas */
+.ventas-treinta .card,
+.ventas-treinta .card-header,
+.ventas-treinta .card-footer,
+.ventas-treinta .table-responsive {
+    border-radius: 10px !important;
+}
+
+
+/* =========================================================
+   CONTRAST SAFETY NET (LIGHT + DARK)
+   Evita textos invisibles por utilidades bootstrap mezcladas.
+========================================================= */
+:root[data-theme='light'] #content,
+:root[data-theme='light'] #content .card,
+:root[data-theme='light'] #content .card-body,
+:root[data-theme='light'] #content .table,
+:root[data-theme='light'] #content .table td,
+:root[data-theme='light'] #content .table th,
+:root[data-theme='light'] #content .list-group-item {
+    color: var(--lt-text) !important;
+}
+
+:root[data-theme='light'] #content .text-muted,
+:root[data-theme='light'] #content .text-secondary,
+:root[data-theme='light'] #content small {
+    color: var(--lt-text-soft) !important;
+}
+
+:root[data-theme='light'] #content .form-control::placeholder,
+:root[data-theme='light'] #content textarea::placeholder,
+:root[data-theme='light'] #content input::placeholder {
+    color: #7b8ea8 !important;
+}
+
+:root[data-theme='light'] #content .table-light,
+:root[data-theme='light'] #content .table-light > * {
+    color: #0f2749 !important;
+}
+
+:root[data-theme='dark'] #content .text-dark:not(.badge):not([class*='btn']),
+:root[data-theme='dark'] #content .text-black:not(.badge):not([class*='btn']),
+:root[data-theme='dark'] #content .text-body:not(.badge):not([class*='btn']),
+:root[data-theme='dark'] #content .text-black-50:not(.badge):not([class*='btn']) {
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] #content .table td strong,
+:root[data-theme='dark'] #content .table td b,
+:root[data-theme='dark'] #content .table td .fw-semibold,
+:root[data-theme='dark'] #content .table td .fw-bold {
+    color: #f3f7ff !important;
+}
+
+:root[data-theme='dark'] #content .alert-warning {
+    color: #ffe9a8 !important;
+    background: rgba(245, 158, 11, 0.16) !important;
+    border-color: rgba(245, 158, 11, 0.36) !important;
 }
