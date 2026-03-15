@@ -169,10 +169,10 @@ header .nav-btn {
 #sidebar {
     font-family: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     position: fixed;
-    top: calc(var(--header-height) + 8px);
-    left: 0;
-    width: var(--sidebar-width);
-    height: calc(100vh - var(--header-height) - 8px);
+    top: calc(var(--header-height) + 12px);
+    left: 12px;
+    width: calc(var(--sidebar-width) - 24px);
+    height: calc(100vh - var(--header-height) - 24px);
     background: var(--sidebar-bg);
     color: var(--sidebar-text);
     display: flex;
@@ -181,8 +181,8 @@ header .nav-btn {
     overflow: hidden;
     transition: width 0.25s ease, left 0.25s ease;
     z-index: 1020;
-    border-right: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px 14px 0 0;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px;
     box-shadow: 0 8px 24px rgba(5, 15, 35, 0.16);
 }
 
@@ -204,11 +204,11 @@ header .nav-btn {
 
 /* TÍTULOS DE SECCIÓN */
 .sidebar-section-title {
-    margin: 14px 8px 6px;
-    padding: 0 4px;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: .9px;
+    margin: 16px 8px 8px;
+    padding: 0 10px;
+    font-size: 12.5px;
+    font-weight: 900;
+    letter-spacing: 1px;
     text-transform: uppercase;
     color: rgba(232, 242, 255, 0.95);
     opacity: 0.96;
@@ -301,7 +301,7 @@ header .nav-btn {
    =============================== */
 
 .sidebar-collapsed #sidebar {
-    width: 70px !important;
+    width: calc(var(--sidebar-width-collapsed) - 12px) !important;
 }
 
 .sidebar-collapsed #sidebar .sidebar-section-title {
@@ -346,7 +346,7 @@ header .nav-btn {
    SIDEBAR — COLAPSADO EN PC
 ============================================ */
 body.sidebar-collapsed #sidebar {
-    width: var(--sidebar-width-collapsed);
+    width: calc(var(--sidebar-width-collapsed) - 12px);
 }
 
 /* ============================================
@@ -355,10 +355,11 @@ body.sidebar-collapsed #sidebar {
 @media (max-width: 768px) {
     #sidebar {
         left: -100%;
+        width: calc(var(--sidebar-width) - 18px);
     }
 
     body.sidebar-visible #sidebar {
-        left: 0;
+        left: 10px;
     }
 }
 
