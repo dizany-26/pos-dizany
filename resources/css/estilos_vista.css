@@ -169,10 +169,10 @@ header .nav-btn {
 #sidebar {
     font-family: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     position: fixed;
-    top: calc(var(--header-height) + 8px);
-    left: 0;
-    width: var(--sidebar-width);
-    height: calc(100vh - var(--header-height) - 8px);
+    top: calc(var(--header-height) + 14px);
+    left: 14px;
+    width: calc(var(--sidebar-width) - 28px);
+    height: calc(100vh - var(--header-height) - 28px);
     background: var(--sidebar-bg);
     color: var(--sidebar-text);
     display: flex;
@@ -181,8 +181,8 @@ header .nav-btn {
     overflow: hidden;
     transition: width 0.25s ease, left 0.25s ease;
     z-index: 1020;
-    border-right: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px 14px 0 0;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px 18px 0 0;
     box-shadow: 0 8px 24px rgba(5, 15, 35, 0.16);
 }
 
@@ -204,11 +204,11 @@ header .nav-btn {
 
 /* TÍTULOS DE SECCIÓN */
 .sidebar-section-title {
-    margin: 14px 8px 6px;
-    padding: 0 4px;
+    margin: 16px 10px 8px;
+    padding: 0 14px;
     font-size: 12px;
-    font-weight: 800;
-    letter-spacing: .9px;
+    font-weight: 500;
+    letter-spacing: .5px;
     text-transform: uppercase;
     color: rgba(232, 242, 255, 0.95);
     opacity: 0.96;
@@ -221,10 +221,10 @@ header .nav-btn {
 
 #sidebar a,
 .submenu-toggle {
-    width: calc(100% - 16px);
-    margin: 2px 8px;
+    width: calc(100% - 20px);
+    margin: 2px 10px;
     color: var(--sidebar-text);
-    padding: 11px 12px;
+    padding: 11px 14px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -232,7 +232,7 @@ header .nav-btn {
     font-size: 14px;
     line-height: 1.25;
     border-radius: 12px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: .15px;
     border: 1px solid transparent;
     background: transparent;
@@ -301,7 +301,7 @@ header .nav-btn {
    =============================== */
 
 .sidebar-collapsed #sidebar {
-    width: 70px !important;
+    width: calc(var(--sidebar-width-collapsed) - 12px) !important;
 }
 
 .sidebar-collapsed #sidebar .sidebar-section-title {
@@ -346,7 +346,7 @@ header .nav-btn {
    SIDEBAR — COLAPSADO EN PC
 ============================================ */
 body.sidebar-collapsed #sidebar {
-    width: var(--sidebar-width-collapsed);
+    width: calc(var(--sidebar-width-collapsed) - 12px);
 }
 
 /* ============================================
@@ -355,10 +355,11 @@ body.sidebar-collapsed #sidebar {
 @media (max-width: 768px) {
     #sidebar {
         left: -100%;
+        width: calc(var(--sidebar-width) - 20px);
     }
 
     body.sidebar-visible #sidebar {
-        left: 0;
+        left: 12px;
     }
 }
 

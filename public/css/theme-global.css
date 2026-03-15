@@ -77,12 +77,12 @@
 
 
 :root[data-theme='light'] #sidebar {
-    border-right: 1px solid #d9e2ee !important;
+    border: 1px solid #d9e2ee !important;
 }
 
 :root[data-theme='light'] #sidebar .sidebar-section-title {
     color: #0f1726 !important;
-    font-weight: 800 !important;
+    font-weight: 500 !important;
 }
 
 :root[data-theme='light'] #sidebar .sidebar-section-catalogo {
@@ -238,12 +238,12 @@
 
 
 :root[data-theme='dark'] #sidebar {
-    border-right: 1px solid #1f3658 !important;
+    border: 1px solid #1f3658 !important;
 }
 
 :root[data-theme='dark'] #sidebar .sidebar-section-title {
     color: #ffffff !important;
-    font-weight: 800 !important;
+    font-weight: 500 !important;
 }
 
 :root[data-theme='dark'] #sidebar a,
