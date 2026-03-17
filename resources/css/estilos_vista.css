@@ -81,6 +81,27 @@ body {
     }
 }
 
+
+#footer {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    transition: margin-left 0.25s ease, width 0.25s ease;
+}
+
+@media (min-width: 769px) {
+    body.sidebar-collapsed #footer {
+        margin-left: var(--sidebar-width-collapsed);
+        width: calc(100% - var(--sidebar-width-collapsed));
+    }
+}
+
+@media (max-width: 768px) {
+    #footer {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
 /* ============================================
    HEADER — FIJO Y CON ESTILO
 ============================================ */
@@ -182,7 +203,7 @@ header .nav-btn {
     transition: width 0.25s ease, left 0.25s ease;
     z-index: 1020;
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px 16px 0 0;
+    border-radius: 16px;
     box-shadow: 0 8px 24px rgba(5, 15, 35, 0.16);
 }
 
