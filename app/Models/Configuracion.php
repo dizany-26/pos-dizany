@@ -18,6 +18,5 @@ class Configuracion extends Model
         'direccion',
         'telefono',
         'correo',
-        'tema',
     ];
 }

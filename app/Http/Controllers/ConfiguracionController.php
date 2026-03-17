@@ -29,7 +29,6 @@ class ConfiguracionController extends Controller
             'direccion'      => 'nullable|string',
             'telefono'       => 'nullable|string|max:20',
             'correo'         => 'nullable|email|max:100',
-            'tema'           => 'required|in:claro,oscuro',
             'logo'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240'
         ]);
 
@@ -53,7 +52,6 @@ class ConfiguracionController extends Controller
         $config->direccion      = $request->direccion;
         $config->telefono       = $request->telefono;
         $config->correo         = $request->correo;
-        $config->tema           = $request->tema;
 
         $config->save();
 
