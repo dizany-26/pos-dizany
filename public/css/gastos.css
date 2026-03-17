@@ -39,7 +39,7 @@ body {
     border-spacing: 0;
 }
 
-/* Header claro */
+/* Header principal */
 .table thead th {
     background-color: #f8f9fa;
     color: #495057;
@@ -278,4 +278,44 @@ body {
     font-weight: 600;
     color: #6c757d;
     margin-bottom: 0.25rem;
+}
+
+/* ======================================================
+   RESUMEN TOTAL DEL DÍA (fuera de tabla)
+====================================================== */
+.gastos-total-resumen {
+    min-width: 230px;
+    border: 1px solid #d6e0ef;
+    border-radius: 12px;
+    background: #f8fbff;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.gastos-total-resumen .total-label {
+    color: #4e6380;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.gastos-total-resumen .total-value {
+    color: #dc2626;
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+:root[data-theme='dark'] .gastos-total-resumen {
+    border-color: #2f4f7d;
+    background: #102746;
+}
+
+:root[data-theme='dark'] .gastos-total-resumen .total-label {
+    color: #b7cae7;
+}
+
+:root[data-theme='dark'] .gastos-total-resumen .total-value {
+    color: #ff8ea0;
 }

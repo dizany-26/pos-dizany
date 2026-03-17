@@ -33,11 +33,14 @@ Gastos
 <link rel="stylesheet" href="{{ asset('css/gastos.css') }}">
     <link rel="stylesheet" href="{{ asset('css/flatpickr.min.css') }}">
 <div class="container-fluid px-3">
-    <div class="card mx-auto my-4" style="max-width: 100%;">
-        <div class="card-header text-center bg-primary text-white">
-            <h4 class="mb-0"><i class="fas fa-money-bill-wave"></i> Lista de Gastos</h4>
+    <div class="card ui-card container-card my-4">
+        <div class="card-header text-center pt-4">
+            <h4 class="mb-0 fw-semibold">
+                <i class="fas fa-money-bill-wave me-2 text-primary"></i>
+                Lista de Gastos
+            </h4>
         </div>
-        <div class="card-body">
+        <div class="card-body px-4 pb-4">
             <!-- Filtros Dinámicos -->
             <div class="row g-3 mb-3 filters-group">
                 <div class="col-12 col-md-4">
@@ -64,9 +67,16 @@ Gastos
                 No se encontraron gastos para los filtros aplicados.
             </div>
 
+            <div class="d-flex justify-content-end mb-3">
+                <div class="gastos-total-resumen">
+                    <span class="total-label">Total del día</span>
+                    <span id="total-gastos" class="total-value">S/ 0.00</span>
+                </div>
+            </div>
+
             <!-- Tabla Gastos -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+            <div class="table-responsive ui-scroll">
+                <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
                     <thead class="table-light">
                         <tr>
                             <th>Fecha</th>
@@ -105,23 +115,25 @@ Gastos
 
                             <td class="text-center">
                                 @if(auth()->user()->esAdmin())
-                                    <a href="{{ route('gastos.edit', $gasto->id) }}"
-                                    class="btn btn-sm btn-outline-warning rounded-circle"
-                                    title="Editar">
-                                        <i class="fas fa-pen"></i>
-                                    </a>
+                                    <div class="d-flex justify-content-center gap-2 action-buttons">
+                                        <a href="{{ route('gastos.edit', $gasto->id) }}"
+                                        class="btn btn-warning btn-sm"
+                                        title="Editar">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
 
-                                    <form action="{{ route('gastos.destroy', $gasto->id) }}"
-                                        method="POST"
-                                        class="d-inline"
-                                        onsubmit="return confirm('¿Anular este gasto?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger rounded-circle"
-                                                title="Anular">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                        <form action="{{ route('gastos.destroy', $gasto->id) }}"
+                                            method="POST"
+                                            class="d-inline"
+                                            onsubmit="return confirm('¿Anular este gasto?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-danger btn-sm"
+                                                    title="Anular">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
@@ -129,16 +141,6 @@ Gastos
                         </tr>
                     @endforeach
                     </tbody>
-
-                    <tfoot class="table-light">
-                        <tr>
-                            <th colspan="2" class="text-end">Total del día</th>
-                            <th id="total-gastos" class="text-end fw-bold text-danger">
-                                S/ 0.00
-                            </th>
-                            <th colspan="3"></th>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
 

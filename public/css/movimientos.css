@@ -202,16 +202,6 @@
     box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
 
-/* ================= DARK MODE ================= */
-.theme-dark .estado-pagado {
-    background-color: #16a34a;
-    color: #ffffff;
-}
-
-.theme-dark .estado-pendiente {
-    background-color: #eab308;
-    color: #1f1f1f;
-}
 /* ✅ OFFCANVAS: permitir scroll real */
 .detalle-venta-panel .offcanvas-body{
     overflow-y: auto !important;
@@ -311,3 +301,143 @@
     font-weight: bold;
 }
 
+
+
+/* =========================================================
+   MOVIMIENTOS — DARK MODE PREMIUM
+========================================================= */
+:root[data-theme='dark'] .dashboard-card {
+    background: linear-gradient(180deg, #102746 0%, #0c213e 100%) !important;
+    border: 1px solid #2a4c79 !important;
+    box-shadow: 0 10px 24px rgba(4, 12, 29, 0.38) !important;
+}
+
+:root[data-theme='dark'] .dashboard-card small.text-muted {
+    color: #b6cdee !important;
+}
+
+:root[data-theme='dark'] .dashboard-card h5 {
+    color: #f5f9ff !important;
+}
+
+:root[data-theme='dark'] .dashboard-card:nth-child(1) h5,
+:root[data-theme='dark'] .dashboard-card .kpi-balance {
+    color: #8ad1ff !important;
+}
+
+
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card h5 { color: #8ad1ff !important; }
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(2) .dashboard-card h5 { color: #86efac !important; }
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(3) .dashboard-card h5 { color: #fda4af !important; }
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(4) .dashboard-card h5 { color: #fde68a !important; }
+
+:root[data-theme='dark'] .icon-soft-primary { background: rgba(56, 189, 248, 0.16) !important; color: #7dd3fc !important; }
+:root[data-theme='dark'] .icon-soft-success { background: rgba(34, 197, 94, 0.16) !important; color: #86efac !important; }
+:root[data-theme='dark'] .icon-soft-danger { background: rgba(244, 63, 94, 0.16) !important; color: #fda4af !important; }
+:root[data-theme='dark'] .icon-soft-warning { background: rgba(250, 204, 21, 0.16) !important; color: #fde68a !important; }
+
+:root[data-theme='dark'] #year-picker.year-picker {
+    background: #0f223f !important;
+    border: 1px solid #2f4f7d;
+    box-shadow: 0 18px 36px rgba(3, 10, 24, 0.5);
+}
+
+:root[data-theme='dark'] #year-picker .year-btn {
+    color: #dce8fb;
+}
+
+:root[data-theme='dark'] #year-picker .year-btn:hover {
+    background: #1a3965;
+}
+
+:root[data-theme='dark'] #year-picker .year-btn.active {
+    background: #2d7df4;
+    color: #ffffff;
+}
+
+
+/* Redondeo de cards/tablas en movimientos */
+:root[data-theme='dark'] .container-card,
+:root[data-theme='dark'] .container-card .card,
+:root[data-theme='dark'] .container-card .ui-card,
+:root[data-theme='dark'] .container-card .table-responsive,
+:root[data-theme='dark'] .container-card .ui-table {
+    border-radius: 16px !important;
+}
+
+:root[data-theme='dark'] .container-card .table-responsive {
+    overflow: hidden;
+    border: 1px solid #2d4f7e;
+    background: #0f2342;
+}
+
+:root[data-theme='dark'] .row.mb-4.g-3 .icon-soft {
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card h5,
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card i { color: #7dd3fc !important; }
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(2) .dashboard-card h5,
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(2) .dashboard-card i { color: #86efac !important; }
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(3) .dashboard-card h5,
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(3) .dashboard-card i { color: #fda4af !important; }
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(4) .dashboard-card h5,
+:root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(4) .dashboard-card i { color: #fde68a !important; }
+
+
+/* KPI Movimientos estilo dashboard (colores + barra lateral) */
+.container-card .dashboard-card {
+    position: relative;
+    border-radius: 18px !important;
+    overflow: hidden;
+    padding-left: 6px;
+}
+
+.container-card .dashboard-card::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 12px;
+    bottom: 12px;
+    width: 5px;
+    border-radius: 999px;
+    background: #4b82f1;
+}
+
+.container-card .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card::before { background: #3b82f6; }
+.container-card .row.mb-4.g-3 > .col-md-3:nth-child(2) .dashboard-card::before { background: #22c55e; }
+.container-card .row.mb-4.g-3 > .col-md-3:nth-child(3) .dashboard-card::before { background: #ef4444; }
+.container-card .row.mb-4.g-3 > .col-md-3:nth-child(4) .dashboard-card::before { background: #f59e0b; }
+
+:root[data-theme='dark'] .container-card .dashboard-card {
+    background: linear-gradient(180deg, #112a4d 0%, #0d2240 100%) !important;
+    border: 1px solid #2f5587 !important;
+    box-shadow: 0 14px 28px rgba(4, 12, 29, 0.38);
+}
+
+:root[data-theme='dark'] .container-card .dashboard-card .card-body {
+    background: transparent !important;
+}
+
+:root[data-theme='dark'] .container-card .dashboard-card small.text-muted {
+    color: #c0d4f1 !important;
+    font-weight: 600;
+}
+
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card h5,
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card i { color: #7dd3fc !important; }
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(2) .dashboard-card h5,
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(2) .dashboard-card i { color: #86efac !important; }
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(3) .dashboard-card h5,
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(3) .dashboard-card i { color: #fda4af !important; }
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(4) .dashboard-card h5,
+:root[data-theme='dark'] .container-card .row.mb-4.g-3 > .col-md-3:nth-child(4) .dashboard-card i { color: #fde68a !important; }
+
+/* Card de tabla redondeado en movimientos */
+.container-card > .card.ui-card.rounded-4,
+.container-card > .card.ui-card.rounded-4 .table-responsive,
+.container-card > .card.ui-card.rounded-4 .ui-table {
+    border-radius: 18px !important;
+}
