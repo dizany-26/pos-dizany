@@ -1,3 +1,3 @@
 <footer id="footer">
-        &copy; {{ date('Y') }} {{ $config->nombre_empresa ?? 'Dizany' }}. Todos los derechos reservados.
-    </footer>
+    <span class="footer-label">{{ strtoupper($config->nombre_empresa ?? 'Dizany') }}</span>
+</footer>
