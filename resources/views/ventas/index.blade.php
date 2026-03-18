@@ -265,14 +265,14 @@ Nueva venta
                     </div>
 
                     <div class="card-footer d-flex justify-content-between">
-                        <button id="btn-volver-step1" class="btn btn-light">
+                        <button id="btn-volver-step1" class="btn btn-soft btn-soft-info px-4">
                             <i class="fas fa-arrow-left me-1"></i> Volver
                         </button>
-                        <button id="btn-ir-step3" class="btn btn-soft btn-soft-success px-5">
+                        <button id="btn-ir-step3" class="btn btn-soft btn-soft-primary px-5">
                             Continuar venta <i class="fas fa-arrow-right ms-2"></i>
                         </button>
                         <button id="btn-confirmar-venta-directo"
-                            class="btn btn-success"
+                            class="btn btn-soft btn-soft-primary px-5"
                             style="display:none">
                         ✅ Confirmar venta
                         </button>
@@ -312,10 +312,10 @@ Nueva venta
                     </div>
 
                     <div class="card-footer d-flex justify-content-between">
-                        <button id="btn-volver-step2" class="btn btn-soft btn-soft-success px-5">
+                        <button id="btn-volver-step2" class="btn btn-soft btn-soft-info px-5">
                             <i class="fas fa-arrow-left"></i> Volver
                         </button>
-                        <button id="btn-confirmar-venta" class="btn btn-soft btn-soft-success px-5">
+                        <button id="btn-confirmar-venta" class="btn btn-soft btn-soft-primary px-5">
                             <i class="fas fa-check"></i> Confirmar venta
                         </button>
                     </div>
