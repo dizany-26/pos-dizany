@@ -24,12 +24,73 @@ function formatPrecioDinamico(precio) {
 // UI / STEPS / CLIENTE / PAGO / VUELTO / SERIE-CORRELATIVO
 // ===============================
 
+
+function esVistaMovilVentas() {
+    return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function setMobileCartOpen(open) {
+    const btn = document.getElementById("btn-carrito-movil");
+    const backdrop = document.getElementById("carrito-movil-backdrop");
+
+    document.body.classList.toggle("mobile-cart-open", !!open && esVistaMovilVentas());
+
+    if (btn) {
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    if (backdrop) {
+        backdrop.hidden = !open;
+    }
+}
+
+function syncMobileCartState(step = null) {
+    const pasoActual = step || document.querySelector(".step-panel.is-active")?.id?.replace("step-", "") || "1";
+    const forzarAbierto = esVistaMovilVentas() && Number(pasoActual) > 1;
+
+    document.body.classList.toggle("mobile-cart-force-open", forzarAbierto);
+
+    if (!esVistaMovilVentas()) {
+        document.body.classList.remove("mobile-cart-open", "mobile-cart-force-open");
+        const backdrop = document.getElementById("carrito-movil-backdrop");
+        if (backdrop) backdrop.hidden = true;
+    }
+}
+
+function inicializarCarritoMovil() {
+    const btnAbrir = document.getElementById("btn-carrito-movil");
+    const btnCerrar = document.getElementById("cerrar-carrito-movil");
+    const backdrop = document.getElementById("carrito-movil-backdrop");
+
+    if (btnAbrir) {
+        btnAbrir.addEventListener("click", () => setMobileCartOpen(true));
+    }
+
+    if (btnCerrar) {
+        btnCerrar.addEventListener("click", () => {
+            if (document.body.classList.contains("mobile-cart-force-open")) return;
+            setMobileCartOpen(false);
+        });
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener("click", () => {
+            if (document.body.classList.contains("mobile-cart-force-open")) return;
+            setMobileCartOpen(false);
+        });
+    }
+
+    window.addEventListener("resize", () => syncMobileCartState());
+    syncMobileCartState();
+}
+
 // ============================
 // showStep (GLOBAL)
 // ============================
 function showStep(n) {
     document.querySelectorAll(".step-panel").forEach(p => p.classList.remove("is-active"));
     document.getElementById("step-" + n)?.classList.add("is-active");
+    syncMobileCartState(n);
 
     const v = ventaActiva();
     if (v) v.fase = n;
@@ -152,19 +213,25 @@ function actualizarResumen() {
 // ============================
 function actualizarBotonCarrito() {
     const btnIrStep2 = document.getElementById("btn-ir-step2");
+    const btnCarritoMovil = document.getElementById("btn-carrito-movil");
+    const badgeMovil = document.getElementById("btn-carrito-movil-count");
+    const totalMovil = document.getElementById("btn-carrito-movil-total");
     if (!btnIrStep2) return;
 
     const v = ventaActiva();
     const cantidad = (v.productos || []).length;
 
+    if (badgeMovil) badgeMovil.textContent = cantidad;
+
     if (cantidad === 0) {
         btnIrStep2.innerHTML = `0 Continuar`;
         btnIrStep2.disabled = true;
+        if (btnCarritoMovil) btnCarritoMovil.disabled = true;
+        if (totalMovil) totalMovil.textContent = 'S/ 0.00';
         return;
     }
 
     const { total } = calcularTotal();
-    // 👇 AHORA USA LA FUNCIÓN DINÁMICA
     const totalFormateado = formatPrecioDinamico(total);
 
     btnIrStep2.disabled = false;
@@ -174,6 +241,9 @@ function actualizarBotonCarrito() {
         <span class="fw-semibold">S/ ${totalFormateado}</span>
         <i class="fas fa-arrow-right ms-2"></i>
     `;
+
+    if (btnCarritoMovil) btnCarritoMovil.disabled = false;
+    if (totalMovil) totalMovil.textContent = `S/ ${totalFormateado}`;
 }
 
 // ============================
@@ -238,7 +308,7 @@ function actualizarBotonesSegunMetodoPagado() {
         if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "none";
     } else if (metodo) {
         if (btnIrStep3) btnIrStep3.style.display = "none";
-        if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "block";
+        if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "inline-flex";
     }
 }
 
@@ -284,7 +354,7 @@ function manejarEstadoVenta() {
             labelVuelto.classList.remove("d-none");
         }
 
-        if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "block";
+        if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "inline-flex";
         return;
     }
 
@@ -347,6 +417,7 @@ if (estado === "pagado") {
 // DOM
 // ============================
 document.addEventListener("DOMContentLoaded", () => {
+    inicializarCarritoMovil();
 
     // Serie/correlativo
     const tipoComprobanteSelect = document.getElementById("tipo_comprobante");
