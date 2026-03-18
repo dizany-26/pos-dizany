@@ -37,6 +37,10 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::post('/perfil/cambiar-clave', [UsuarioController::class, 'cambiarMiClave'])
+    ->middleware('auth')
+    ->name('perfil.cambiar-clave');
+
 // Rutas exclusivas para Administrador
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::get('/admin/dashboard', [DashboardAdminController::class, 'index'])
