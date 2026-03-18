@@ -168,37 +168,4 @@
 
     </div>
 
-    <!-- Botón Cerrar sesión -->
-    <a href="#" id="btn-logout" class="nav-link sidebar-footer">
-        <i class="fas fa-sign-out-alt"></i>
-        <span class="menu-text logout-text">Cerrar sesión</span>
-    </a>
-
-
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
 </aside>
-
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.getElementById('btn-logout').addEventListener('click', function (e) {
-        e.preventDefault();
-        Swal.fire({
-            title: '¿Cerrar sesión?',
-            text: "Tu sesión se cerrará.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, cerrar sesión',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('logout-form').submit();
-            }
-        });
-    });
-</script>
-

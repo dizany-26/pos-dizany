@@ -1147,3 +1147,76 @@ select.form-select-sm,
 :root[data-theme='dark'] .step2-scroll::-webkit-scrollbar-track {
     background: #0a1f3d;
 }
+
+
+/* ============================================================
+   BOTONES DE STEPS DEL CARRITO
+============================================================ */
+#step-2 .card-footer,
+#step-3 .card-footer {
+    gap: 14px;
+    padding: 14px 16px 16px;
+}
+
+.venta-step-btn {
+    min-height: 52px;
+    border-radius: 14px !important;
+    padding: 0.9rem 1.35rem !important;
+    font-size: 1rem;
+    font-weight: 500;
+    justify-content: center;
+    border: 1px solid #d7deea !important;
+    background: #ffffff !important;
+    color: #11243f !important;
+    box-shadow: 0 6px 14px rgba(15, 35, 65, 0.08);
+}
+
+.venta-step-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(15, 35, 65, 0.12);
+}
+
+.venta-step-btn-back {
+    background: #ffffff !important;
+    color: #11243f !important;
+}
+
+.venta-step-btn-primary {
+    background: #ffffff !important;
+    color: #11243f !important;
+}
+
+.venta-step-btn .fas,
+.venta-step-btn i {
+    font-size: 1rem;
+}
+
+#btn-confirmar-venta-directo.venta-step-btn {
+    min-width: 260px;
+}
+
+:root[data-theme='dark'] .venta-step-btn {
+    border-color: #35527a !important;
+    background: #122742 !important;
+    color: #ecf4ff !important;
+    box-shadow: 0 8px 18px rgba(2, 8, 20, 0.32);
+}
+
+:root[data-theme='dark'] .venta-step-btn:hover {
+    box-shadow: 0 12px 22px rgba(2, 8, 20, 0.4);
+    border-color: #4a6d9d !important;
+    background: #16304f !important;
+}
+
+@media (max-width: 768px) {
+    #step-2 .card-footer,
+    #step-3 .card-footer {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .venta-step-btn {
+        width: 100%;
+    }
+}
+
