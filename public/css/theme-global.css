@@ -60,6 +60,17 @@
     box-shadow: var(--lt-shadow-sm);
 }
 
+:root[data-theme='light'] #footer {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-top: 1px solid #cfd8e6 !important;
+    margin-top: 12px;
+    padding: 8px 16px 6px !important;
+    text-align: center;
+    font-size: 0.88rem;
+    color: #314866 !important;
+}
+
 :root[data-theme='light'] #sidebar .submenu-items {
     background: #f5f8fc !important;
 }
@@ -170,6 +181,55 @@
     background: linear-gradient(180deg, #ffffff, #edf4fd) !important;
 }
 
+:root[data-theme='light'] .user-menu-panel,
+:root[data-theme='light'] .user-menu-panel .dropdown-header,
+:root[data-theme='light'] .user-menu-panel .dropdown-item {
+    color: #17365d !important;
+}
+
+:root[data-theme='light'] .user-menu-panel .dropdown-divider {
+    border-top-color: #dbe6f5 !important;
+}
+
+:root[data-theme='light'] .user-menu-panel .dropdown-item:hover,
+:root[data-theme='light'] .user-menu-panel .dropdown-item:focus {
+    background: rgba(59, 130, 246, 0.06) !important;
+    border-color: #b9d3f7 !important;
+    color: #17365d !important;
+}
+
+:root[data-theme='light'] .user-password-modal .modal-header {
+    background: linear-gradient(180deg, #3d73e9 0%, #2b5ecf 100%) !important;
+    color: #fff !important;
+    border-bottom-color: #2958be !important;
+}
+
+:root[data-theme='light'] .user-password-modal .modal-footer {
+    background: #f8fbff !important;
+}
+
+:root[data-theme='light'] .user-menu-logout {
+    background: rgba(239, 68, 68, .15) !important;
+    color: #dc2626 !important;
+    border: none !important;
+}
+
+:root[data-theme='light'] .user-menu-logout:hover {
+    background: rgba(239, 68, 68, .22) !important;
+    color: #c81e1e !important;
+}
+
+:root[data-theme='light'] .user-modal-submit {
+    background: rgba(37, 99, 235, .15) !important;
+    color: #2563eb !important;
+    border: none !important;
+}
+
+:root[data-theme='light'] .user-modal-submit:hover {
+    background: rgba(37, 99, 235, .24) !important;
+    color: #1d4ed8 !important;
+}
+
 :root[data-theme='light'] .card,
 :root[data-theme='light'] .modal-content,
 :root[data-theme='light'] .offcanvas,
@@ -245,11 +305,27 @@
     color: var(--dm-text) !important;
 }
 
+:root[data-theme='dark'] #content {
+    box-shadow: inset 0 0 0 1px #1f3658;
+    border-radius: 0 0 14px 14px;
+}
+
 :root[data-theme='dark'] header,
 :root[data-theme='dark'] #sidebar,
 :root[data-theme='dark'] footer {
     background: #0d1d36 !important;
     box-shadow: var(--dm-shadow-sm);
+}
+
+:root[data-theme='dark'] #footer {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-top: 1px solid #2b3f5f !important;
+    margin-top: 12px;
+    padding: 8px 16px 6px !important;
+    text-align: center;
+    font-size: 0.88rem;
+    color: #d7e3f5 !important;
 }
 
 :root[data-theme='dark'] #sidebar .submenu-items {
@@ -312,6 +388,55 @@
 :root[data-theme='dark'] #sidebar .sidebar-footer:hover {
     background: rgba(100, 163, 255, 0.18) !important;
     border-color: #5880ba !important;
+}
+
+:root[data-theme='dark'] .user-menu-panel,
+:root[data-theme='dark'] .user-menu-panel .dropdown-header,
+:root[data-theme='dark'] .user-menu-panel .dropdown-item {
+    color: #dbe8ff !important;
+}
+
+:root[data-theme='dark'] .user-menu-panel .dropdown-divider {
+    border-top-color: #284264 !important;
+}
+
+:root[data-theme='dark'] .user-menu-panel .dropdown-item:hover,
+:root[data-theme='dark'] .user-menu-panel .dropdown-item:focus {
+    background: rgba(100, 163, 255, 0.08) !important;
+    border-color: #3d5f8f !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .user-password-modal .modal-header {
+    background: linear-gradient(180deg, #315fd1 0%, #264fb7 100%) !important;
+    color: #f7fbff !important;
+    border-bottom-color: #2b4f9b !important;
+}
+
+:root[data-theme='dark'] .user-password-modal .modal-footer {
+    background: #162742 !important;
+}
+
+:root[data-theme='dark'] .user-menu-logout {
+    background: rgba(239, 68, 68, .16) !important;
+    color: #ff7b84 !important;
+    border: none !important;
+}
+
+:root[data-theme='dark'] .user-menu-logout:hover {
+    background: rgba(239, 68, 68, .24) !important;
+    color: #ff959c !important;
+}
+
+:root[data-theme='dark'] .user-modal-submit {
+    background: rgba(37, 99, 235, .18) !important;
+    color: #6da8ff !important;
+    border: none !important;
+}
+
+:root[data-theme='dark'] .user-modal-submit:hover {
+    background: rgba(37, 99, 235, .28) !important;
+    color: #8abcff !important;
 }
 :root[data-theme='dark'] .card,
 :root[data-theme='dark'] .card-body,
