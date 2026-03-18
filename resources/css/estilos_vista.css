@@ -81,6 +81,27 @@ body {
     }
 }
 
+
+#footer {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    transition: margin-left 0.25s ease, width 0.25s ease;
+}
+
+@media (min-width: 769px) {
+    body.sidebar-collapsed #footer {
+        margin-left: var(--sidebar-width-collapsed);
+        width: calc(100% - var(--sidebar-width-collapsed));
+    }
+}
+
+@media (max-width: 768px) {
+    #footer {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
 /* ============================================
    HEADER — FIJO Y CON ESTILO
 ============================================ */
@@ -109,29 +130,76 @@ header .nav-btn {
     cursor: pointer;
 }
 .user-info-header {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-
-    padding: 4px 10px;
-    height: 34px;
-
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: 999px;
-
     color: #fff;
-    font-size: 13px;
+    font-size: 15px;
     opacity: 0.95;
+}
+
+.user-menu-toggle {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.user-menu-toggle:hover,
+.user-menu-toggle:focus,
+.user-menu-toggle.show {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(9, 18, 35, 0.18);
+}
+
+.user-menu-toggle::after {
+    display: none;
 }
 
 .user-info-header i {
     font-size: 15px;
 }
 
+.user-menu-panel {
+    min-width: 240px;
+    padding: 8px;
+}
+
+.user-menu-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.user-menu-panel .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.user-menu-logout,
+.user-modal-submit {
+    border-radius: 12px !important;
+    font-weight: 600;
+    padding: 0.65rem 0.9rem;
+    min-height: 42px;
+    box-shadow: none !important;
+}
+
+.user-password-modal .modal-title {
+    font-weight: 700;
+}
+
 @media (max-width: 768px) {
-    .user-info-header .user-name {
-        display: none;
+    .user-menu-panel {
+        min-width: 220px;
     }
 }
 
@@ -182,7 +250,7 @@ header .nav-btn {
     transition: width 0.25s ease, left 0.25s ease;
     z-index: 1020;
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px 16px 0 0;
+    border-radius: 16px;
     box-shadow: 0 8px 24px rgba(5, 15, 35, 0.16);
 }
 

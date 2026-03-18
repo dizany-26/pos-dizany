@@ -1147,3 +1147,84 @@ select.form-select-sm,
 :root[data-theme='dark'] .step2-scroll::-webkit-scrollbar-track {
     background: #0a1f3d;
 }
+
+
+/* ============================================================
+   BOTONES DE STEPS DEL CARRITO
+============================================================ */
+#step-2 .card-footer,
+#step-3 .card-footer {
+    gap: 14px;
+    padding: 14px 16px 16px;
+}
+
+.venta-step-btn {
+    min-height: 42px;
+    border-radius: 12px !important;
+    padding: 0.62rem 1.15rem !important;
+    font-size: 0.98rem;
+    font-weight: 500;
+    justify-content: center;
+    border: 1px solid #d8e0ec !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(15, 35, 65, 0.06);
+}
+
+.venta-step-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(15, 35, 65, 0.1);
+}
+
+.venta-step-btn-back {
+    background: #ffffff !important;
+    color: #4b5d76 !important;
+}
+
+.venta-step-btn-primary {
+    background: #ffffff !important;
+    color: #15803d !important;
+    border-color: #cfe7d7 !important;
+}
+
+.venta-step-btn .fas,
+.venta-step-btn i {
+    font-size: 0.95rem;
+}
+
+#btn-confirmar-venta-directo.venta-step-btn {
+    min-width: 260px;
+}
+
+:root[data-theme='dark'] .venta-step-btn {
+    border-color: #324d73 !important;
+    background: #122742 !important;
+    box-shadow: 0 6px 14px rgba(2, 8, 20, 0.24);
+}
+
+:root[data-theme='dark'] .venta-step-btn:hover {
+    box-shadow: 0 10px 18px rgba(2, 8, 20, 0.32);
+    border-color: #43648f !important;
+    background: #16304f !important;
+}
+
+:root[data-theme='dark'] .venta-step-btn-back {
+    color: #d2dceb !important;
+}
+
+:root[data-theme='dark'] .venta-step-btn-primary {
+    color: #7fe39a !important;
+    border-color: #2f6b4a !important;
+}
+
+@media (max-width: 768px) {
+    #step-2 .card-footer,
+    #step-3 .card-footer {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .venta-step-btn {
+        width: 100%;
+    }
+}
+

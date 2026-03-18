@@ -34,22 +34,12 @@
 
 /* Botón atrás */
 .btn-header-back {
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.35);
-    background: transparent;
-    color: #fff;
-
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    transition: 0.2s ease;
-}
-
-.btn-header-back:hover {
-    background: rgba(255,255,255,0.12);
 }
 
 /* Separador */
@@ -80,6 +70,40 @@
     flex-shrink: 0;
 }
 
+
+/* =========================================================
+   BOTONES HEADER — ESTILO SOFT GLOBAL
+========================================================= */
+.btn-header-back,
+.btn-pos-espera,
+.btn-ordenar,
+.btn-gasto,
+.btn-movimientos-primary,
+.btn-movimientos-outline,
+.btn-header-more {
+    min-height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.10);
+    color: #eef5ff;
+    box-shadow: none;
+    transition: all .18s ease;
+    backdrop-filter: blur(8px);
+}
+
+.btn-header-back:hover,
+.btn-pos-espera:hover,
+.btn-ordenar:hover,
+.btn-gasto:hover,
+.btn-movimientos-primary:hover,
+.btn-movimientos-outline:hover,
+.btn-header-more:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,.12);
+    background: rgba(255,255,255,.16);
+    border-color: rgba(255,255,255,.24);
+}
+
 /* =========================================================
    BOTÓN: VENTAS EN ESPERA
 ========================================================= */
@@ -88,15 +112,8 @@
     display: flex;
     align-items: center;
     gap: 6px;
-
-    height: 36px;
-    padding: 0 12px;
-
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 8px;
-
-    color: #fff;
+    height: 38px;
+    padding: 0 14px;
     font-size: 13px;
     cursor: pointer;
 }
@@ -118,14 +135,8 @@
 }
 
 .btn-ordenar {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: #fff;
-
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -163,20 +174,11 @@
 .btn-gasto {
     height: 38px;
     padding: 0 16px;
-    border-radius: 10px;
-
-    background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.1));
-    border: 1px solid rgba(189, 212, 246, 0.45);
-    color: #eef5ff;
-
     display: flex;
     align-items: center;
     gap: 8px;
-
     font-weight: 500;
     letter-spacing: .15px;
-    box-shadow: 0 4px 10px rgba(7, 18, 41, 0.18);
-    transition: background .2s ease, border-color .2s ease, transform .15s ease, box-shadow .2s ease;
 }
 
 .btn-gasto i {
@@ -184,12 +186,6 @@
     opacity: .92;
 }
 
-.btn-gasto:hover {
-    background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.14));
-    border-color: rgba(167, 201, 248, 0.65);
-    box-shadow: 0 8px 16px rgba(5, 16, 39, 0.22);
-    transform: translateY(-1px);
-}
 
 /* =========================================================
    BOTONES MOVIMIENTOS (MISMO LOOK QUE VENTAS)
@@ -197,30 +193,32 @@
 
 .btn-movimientos-primary,
 .btn-movimientos-outline {
-    height: 36px;
+    height: 38px;
     padding: 0 14px;
-    border-radius: 8px;
-
     display: flex;
     align-items: center;
     gap: 6px;
-
     font-size: 13px;
     cursor: pointer;
 }
 
-/* Abrir caja */
-.btn-movimientos-primary {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.35);
-    color: #fff;
+.btn-movimientos-outline {
+    color: #cfe2ff;
 }
 
-/* Reporte */
+.btn-header-back,
+.btn-ordenar,
+.btn-header-more {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+}
+
+.btn-pos-espera,
+.btn-gasto,
+.btn-movimientos-primary,
 .btn-movimientos-outline {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.35);
-    color: #9cc2ff;
+    justify-content: center;
 }
 
 /* =========================================================
@@ -294,11 +292,8 @@
 /* ===== BOTÓN ⋮ ===== */
 .btn-header-more {
     display: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.25);
-    background: rgba(255,255,255,.1);
+    width: 38px;
+    height: 38px;
     color: #fff;
 }
 

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role; // Asegúrate de que el modelo se llame Role.php
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use App\Exports\UsuariosExport;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -82,6 +83,19 @@ class UsuarioController extends Controller
 
         return redirect()->route('usuarios.index')->with('success', 'Contraseña actualizada correctamente.');
     }
+    public function cambiarMiClave(Request $request)
+    {
+        $request->validate([
+            'nueva_clave' => 'required|string|min:4'
+        ]);
+
+        $usuario = Auth::user();
+        $usuario->clave = Hash::make($request->nueva_clave);
+        $usuario->save();
+
+        return back()->with('success', 'Contraseña actualizada correctamente.');
+    }
+
     public function exportarExcel()
     {
         return Excel::download(new UsuariosExport, 'usuarios.xlsx');
