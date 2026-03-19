@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 use App\Models\Producto;
 use App\Models\Lote;
@@ -21,6 +23,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
 {
     Paginator::useBootstrapFive();
+
+    if (! Schema::hasTable('usuario_permisos')) {
+        Schema::create('usuario_permisos', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('usuario_id');
+            $table->string('permiso', 100);
+            $table->unique(['usuario_id', 'permiso']);
+            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('cascade');
+        });
+    }
 
     View::composer('*', function ($view) {
 
