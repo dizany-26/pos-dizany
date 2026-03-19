@@ -1,4 +1,3 @@
-
 /* ===============================
    BOTÓN EXPORTAR
 ================================ */
@@ -8,3 +7,182 @@
     padding: 8px 16px;
 }
 
+.usuario-modal-dialog {
+    max-width: 1120px;
+}
+
+.usuario-modal-form {
+    overflow: hidden;
+}
+
+.usuario-hidden-autofill {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    padding: 0;
+}
+
+.usuario-modal-panel {
+    border: 1px solid #dbe2ea;
+    border-radius: 18px;
+    padding: 1rem;
+    background: #fff;
+}
+
+.usuario-modal-section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.usuario-modal-section-help {
+    font-size: 0.83rem;
+    color: #6b7280;
+}
+
+.usuario-modal-panel-permisos {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.usuario-permisos-grid {
+    display: grid;
+    gap: 0.9rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: min(58vh, 560px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.usuario-permisos-card {
+    border: 1px solid #dbe2ea;
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    background: #f8fafc;
+}
+
+.usuario-permisos-card-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+}
+
+.usuario-permiso-item {
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.usuario-permiso-item .form-check-input {
+    margin-top: 0;
+}
+
+.usuario-permiso-item .form-check-label {
+    font-size: 0.88rem;
+    color: #1f2937;
+}
+
+.usuario-permisos-action {
+    border-radius: 999px;
+    padding-inline: 0.9rem;
+    font-size: 0.8rem;
+    border: 1px solid #dbe2ea;
+}
+
+.usuario-password-group .ui-input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.toggle-password-btn {
+    min-width: 46px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-color: #cbd5e1;
+    color: #6b7280;
+    background: #fff;
+}
+
+.toggle-password-btn:hover {
+    background: #f8fafc;
+    color: #334155;
+}
+
+.usuario-modal-form input:-webkit-autofill,
+.usuario-modal-form input:-webkit-autofill:hover,
+.usuario-modal-form input:-webkit-autofill:focus,
+.usuario-modal-form select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    -webkit-text-fill-color: #111827;
+    transition: background-color 9999s ease-out 0s;
+}
+
+:root[data-theme='dark'] .usuario-modal-form {
+    background: #0f172a;
+    color: #e5edf7;
+}
+
+:root[data-theme='dark'] .usuario-modal-panel {
+    background: #111c31;
+    border-color: #24324c;
+}
+
+:root[data-theme='dark'] .usuario-modal-section-title,
+:root[data-theme='dark'] .usuario-modal-form .form-label,
+:root[data-theme='dark'] .usuario-permiso-item .form-check-label {
+    color: #e5edf7;
+}
+
+:root[data-theme='dark'] .usuario-modal-section-help,
+:root[data-theme='dark'] .usuario-permisos-card-title {
+    color: #9fb0ca;
+}
+
+:root[data-theme='dark'] .usuario-permisos-card {
+    background: #16233b;
+    border-color: #24324c;
+}
+
+:root[data-theme='dark'] .usuario-permisos-action,
+:root[data-theme='dark'] .toggle-password-btn {
+    background: #16233b;
+    border-color: #31415f;
+    color: #dbe6f5;
+}
+
+:root[data-theme='dark'] .usuario-permisos-action:hover,
+:root[data-theme='dark'] .toggle-password-btn:hover {
+    background: #1d2d4b;
+    color: #ffffff;
+}
+
+:root[data-theme='dark'] .usuario-modal-form input:-webkit-autofill,
+:root[data-theme='dark'] .usuario-modal-form input:-webkit-autofill:hover,
+:root[data-theme='dark'] .usuario-modal-form input:-webkit-autofill:focus,
+:root[data-theme='dark'] .usuario-modal-form select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #0f1b2e inset;
+    -webkit-text-fill-color: #e5edf7;
+}
+
+@media (max-width: 991.98px) {
+    .usuario-modal-dialog {
+        max-width: calc(100vw - 1rem);
+        margin-inline: auto;
+    }
+
+    .usuario-modal-panel-permisos,
+    .usuario-permisos-grid {
+        max-height: none;
+    }
+}
