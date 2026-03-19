@@ -15,10 +15,11 @@ class UsuarioController extends Controller
     // Muestra la lista de usuarios y los roles para el formulario
     public function index()
     {
-        $usuarios = User::with('rol')->get();
+        $usuarios = User::with(['rol', 'permisos'])->get();
         $roles = Role::all();
+        $permissionGroups = User::availablePermissions();
 
-        return view('usuarios.index', compact('usuarios', 'roles'));
+        return view('usuarios.index', compact('usuarios', 'roles', 'permissionGroups'));
     }
 
     // Guarda un nuevo usuario
@@ -30,15 +31,22 @@ class UsuarioController extends Controller
         'email' => 'required|email|unique:usuarios,email', // ✅ validación
         'password' => 'required',
         'rol_id' => 'required|exists:roles,id',
+        'permissions' => 'nullable|array',
+        'permissions.*' => 'in:' . implode(',', User::flattenedPermissions()),
     ]);
 
-    User::create([
+    $usuario = User::create([
         'nombre' => $request->nombre,
         'usuario' => $request->usuario,
         'email' => $request->email, // ✅ nuevo campo
         'clave' => Hash::make($request->password),
         'rol_id' => $request->rol_id,
     ]);
+
+    $usuario->permisos()->delete();
+    foreach ($request->input('permissions', []) as $permiso) {
+        $usuario->permisos()->create(['permiso' => $permiso]);
+    }
 
     return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
 }
@@ -51,6 +59,8 @@ class UsuarioController extends Controller
         'usuario' => 'required|unique:usuarios,usuario,' . $id,
         'email' => 'required|email|unique:usuarios,email,' . $id, // ✅ validación
         'rol_id' => 'required|exists:roles,id',
+        'permissions' => 'nullable|array',
+        'permissions.*' => 'in:' . implode(',', User::flattenedPermissions()),
     ]);
 
     $usuario = User::findOrFail($id);
@@ -60,6 +70,11 @@ class UsuarioController extends Controller
         'email' => $request->email, // ✅ nuevo campo
         'rol_id' => $request->rol_id,
     ]);
+
+    $usuario->permisos()->delete();
+    foreach ($request->input('permissions', []) as $permiso) {
+        $usuario->permisos()->create(['permiso' => $permiso]);
+    }
 
     return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado correctamente.');
 }

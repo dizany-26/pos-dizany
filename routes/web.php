@@ -41,56 +41,117 @@ Route::post('/perfil/cambiar-clave', [UsuarioController::class, 'cambiarMiClave'
     ->middleware('auth')
     ->name('perfil.cambiar-clave');
 
-// Rutas exclusivas para Administrador
-Route::middleware(['auth', 'role:Administrador'])->group(function () {
+// Rutas con acceso por permisos
+Route::middleware(['auth', 'permission:dashboard.admin'])->group(function () {
     Route::get('/admin/dashboard', [DashboardAdminController::class, 'index'])
-    ->name('admin.dashboard');
-    // Otras rutas solo para admin...
+        ->name('admin.dashboard');
+});
+
+Route::middleware(['auth', 'permission:dashboard.empleado'])->group(function () {
+    Route::get('/empleado/dashboard', [EmpleadoController::class, 'index'])->name('empleado.dashboard');
+});
+
+Route::middleware(['auth', 'permission:gestion.usuarios'])->group(function () {
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
-    Route::get('/productos', [ProductoController::class, 'index'])->name('productos.index');
-    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-    Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
-    Route::get('/productos/export', [ProductoController::class, 'export'])->name('productos.export');
-    Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
+    Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
+    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
+    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+    Route::post('/usuarios/cambiar-clave', [UsuarioController::class, 'cambiarClave'])->name('usuarios.cambiarClave');
+    Route::get('/usuarios/exportar-excel', [UsuarioController::class, 'exportarExcel'])->name('usuarios.exportarExcel');
+});
+
+Route::middleware(['auth', 'permission:gestion.clientes'])->group(function () {
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/clientes/{id}', [ClienteController::class, 'show'])->name('clientes.show');
     Route::get('/clientes/{id}/edit', [ClienteController::class, 'edit'])->name('clientes.edit');
     Route::put('/clientes/{id}', [ClienteController::class, 'update'])->name('clientes.update');
-    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-    Route::get('/reportes/ganancias', [ReporteController::class, 'ganancias'])->name('reportes.ganancias');
-    Route::get('/reportes/resumen', [ReporteController::class, 'resumen'])
-     ->name('reportes.resumen');
-    Route::get('/movimientos', [MovimientoController::class, 'index'])
-    ->name('movimientos.index');
-
-
-    Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
-    Route::put('/configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
-
-
+    Route::get('/buscar-cliente/{dniRuc}', [ClienteController::class, 'buscarCliente']);
+    Route::post('/guardar-cliente', [ClienteController::class, 'guardar'])->name('clientes.guardar');
+    Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
 });
 
-// Rutas para Empleado
-Route::middleware(['auth', 'role:Empleado'])->group(function () {
-    Route::get('/empleado/dashboard', [EmpleadoController::class, 'index'])->name('empleado.dashboard');
-    Route::get('/empleado/dashboard', [EmpleadoController::class, 'dashboard'])->name('empleado.dashboard');
-    // Otras rutas solo para empleado...
+Route::middleware(['auth', 'permission:gestion.proveedores'])->group(function () {
+    Route::resource('proveedores', App\Http\Controllers\ProveedorController::class);
 });
 
-// Rutas compartidas por Admin y Empleado
-Route::middleware(['auth', 'role:Administrador,Empleado'])->group(function () {
+Route::middleware(['auth', 'permission:inventario.productos'])->group(function () {
+    Route::get('/productos', [ProductoController::class, 'index'])->name('productos.index');
+    Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
+    Route::get('/productos/export', [ProductoController::class, 'export'])->name('productos.export');
+    Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
+    Route::get('productos/{id}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
+    Route::put('productos/{id}', [ProductoController::class, 'update'])->name('productos.update');
+    Route::patch('/productos/{id}/toggle-estado', [ProductoController::class, 'toggleEstado'])->name('productos.toggleEstado');
+});
+
+Route::middleware(['auth', 'permission:inventario.parametros'])->group(function () {
+    Route::get('/productos/parametros', [ParametrosController::class, 'index'])->name('productos.parametros');
+    Route::post('/marcas', [ParametrosController::class, 'storeMarca'])->name('parametros.marcas.store');
+    Route::delete('/marcas/{id}', [ParametrosController::class, 'destroyMarca'])->name('parametros.marcas.destroy');
+    Route::post('/marca/crear', [MarcaController::class, 'ajaxStore'])->name('marca.ajax.store');
+    Route::put('/marcas/{id}', [ParametrosController::class, 'updateMarca'])->name('parametros.marcas.update');
+    Route::post('/categorias', [ParametrosController::class, 'storeCategoria'])->name('parametros.categorias.store');
+    Route::delete('/categorias/{id}', [ParametrosController::class, 'destroyCategoria'])->name('parametros.categorias.destroy');
+    Route::post('/categoria/crear', [CategoriaController::class, 'ajaxStore'])->name('categoria.ajax.store');
+    Route::put('/categorias/{id}', [ParametrosController::class, 'updateCategoria'])->name('parametros.categorias.update');
+});
+
+Route::middleware(['auth', 'permission:inventario.resumen'])->group(function () {
+    Route::get('/inventario/resumen', [InventarioController::class, 'resumen'])->name('inventario.resumen');
+});
+
+Route::middleware(['auth', 'permission:inventario.lotes'])->group(function () {
+    Route::get('/inventario/lote', [InventarioController::class, 'lote'])->name('inventario.lote');
+    Route::post('/inventario/lote', [InventarioController::class, 'storeLote'])->name('inventario.lote.store');
+    Route::get('/inventario/lotes', [InventarioController::class, 'lotes'])->name('inventario.lotes');
+    Route::get('/lotes/{lote}/edit', [InventarioController::class, 'edit'])->name('lotes.edit');
+    Route::put('/lotes/{lote}', [InventarioController::class, 'update'])->name('lotes.update');
+    Route::post('/lotes/{lote}/ajuste', [InventarioController::class, 'ajustarStock'])->name('lotes.ajustar');
+    Route::get('lotes/{lote}/movimientos', [InventarioController::class, 'movimientos'])->name('lotes.movimientos');
+});
+
+Route::middleware(['auth', 'permission:operaciones.ventas'])->group(function () {
     Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
+    Route::get('/ventas/lista', [VentaController::class, 'listar'])->name('ventas.listar');
+    Route::get('/ventas/exportar-excel', [VentaController::class, 'exportarExcel'])->name('ventas.exportarExcel');
+    Route::get('/ventas/exportar-pdf', [VentaController::class, 'exportarPDF'])->name('ventas.exportarPDF');
+    Route::post('/ventas/registrar', [VentaController::class, 'registrarVenta']);
+    Route::get('/ventas/obtener-serie-correlativo', [VentaController::class, 'obtenerSerieCorrelativo']);
+    Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
+    Route::get('/ventas/{venta}/edit', [VentaController::class, 'edit'])->name('ventas.edit');
+    Route::put('/ventas/{venta}', [VentaController::class, 'update'])->name('ventas.update');
+    Route::delete('/ventas/{venta}', [VentaController::class, 'destroy'])->name('ventas.destroy');
+    Route::post('/autorizar', [VentaController::class, 'autorizar'])->name('ventas.autorizar');
+    Route::get('/comprobantes/descargar/{filename}', [VentaController::class, 'descargarComprobante']);
+    Route::get('/ventas/filtrar-productos', [VentaController::class, 'filtrarPorCategoria']);
+    Route::post('/ventas/{venta}/cerrar-pendiente', [VentaController::class, 'cerrarPendiente']);
+    Route::get('/ventas/{id}/detalle', [VentaController::class, 'detalle']);
+    Route::post('/ventas/{venta}/pagar-credito', [VentaController::class, 'pagarCredito']);
+    Route::get('/productos/iniciales', [ProductoController::class, 'productosIniciales']);
+    Route::get('/buscar-producto', [ProductoController::class, 'buscar'])->name('producto.buscar');
+    Route::get('/producto/detalles/{id}', [ProductoController::class, 'mostrarDetalles']);
+});
+
+Route::middleware(['auth', 'permission:operaciones.gastos'])->group(function () {
     Route::get('/gastos', [GastoController::class, 'index'])->name('gastos.index');
     Route::get('/gastos/crear', [GastoController::class, 'create'])->name('gastos.create');
     Route::post('/gastos', [GastoController::class, 'store'])->name('gastos.store');
-    Route::get('/ventas/lista', [VentaController::class, 'listar'])->name('ventas.listar');
-    
-
-    // Otras rutas comunes aquí...
-    Route::get('/ventas/exportar-excel', [VentaController::class, 'exportarExcel'])->name('ventas.exportarExcel');
-    Route::get('/ventas/exportar-pdf', [VentaController::class, 'exportarPDF'])->name('ventas.exportarPDF');
 });
 
+Route::middleware(['auth', 'permission:operaciones.movimientos'])->group(function () {
+    Route::get('/movimientos', [MovimientoController::class, 'index'])->name('movimientos.index');
+});
+
+Route::middleware(['auth', 'permission:analisis.reportes'])->group(function () {
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/ganancias', [ReporteController::class, 'ganancias'])->name('reportes.ganancias');
+    Route::get('/reportes/resumen', [ReporteController::class, 'resumen'])->name('reportes.resumen');
+});
+
+Route::middleware(['auth', 'permission:sistema.configuracion'])->group(function () {
+    Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
+    Route::put('/configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
+});
 // Ruta raíz redirige según rol
 Route::get('/', function () {
     if (auth()->check()) {
@@ -104,53 +165,9 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Ruta para Buscar productos
-
-Route::get('/buscar-producto', [ProductoController::class, 'buscar'])->name('producto.buscar');
-
-// Rutas para editar y actualizar un producto
-Route::get('productos/{id}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
-Route::put('productos/{id}', [ProductoController::class, 'update'])->name('productos.update');
-
-// Ruta para activar y desactivar un producto
-Route::patch('/productos/{id}/toggle-estado', [ProductoController::class, 'toggleEstado'])->name('productos.toggleEstado');
 // Ruta para validar codigo de barras existente
 Route::get('/productos/validar-codigo-barras', [ProductoController::class, 'validarCodigoBarras'])->name('productos.validarCodigoBarras');
 Route::get('/productos/validar-codigo-barras-edicion', [ProductoController::class, 'validarCodigoBarrasEdicion'])->name('productos.validarCodigoBarrasEdicion');
-
-// ruta para crear usuarios
-Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
-Route::resource('usuarios', UsuarioController::class)->only([
-    'index', 'store', 'update', 'destroy'
-]);
-Route::post('/usuarios/cambiar-clave', [UsuarioController::class, 'cambiarClave'])->name('usuarios.cambiarClave');
-Route::get('/usuarios/exportar-excel', [UsuarioController::class, 'exportarExcel'])->name('usuarios.exportarExcel');
-
-// Buscar cliente por DNI o RUC
-Route::get('/buscar-cliente/{dniRuc}', [ClienteController::class, 'buscarCliente']);
-// Guardar cliente
-Route::post('/guardar-cliente', [ClienteController::class, 'guardar'])->name('clientes.guardar');
-Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
-
-// Guardar proveedor
-Route::resource('proveedores', App\Http\Controllers\ProveedorController::class);
-
-// Ruta para registrar la venta
-Route::post('/ventas/registrar', [VentaController::class, 'registrarVenta'])->middleware('auth');
-Route::get('/ventas/obtener-serie-correlativo', [VentaController::class, 'obtenerSerieCorrelativo']);
-
-// Ruta para mostrar detalles de venta
-Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
-// Ruta editar y eliminar
-Route::get('/ventas/{venta}/edit', [VentaController::class, 'edit'])->name('ventas.edit');
-Route::put('/ventas/{venta}', [VentaController::class, 'update'])->name('ventas.update');
-// Ruta buscar productos para editar venta
-//Route::get('/api/productos/buscar', [ProductoController::class, 'buscar']);
-
-// Ruta eliminar
-Route::delete('/ventas/{venta}', [VentaController::class, 'destroy'])
-     ->name('ventas.destroy')
-     ->middleware('auth'); // Asegúrate de tener autenticación
 
 // ruta para verificar credenciales de login
 Route::post('/login-ajax', [LoginController::class, 'loginAjax'])->name('login.ajax');
@@ -164,29 +181,6 @@ Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkE
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 // Guardar nueva contraseña
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
-// Ruta para obtener los detalles del producto
-Route::get('/producto/detalles/{id}', [ProductoController::class, 'mostrarDetalles']);
-
-//INTERFAZ PARAMETROS
-// Vista principal
-Route::get('/productos/parametros', [ParametrosController::class, 'index'])->name('productos.parametros');
-
-// Rutas de MARCAS
-Route::post('/marcas', [ParametrosController::class, 'storeMarca'])->name('parametros.marcas.store');
-Route::delete('/marcas/{id}', [ParametrosController::class, 'destroyMarca'])->name('parametros.marcas.destroy');
-Route::post('/marca/crear', [MarcaController::class, 'ajaxStore'])->name('marca.ajax.store');
-
-Route::put('/marcas/{id}', [ParametrosController::class, 'updateMarca'])
-    ->name('parametros.marcas.update');
-
-// Rutas de CATEGORÍAS
-Route::post('/categorias', [ParametrosController::class, 'storeCategoria'])->name('parametros.categorias.store');
-Route::delete('/categorias/{id}', [ParametrosController::class, 'destroyCategoria'])->name('parametros.categorias.destroy');
-Route::post('/categoria/crear', [CategoriaController::class, 'ajaxStore'])->name('categoria.ajax.store');
-
-Route::put('/categorias/{id}', [ParametrosController::class, 'updateCategoria'])
-    ->name('parametros.categorias.update');
-
 // Validación en tiempo real para marcas
 Route::get('/validar-marca', function (Illuminate\Http\Request $request) {
     $existe = \App\Models\Marca::where('nombre', $request->nombre)->exists();
@@ -198,67 +192,54 @@ Route::get('/validar-categoria', function (Request $request) {
     return response()->json(['existe' => $existe]);
 });
 
-// resumen
-Route::get('/notificaciones/inventario', [NotificacionController::class, 'inventario']);
+Route::get('/notificaciones/inventario', [NotificacionController::class, 'inventario'])
+    ->middleware(['auth', 'permission:inventario.resumen']);
 
-Route::get('/inventario/resumen', [InventarioController::class, 'resumen'])
-    ->name('inventario.resumen');
-
-Route::post('/autorizar', [VentaController::class, 'autorizar'])->name('ventas.autorizar');
-Route::get('/comprobantes/descargar/{filename}', [VentaController::class, 'descargarComprobante']);
-
-Route::get('/ventas/filtrar-productos', [VentaController::class, 'filtrarPorCategoria']);
-
-Route::get('/productos/iniciales', [ProductoController::class, 'productosIniciales']);
 // ORDENAR VENTAS (F)
 Route::get('/productos/ordenar', [ProductoController::class, 'ordenar'])
     ->name('productos.ordenar');
 
-Route::post('/ventas/{venta}/cerrar-pendiente', [VentaController::class, 'cerrarPendiente']);
-
-Route::get('/ventas/{id}/detalle', [VentaController::class, 'detalle']);
-Route::post('/ventas/{venta}/pagar-credito', [VentaController::class, 'pagarCredito']);
 
 Route::get('/movimientos/reporte', 
     [MovimientoController::class, 'reporte']
-)->name('movimientos.reporte');
+)->middleware(['auth', 'permission:operaciones.movimientos'])->name('movimientos.reporte');
 
 Route::delete('/gastos/{id}', [GastoController::class, 'destroy'])
-     ->name('gastos.destroy');
+     ->middleware(['auth', 'permission:operaciones.gastos'])->name('gastos.destroy');
      
 Route::get('/gastos/{id}/edit', [GastoController::class, 'edit'])
-    ->name('gastos.edit');
+    ->middleware(['auth', 'permission:operaciones.gastos'])->name('gastos.edit');
 
 Route::put('/gastos/{id}', [GastoController::class, 'update'])
-    ->name('gastos.update');
+    ->middleware(['auth', 'permission:operaciones.gastos'])->name('gastos.update');
 
 Route::get('/inventario/lote', [InventarioController::class, 'lote'])
-    ->name('inventario.lote');
+    ->middleware(['auth', 'permission:inventario.lotes'])->name('inventario.lote');
 
 Route::post('/inventario/lote', [InventarioController::class, 'storeLote'])
-    ->name('inventario.lote.store');
+    ->middleware(['auth', 'permission:inventario.lotes'])->name('inventario.lote.store');
 
 Route::get('/inventario/lotes', [InventarioController::class, 'lotes'])
-    ->name('inventario.lotes');
+    ->middleware(['auth', 'permission:inventario.lotes'])->name('inventario.lotes');
 
 // ✏️ Editar lote
     Route::get('/lotes/{lote}/edit', [InventarioController::class, 'edit'])
-    ->name('lotes.edit');
+    ->middleware(['auth', 'permission:inventario.lotes'])->name('lotes.edit');
 
 Route::put('/lotes/{lote}', [InventarioController::class, 'update'])
-    ->name('lotes.update');
+    ->middleware(['auth', 'permission:inventario.lotes'])->name('lotes.update');
 
         
     Route::post('/lotes/{lote}/ajuste', [InventarioController::class, 'ajustarStock'])
-    ->name('lotes.ajustar');
+    ->middleware(['auth', 'permission:inventario.lotes'])->name('lotes.ajustar');
 
     Route::get('lotes/{lote}/movimientos', [InventarioController::class, 'movimientos'])
-    ->name('lotes.movimientos');
+    ->middleware(['auth', 'permission:inventario.lotes'])->name('lotes.movimientos');
 
 Route::get(
     '/ventas/stock-fifo/{producto}',
     [VentaController::class, 'stockFIFO']
-);
+)->middleware(['auth', 'permission:operaciones.ventas']);
 //CATALAGO
 Route::get('/catalogo', function () {
 
@@ -277,7 +258,7 @@ Route::get('/catalogo', function () {
     return view('catalogo.index', compact('productos', 'categorias', 'config'));
 });
 
-Route::prefix('catalogo-admin')->middleware('auth')->group(function () {
+Route::prefix('catalogo-admin')->middleware(['auth', 'permission:catalogo.admin,catalogo.config'])->group(function () {
 
     Route::get('/', function () {
         $config = ConfiguracionCatalogo::first();
@@ -319,7 +300,7 @@ Route::prefix('catalogo-admin')->middleware('auth')->group(function () {
             'categoriasPublicas',
             'porcentajeConfig'
         ));
-        })->name('catalogo.admin.index');
+        })->middleware('permission:catalogo.admin')->name('catalogo.admin.index');
 
     Route::get('/configuracion', function () {
 
@@ -327,7 +308,7 @@ Route::prefix('catalogo-admin')->middleware('auth')->group(function () {
 
         return view('catalogo.admin.config', compact('config'));
 
-        })->name('catalogo.admin.config');
+        })->middleware('permission:catalogo.config')->name('catalogo.admin.config');
 
         Route::post('/configuracion', function (\Illuminate\Http\Request $request) {
 
@@ -355,7 +336,7 @@ Route::prefix('catalogo-admin')->middleware('auth')->group(function () {
 
             return back()->with('success', 'Configuración actualizada correctamente');
 
-        })->name('catalogo.admin.config.update');
+        })->middleware('permission:catalogo.config')->name('catalogo.admin.config.update');
 
 
 

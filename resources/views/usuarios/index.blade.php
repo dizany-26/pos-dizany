@@ -128,7 +128,8 @@ Usuarios
                                         data-nombre="{{ $usuario->nombre }}"
                                         data-usuario="{{ $usuario->usuario }}"
                                         data-email="{{ $usuario->email }}"
-                                        data-rol="{{ $usuario->rol_id }}">
+                                        data-rol="{{ $usuario->rol_id }}"
+                                        data-permissions='@json($usuario->permissionKeys())'>
                                         <i class="fa fa-edit"></i>
                                     </button>
 
@@ -194,12 +195,35 @@ Usuarios
 
                 <div class="mb-3">
                     <label class="form-label">Rol</label>
-                    <select name="rol_id" class="form-select ui-input" required>
+                    <select name="rol_id" class="form-select ui-input permission-role-select" required>
                         <option value="" disabled selected>Seleccione un rol</option>
                         @foreach($roles as $rol)
-                            <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
+                            <option value="{{ $rol->id }}" data-role-name="{{ $rol->nombre }}">{{ $rol->nombre }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div class="permissions-block mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+                        <label class="form-label mb-0 fw-semibold">Permisos de acceso</label>
+                        <div class="permissions-actions d-flex gap-2">
+                            <button type="button" class="btn-soft btn-soft-info permissions-select-all">Marcar todo</button>
+                            <button type="button" class="btn-soft btn-soft-info permissions-clear-all">Limpiar</button>
+                        </div>
+                    </div>
+                    @foreach($permissionGroups as $groupName => $permissions)
+                        <div class="permission-group-card mb-3">
+                            <div class="permission-group-title">{{ $groupName }}</div>
+                            <div class="permission-grid">
+                                @foreach($permissions as $permissionKey => $permissionLabel)
+                                    <label class="permission-check">
+                                        <input type="checkbox" name="permissions[]" value="{{ $permissionKey }}">
+                                        <span>{{ $permissionLabel }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
@@ -247,11 +271,34 @@ Usuarios
 
                 <div class="mb-3">
                     <label class="form-label">Rol</label>
-                    <select name="rol_id" id="editar-rol" class="form-select ui-input" required>
+                    <select name="rol_id" id="editar-rol" class="form-select ui-input permission-role-select" required>
                         @foreach($roles as $rol)
-                            <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
+                            <option value="{{ $rol->id }}" data-role-name="{{ $rol->nombre }}">{{ $rol->nombre }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div class="permissions-block mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+                        <label class="form-label mb-0 fw-semibold">Permisos de acceso</label>
+                        <div class="permissions-actions d-flex gap-2">
+                            <button type="button" class="btn-soft btn-soft-info permissions-select-all">Marcar todo</button>
+                            <button type="button" class="btn-soft btn-soft-info permissions-clear-all">Limpiar</button>
+                        </div>
+                    </div>
+                    @foreach($permissionGroups as $groupName => $permissions)
+                        <div class="permission-group-card mb-3">
+                            <div class="permission-group-title">{{ $groupName }}</div>
+                            <div class="permission-grid">
+                                @foreach($permissions as $permissionKey => $permissionLabel)
+                                    <label class="permission-check">
+                                        <input type="checkbox" name="permissions[]" value="{{ $permissionKey }}">
+                                        <span>{{ $permissionLabel }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
