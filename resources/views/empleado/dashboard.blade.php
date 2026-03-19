@@ -28,30 +28,39 @@ Dashboard
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-3 col-6">
-                    <a href="{{ route('ventas.index') }}" class="btn btn-outline-success w-100">
-                        <i class="fas fa-cash-register fa-2x d-block mb-2"></i>
-                        Registrar Venta
-                    </a>
-                </div>
-                <div class="col-md-3 col-6">
-                    <a href="{{ route('ventas.listar') }}" class="btn btn-outline-info w-100">
-                        <i class="fas fa-list fa-2x d-block mb-2"></i>
-                        Ver Ventas
-                    </a>
-                </div>
-                <div class="col-md-3 col-6">
-                    <a href="{{ route('reportes.index') }}" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-boxes fa-2x d-block mb-2"></i>
-                        Reportes
-                    </a>
-                </div>
-                <div class="col-md-3 col-6">
-                    <a href="{{ route('gastos.index') }}" class="btn btn-outline-danger w-100">
-                        <i class="fas fa-wallet fa-2x d-block mb-2"></i>
-                        Registrar Gasto
-                    </a>
-                </div>
+                @if (Auth::user()->hasPermission('operaciones.ventas'))
+                    <div class="col-md-3 col-6">
+                        <a href="{{ route('ventas.index') }}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-cash-register fa-2x d-block mb-2"></i>
+                            Registrar Venta
+                        </a>
+                    </div>
+
+                    <div class="col-md-3 col-6">
+                        <a href="{{ route('ventas.listar') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-list fa-2x d-block mb-2"></i>
+                            Ver Ventas
+                        </a>
+                    </div>
+                @endif
+
+                @if (Auth::user()->hasPermission('analisis.reportes'))
+                    <div class="col-md-3 col-6">
+                        <a href="{{ route('reportes.index') }}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-boxes fa-2x d-block mb-2"></i>
+                            Reportes
+                        </a>
+                    </div>
+                @endif
+
+                @if (Auth::user()->hasPermission('operaciones.gastos'))
+                    <div class="col-md-3 col-6">
+                        <a href="{{ route('gastos.index') }}" class="btn btn-outline-danger w-100">
+                            <i class="fas fa-wallet fa-2x d-block mb-2"></i>
+                            Registrar Gasto
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -73,7 +82,7 @@ Dashboard
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($ultimasVentas as $venta)
+                        @forelse(($ultimasVentas ?? collect()) as $venta)
                             <tr>
                                 <td>{{ $venta->id }}</td>
                                 <td>{{ $venta->cliente->nombre ?? 'Sin cliente' }}</td>

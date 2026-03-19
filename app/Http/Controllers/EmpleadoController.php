@@ -11,10 +11,6 @@ class EmpleadoController extends Controller
 {
     public function index()
     {
-        return view('empleado.dashboard');
-    }
-    public function dashboard()
-    {
         $ultimasVentas = Venta::with('cliente')
             ->where('usuario_id', Auth::id())
             ->whereDate('fecha', Carbon::today())
@@ -25,4 +21,8 @@ class EmpleadoController extends Controller
         return view('empleado.dashboard', compact('ultimasVentas'));
     }
 
+    public function dashboard()
+    {
+        return $this->index();
+    }
 }

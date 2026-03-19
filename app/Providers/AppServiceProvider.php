@@ -5,8 +5,6 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\DB;
-
 use App\Models\Producto;
 use App\Models\Lote;
 

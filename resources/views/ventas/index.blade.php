@@ -80,7 +80,7 @@ Nueva venta
 
         </div> <!-- cierre columna izquierda -->
                 <!-- ====================== 🟥 COLUMNA DERECHA ====================== -->
-        <div class="treinta-col derecha">
+        <div class="treinta-col derecha" id="ventas-panel-derecha">
         <div class="venta-steps">
 
             <!-- █████████████████████████████ -->
@@ -89,11 +89,17 @@ Nueva venta
             <!-- ==================== FASE 1 ==================== -->
             <div id="step-1" class="step-panel is-active">
 
+                <button type="button" id="cerrar-carrito-movil" class="btn-cerrar-carrito-movil" aria-label="Cerrar carrito">
+                    <i class="fas fa-times"></i>
+                </button>
+
                 <!-- HEADER FIJO -->
                 <div class="card shadow-sm mb-0">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                         <span>Productos</span>
-                        <a href="#" id="vaciar-canasta" class="text-white">Vaciar canasta</a>
+                        <div class="d-flex align-items-center gap-3">
+                            <a href="#" id="vaciar-canasta" class="text-white">Vaciar canasta</a>
+                        </div>
                     </div>
                 </div>
 
@@ -328,6 +334,19 @@ Nueva venta
     </div> <!-- /.treinta-body -->
 </div> <!-- /.ventas-treinta -->
 
+<button type="button" id="btn-carrito-movil" class="btn-carrito-movil" aria-controls="ventas-panel-derecha" aria-expanded="false" aria-label="Abrir carrito">
+    <span class="btn-carrito-movil__icon">
+        <i class="fas fa-shopping-cart"></i>
+    </span>
+    <span class="btn-carrito-movil__badge" id="btn-carrito-movil-count">0</span>
+    <span class="btn-carrito-movil__tooltip">
+        <span class="btn-carrito-movil__label">Carrito</span>
+        <span class="btn-carrito-movil__total" id="btn-carrito-movil-total">S/ 0.00</span>
+    </span>
+</button>
+
+<div id="carrito-movil-backdrop" class="carrito-movil-backdrop" hidden></div>
+
 <!-- MODAL ORDENAR PRODUCTOS -->
 <div class="modal fade" id="modalOrdenar" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -390,8 +409,8 @@ Nueva venta
 
 <!-- Modal para registrar un cliente -->
 <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content client-modal-premium">
             <div class="modal-header">
                 <h5 class="modal-title" id="clientModalLabel">Registrar Cliente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -429,8 +448,8 @@ Nueva venta
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="submit" class="btn btn-primary">Registrar Cliente</button>
+                        <button type="button" class="btn btn-soft btn-soft-info client-modal-btn client-modal-btn-cancel" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-soft btn-soft-success client-modal-btn client-modal-btn-submit">Registrar Cliente</button>
                     </div>
                 </form>
             </div>
