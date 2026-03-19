@@ -1,4 +1,3 @@
-
 /* ===============================
    BOTÓN EXPORTAR
 ================================ */
@@ -8,3 +7,96 @@
     padding: 8px 16px;
 }
 
+.usuario-modal-dialog {
+    max-width: 1080px;
+}
+
+.usuario-modal-panel {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 1rem;
+    background: #fff;
+}
+
+.usuario-modal-section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.usuario-modal-section-help {
+    font-size: 0.83rem;
+    color: #6b7280;
+}
+
+.usuario-modal-panel-permisos {
+    max-height: 70vh;
+    overflow: hidden;
+}
+
+.usuario-permisos-grid {
+    display: grid;
+    gap: 0.9rem;
+    max-height: 56vh;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.usuario-permisos-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    background: #f8fafc;
+}
+
+.usuario-permisos-card-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+}
+
+.usuario-permiso-item {
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.usuario-permiso-item .form-check-input {
+    margin-top: 0;
+}
+
+.usuario-permiso-item .form-check-label {
+    font-size: 0.88rem;
+    color: #1f2937;
+}
+
+.usuario-permisos-action {
+    border-radius: 999px;
+    padding-inline: 0.9rem;
+    font-size: 0.8rem;
+}
+
+.usuario-password-group .ui-input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.toggle-password-btn {
+    min-width: 46px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+@media (max-width: 991.98px) {
+    .usuario-modal-panel-permisos {
+        max-height: none;
+    }
+
+    .usuario-permisos-grid {
+        max-height: none;
+    }
+}
