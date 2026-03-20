@@ -1,44 +1,65 @@
 /* =================================
-   DIZANY UI – MODALES + INPUTS
+   DIZANY UI – MODALES
 ================================= */
 
 /* Modal: caja */
-.modal-content{
-  border: 1px solid rgba(229,231,235,.9);
+.modal-content {
+  border: 1px solid rgba(229, 231, 235, .9);
   border-radius: 18px;
-  box-shadow: 0 25px 60px rgba(2,6,23,.18);
+  box-shadow: 0 25px 60px rgba(2, 6, 23, .18);
   overflow: hidden;
 }
 
-/* Header */
-.modal-header{
-  padding: 18px 22px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
+/* Header global */
+.modal-header {
+  padding: 16px 22px;
+  border-bottom: 1px solid #334155 !important;
+  background: #162033 !important;
+  color: #f8fafc !important;
 }
 
-.modal-title{
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
   font-weight: 700;
   font-size: 18px;
   letter-spacing: .2px;
+  color: #f8fafc !important;
 }
 
-/* Botón X más fino */
-.modal-header .btn-close{
-  opacity: .55;
+.modal-header .modal-title i,
+.modal-header .modal-title svg,
+.modal-header .modal-title .fa,
+.modal-header .modal-title .fas,
+.modal-header .modal-title .far,
+.modal-header .modal-title .fa-solid,
+.modal-header .modal-title .fa-regular,
+.modal-header .modal-title .text-primary {
+  color: #60a5fa !important;
+}
+
+/* Botón X */
+.modal-header .btn-close,
+.modal-header .btn-close.btn-close-white {
+  filter: invert(1) grayscale(100%) brightness(220%) !important;
+  opacity: .88;
   transform: scale(.95);
 }
-.modal-header .btn-close:hover{
-  opacity: .85;
+
+.modal-header .btn-close:hover,
+.modal-header .btn-close.btn-close-white:hover {
+  opacity: 1;
 }
 
 /* Body */
-.modal-body{
+.modal-body {
   padding: 18px 22px 10px 22px;
 }
 
 /* Footer */
-.modal-footer{
+.modal-footer {
   padding: 14px 22px;
   border-top: 1px solid #f1f5f9;
   background: #ffffff;
@@ -46,7 +67,7 @@
 
 /* Labels */
 .modal-body label,
-.modal-body .form-label{
+.modal-body .form-label {
   font-size: 13px;
   font-weight: 600;
   color: #0f172a;
@@ -56,7 +77,7 @@
 /* Inputs / selects / textarea (uniforme) */
 .modal-body .form-control,
 .modal-body .form-select,
-.modal-body textarea{
+.modal-body textarea {
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   padding: 10px 12px;
@@ -67,68 +88,51 @@
 
 .modal-body .form-control:focus,
 .modal-body .form-select:focus,
-.modal-body textarea:focus{
-  border-color: rgba(37,99,235,.9);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.14);
+.modal-body textarea:focus {
+  border-color: rgba(37, 99, 235, .9);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .14);
   outline: none;
 }
 
 /* Inputs disabled */
 .modal-body .form-control:disabled,
-.modal-body .form-select:disabled{
+.modal-body .form-select:disabled {
   background: #f8fafc;
   color: #64748b;
 }
 
 /* Spacing de grupos */
-.modal-body .mb-3{
+.modal-body .mb-3 {
   margin-bottom: 14px !important;
 }
 
 /* Animación suave */
-.modal.fade .modal-dialog{
+.modal.fade .modal-dialog {
   transform: translateY(10px) scale(.98);
   transition: transform .18s ease;
 }
-.modal.show .modal-dialog{
+
+.modal.show .modal-dialog {
   transform: translateY(0) scale(1);
 }
 
-/* Backdrop un poco más elegante */
-.modal-backdrop.show{
+/* Backdrop elegante */
+.modal-backdrop.show {
   opacity: .55;
 }
 
-/* =========================
-   DIZANY UI – MODAL
-========================= */
-
-.modal-content {
-    border-radius: 18px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 25px 60px rgba(0,0,0,.18);
-    overflow: hidden;
+:root[data-theme='light'] .modal-header {
+  background: #162033 !important;
+  border-bottom-color: #334155 !important;
+  color: #f8fafc !important;
 }
 
-/* Header más fino */
-.modal-header {
-    background: linear-gradient(90deg, #1e40af, #2563eb);
-    color: white;
-    border-bottom: none;
-    padding: 16px 22px;
+:root[data-theme='dark'] .modal-header {
+  background: #0f172a !important;
+  border-bottom-color: #334155 !important;
+  color: #f8fafc !important;
 }
 
-.modal-title {
-    font-weight: 600;
-    font-size: 16px;
-}
-
-/* Botón cerrar más limpio */
-.modal-header .btn-close {
-    filter: brightness(0) invert(1);
-    opacity: .8;
-}
-
-.modal-header .btn-close:hover {
-    opacity: 1;
+:root[data-theme='dark'] .modal-title {
+  color: #f8fafc !important;
 }
