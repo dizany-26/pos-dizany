@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -37,6 +38,16 @@ class User extends Authenticatable
     public function rol()
     {
         return $this->belongsTo(Role::class, 'rol_id');
+    }
+
+    public function permisos(): HasMany
+    {
+        return $this->hasMany(UsuarioPermiso::class, 'usuario_id');
+    }
+
+    public function tienePermiso(string $permiso): bool
+    {
+        return $this->permisos->contains('permiso', $permiso);
     }
   //  public function getAuthIdentifierName()
 //{

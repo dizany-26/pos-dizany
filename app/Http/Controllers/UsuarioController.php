@@ -7,18 +7,57 @@ use App\Models\Role; // Asegúrate de que el modelo se llame Role.php
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\UsuarioPermiso;
 use App\Exports\UsuariosExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class UsuarioController extends Controller
 {
+    private function catalogoPermisos(): array
+    {
+        return [
+            'INICIO' => [
+                'dashboard.admin' => 'Dashboard administrador',
+                'dashboard.empleado' => 'Dashboard empleado',
+            ],
+            'GESTIÓN' => [
+                'usuarios' => 'Usuarios',
+                'clientes' => 'Clientes',
+                'proveedores' => 'Proveedores',
+            ],
+            'INVENTARIO' => [
+                'productos' => 'Productos',
+                'inventario.resumen' => 'Resumen inventario',
+                'parametros.productos' => 'Parámetros de productos',
+                'inventario.lote' => 'Ingreso de lotes',
+            ],
+            'OPERACIONES' => [
+                'ventas' => 'Ventas',
+                'movimientos' => 'Movimientos',
+                'gastos' => 'Gastos',
+            ],
+            'ANÁLISIS' => [
+                'reportes' => 'Reportes',
+            ],
+            'SISTEMA' => [
+                'configuracion' => 'Configuración',
+            ],
+            'CATÁLOGO WEB' => [
+                'catalogo.ver' => 'Vista catálogo',
+                'catalogo.config' => 'Configurar catálogo',
+            ],
+        ];
+    }
+
     // Muestra la lista de usuarios y los roles para el formulario
     public function index()
     {
-        $usuarios = User::with('rol')->get();
+        $usuarios = User::with(['rol', 'permisos'])->get();
         $roles = Role::all();
+        $catalogoPermisos = $this->catalogoPermisos();
 
-        return view('usuarios.index', compact('usuarios', 'roles'));
+        return view('usuarios.index', compact('usuarios', 'roles', 'catalogoPermisos'));
     }
 
     // Guarda un nuevo usuario
@@ -32,13 +71,29 @@ class UsuarioController extends Controller
         'rol_id' => 'required|exists:roles,id',
     ]);
 
-    User::create([
-        'nombre' => $request->nombre,
-        'usuario' => $request->usuario,
-        'email' => $request->email, // ✅ nuevo campo
-        'clave' => Hash::make($request->password),
-        'rol_id' => $request->rol_id,
-    ]);
+    DB::transaction(function () use ($request) {
+        $usuario = User::create([
+            'nombre' => $request->nombre,
+            'usuario' => $request->usuario,
+            'email' => $request->email, // ✅ nuevo campo
+            'clave' => Hash::make($request->password),
+            'rol_id' => $request->rol_id,
+        ]);
+
+        $permisos = collect($request->input('permisos', []))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($permisos->isNotEmpty()) {
+            UsuarioPermiso::insert(
+                $permisos->map(fn ($permiso) => [
+                    'usuario_id' => $usuario->id,
+                    'permiso' => $permiso,
+                ])->all()
+            );
+        }
+    });
 
     return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
 }
