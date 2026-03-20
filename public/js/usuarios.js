@@ -96,6 +96,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (modalNuevoUsuario) {
         modalNuevoUsuario.addEventListener('show.bs.modal', () => {
+            if (formNuevoUsuario) {
+                formNuevoUsuario.reset();
+            }
+
+            const usuarioInput = formNuevoUsuario?.querySelector('input[name="usuario"]');
+            const passwordInput = formNuevoUsuario?.querySelector('input[name="password"]');
+
+            if (usuarioInput) {
+                usuarioInput.value = '';
+                usuarioInput.setAttribute('autocomplete', 'off');
+            }
+
+            if (passwordInput) {
+                passwordInput.value = '';
+                passwordInput.type = 'password';
+                passwordInput.setAttribute('autocomplete', 'new-password');
+            }
+
+            togglePasswordButtons.forEach((button) => {
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.classList.add('fa-eye');
+                    icon.classList.remove('fa-eye-slash');
+                }
+                button.setAttribute('aria-label', 'Mostrar contraseña');
+            });
+
             window.setTimeout(() => applyRoleDefaults(), 0);
         });
     }

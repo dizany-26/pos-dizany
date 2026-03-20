@@ -161,7 +161,7 @@ Usuarios
             </div>
 
             <div class="modal-body">
-                <div class="row g-4 usuario-modal-layout">
+                <div class="row g-4 usuario-modal-layout align-items-stretch">
                     <div class="col-12 col-lg-5">
                         <div class="usuario-modal-panel h-100">
                             <h6 class="usuario-modal-section-title">Datos del usuario</h6>
@@ -173,7 +173,7 @@ Usuarios
 
                             <div class="mb-3">
                                 <label class="form-label">Usuario</label>
-                                <input type="text" name="usuario" class="form-control ui-input" required>
+                                <input type="text" name="usuario" class="form-control ui-input" autocomplete="off" value="" required>
                             </div>
 
                             <div class="mb-3">
@@ -183,9 +183,9 @@ Usuarios
 
                             <div class="mb-3">
                                 <label class="form-label">Contraseña</label>
-                                <div class="input-group usuario-password-group">
-                                    <input type="password" name="password" class="form-control ui-input usuario-password-input" required>
-                                    <button type="button" class="btn btn-outline-secondary toggle-password-btn" data-target="password" aria-label="Mostrar contraseña">
+                                <div class="usuario-password-group position-relative">
+                                    <input type="password" name="password" class="form-control ui-input usuario-password-input pe-5" autocomplete="new-password" value="" required>
+                                    <button type="button" class="toggle-password-btn" data-target="password" aria-label="Mostrar contraseña">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
                                 </div>
@@ -250,8 +250,8 @@ Usuarios
                     Cerrar
                 </button>
 
-                <button type="submit" class="btn-soft btn-soft-primary">
-                    Guardar cambios
+                <button type="submit" class="btn-soft btn-soft-success">
+                    Guardar
                 </button>
             </div>
         </form>
