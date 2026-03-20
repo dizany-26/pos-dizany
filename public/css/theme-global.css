@@ -199,9 +199,9 @@
 }
 
 :root[data-theme='light'] .user-password-modal .modal-header {
-    background: linear-gradient(180deg, #3d73e9 0%, #2b5ecf 100%) !important;
-    color: #fff !important;
-    border-bottom-color: #2958be !important;
+    background: #162033 !important;
+    color: #f8fafc !important;
+    border-bottom-color: #334155 !important;
 }
 
 :root[data-theme='light'] .user-password-modal .modal-footer {
@@ -408,9 +408,9 @@
 }
 
 :root[data-theme='dark'] .user-password-modal .modal-header {
-    background: linear-gradient(180deg, #315fd1 0%, #264fb7 100%) !important;
-    color: #f7fbff !important;
-    border-bottom-color: #2b4f9b !important;
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-bottom-color: #334155 !important;
 }
 
 :root[data-theme='dark'] .user-password-modal .modal-footer {
