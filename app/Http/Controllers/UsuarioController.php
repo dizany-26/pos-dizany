@@ -71,13 +71,31 @@ class UsuarioController extends Controller
         'rol_id' => 'required|exists:roles,id',
     ]);
 
-    $usuario = User::findOrFail($id);
-    $usuario->update([
-        'nombre' => $request->nombre,
-        'usuario' => $request->usuario,
-        'email' => $request->email, // ✅ nuevo campo
-        'rol_id' => $request->rol_id,
-    ]);
+    DB::transaction(function () use ($request, $id) {
+        $usuario = User::findOrFail($id);
+        $usuario->update([
+            'nombre' => $request->nombre,
+            'usuario' => $request->usuario,
+            'email' => $request->email, // ✅ nuevo campo
+            'rol_id' => $request->rol_id,
+        ]);
+
+        $permisos = collect($request->input('permisos', []))
+            ->filter()
+            ->unique()
+            ->values();
+
+        UsuarioPermiso::where('usuario_id', $usuario->id)->delete();
+
+        if ($permisos->isNotEmpty()) {
+            UsuarioPermiso::insert(
+                $permisos->map(fn ($permiso) => [
+                    'usuario_id' => $usuario->id,
+                    'permiso' => $permiso,
+                ])->all()
+            );
+        }
+    });
 
     return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado correctamente.');
 }
