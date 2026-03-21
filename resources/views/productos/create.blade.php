@@ -65,11 +65,27 @@ Nuevo Producto
                 {{-- ================= DATOS BÁSICOS ================= --}}
                 <div class="col-md-4">
                     <label class="form-label">Código de Barras</label>
-                    <input type="text"
-                        name="codigo_barras"
-                        id="codigo_barras"
-                        class="form-control ui-input"
-                        value="{{ old('codigo_barras') }}">
+                    <div class="codigo-barras-field">
+                        <input type="text"
+                            name="codigo_barras"
+                            id="codigo_barras"
+                            class="form-control ui-input"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            value="{{ old('codigo_barras') }}">
+
+                        <button type="button"
+                            class="btn-soft btn-soft-info codigo-barras-scan-btn"
+                            id="btnEscanearCodigo"
+                            title="Escanear código de barras"
+                            aria-label="Escanear código de barras con cámara">
+                            <i class="fas fa-barcode"></i>
+                        </button>
+                    </div>
+
+                    <small class="codigo-barras-help">
+                        En móvil abre la cámara para escanear. En PC puedes usar una pistola lectora con el cursor en este campo.
+                    </small>
 
                     <div id="codigo_barras_error" class="invalid-feedback d-none">
                         Este código de barras ya está registrado.
@@ -270,7 +286,41 @@ Nuevo Producto
 
     </div>
 </div>
+
+<!-- Modal Escanear Código de Barras -->
+<div class="modal fade" id="modalEscanearCodigoBarras" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Escanear código de barras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="barcode-scanner-shell">
+                    <div id="barcode-reader" class="barcode-reader"></div>
+
+                    <div class="barcode-fallback-actions d-none" id="barcodeFallbackActions">
+                        <button type="button" class="btn-soft btn-soft-primary barcode-fallback-btn" id="btnEscanerExterno">
+                            <i class="fas fa-barcode"></i>
+                            Escanear con app externa
+                        </button>
+                    </div>
+
+                    <p id="barcodeScannerStatus" class="barcode-scanner-status barcode-scanner-status-info">
+                        En móvil usa la cámara. En PC puedes usar una pistola lectora enfocando el campo.
+                    </p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-soft btn-soft-info" id="btnCerrarEscaner">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Modal Nueva Categoría -->
+
 <div class="modal fade" id="modalNuevaCategoria" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -322,7 +372,9 @@ Nuevo Producto
 @endsection
 
 @push('scripts')
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="{{ asset('js/validarCodigoBarras.js') }}"></script>
+    <script src="{{ asset('js/productoScanner.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     
