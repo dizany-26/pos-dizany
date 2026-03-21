@@ -169,16 +169,42 @@
 }
 
 
+
+
+:root[data-theme='light'] .btn-pos-espera {
+    background: linear-gradient(180deg, #f8fbff, #eef5ff) !important;
+    border-color: #cbdcf8 !important;
+    color: #1e3a5f !important;
+}
+
+:root[data-theme='light'] .btn-ordenar {
+    background: linear-gradient(180deg, #fffaf0, #fef3c7) !important;
+    border-color: #f3d38a !important;
+    color: #9a6700 !important;
+}
+
 :root[data-theme='light'] .btn-gasto {
-    color: #1f3552 !important;
-    border-color: #c2d3ec !important;
-    background: linear-gradient(180deg, #fefefe, #f3f7fd) !important;
-    box-shadow: 0 4px 10px rgba(36, 67, 113, 0.08) !important;
+    background: linear-gradient(180deg, #f0fdf4, #dcfce7) !important;
+    border-color: #bbf7d0 !important;
+    color: #15803d !important;
+}
+
+:root[data-theme='light'] .btn-pos-espera:hover {
+    background: linear-gradient(180deg, #ffffff, #e8f1ff) !important;
+    border-color: #b6cdf4 !important;
+    color: #1d4f91 !important;
+}
+
+:root[data-theme='light'] .btn-ordenar:hover {
+    background: linear-gradient(180deg, #fffdf7, #fde68a) !important;
+    border-color: #e8c766 !important;
+    color: #854d0e !important;
 }
 
 :root[data-theme='light'] .btn-gasto:hover {
-    border-color: #a8c0e4 !important;
-    background: linear-gradient(180deg, #ffffff, #edf4fd) !important;
+    background: linear-gradient(180deg, #f7fff9, #bbf7d0) !important;
+    border-color: #86efac !important;
+    color: #166534 !important;
 }
 
 :root[data-theme='light'] .user-menu-panel,
@@ -199,9 +225,9 @@
 }
 
 :root[data-theme='light'] .user-password-modal .modal-header {
-    background: linear-gradient(180deg, #3d73e9 0%, #2b5ecf 100%) !important;
-    color: #fff !important;
-    border-bottom-color: #2958be !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-bottom-color: #e2e8f0 !important;
 }
 
 :root[data-theme='light'] .user-password-modal .modal-footer {
@@ -408,9 +434,9 @@
 }
 
 :root[data-theme='dark'] .user-password-modal .modal-header {
-    background: linear-gradient(180deg, #315fd1 0%, #264fb7 100%) !important;
-    color: #f7fbff !important;
-    border-bottom-color: #2b4f9b !important;
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-bottom-color: #334155 !important;
 }
 
 :root[data-theme='dark'] .user-password-modal .modal-footer {
