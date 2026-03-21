@@ -817,7 +817,7 @@ select.form-select-sm,
 /* Modal contenedor */
 #modalOrdenar .modal-content {
     border-radius: 18px;
-    border: none;
+    border: 1px solid #e2e8f0;
     overflow: hidden;
     animation: modalFadeUp 0.25s ease-out;
 }
@@ -860,31 +860,24 @@ select.form-select-sm,
 
 /* Botones de orden */
 .orden-btn {
+    min-height: 48px;
     padding: 12px 10px;
     border-radius: 12px;
-    background: #fff;
-    border: 1.5px solid #e5e7eb;
+    border: none;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #111827;
-    transition: all 0.2s ease;
-    cursor: pointer;
 }
 
 /* Hover */
 .orden-btn:hover {
-    background: #f5f9ff;
-    border-color: #9ec5ff;
-    color: #1d4ed8;
-    transform: translateY(-1px);
+    color: #2563eb;
 }
 
 /* Activo */
 .orden-btn.active {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 6px 16px rgba(37,99,235,0.35);
+    background: rgba(37, 99, 235, .15);
+    color: #2563eb;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.18);
 }
 
 /* Footer */
@@ -893,33 +886,65 @@ select.form-select-sm,
     padding: 14px 20px;
 }
 
-/* Botón limpiar */
-#btn-limpiar-orden {
-    background: #f3f4f6;
-    border: none;
-    color: #374151;
-    border-radius: 10px;
-    padding: 8px 16px;
-    font-size: 0.85rem;
-}
-
-#btn-limpiar-orden:hover {
-    background: #e5e7eb;
-}
-
-/* Botón aplicar */
+#btn-limpiar-orden,
 #btn-aplicar-orden {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    border: none;
-    border-radius: 12px;
-    padding: 9px 22px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    box-shadow: 0 6px 18px rgba(37,99,235,0.35);
+    min-width: 110px;
+    justify-content: center;
 }
 
-#btn-aplicar-orden:hover {
-    filter: brightness(1.08);
+/* Dark mode */
+:root[data-theme='dark'] #modalOrdenar .modal-content {
+    background: #162033 !important;
+    border-color: #334155 !important;
+}
+
+:root[data-theme='dark'] #modalOrdenar .modal-body,
+:root[data-theme='dark'] #modalOrdenar .modal-footer {
+    background: #162033 !important;
+}
+
+:root[data-theme='dark'] #modalOrdenar .modal-body p,
+:root[data-theme='dark'] #modalOrdenar label {
+    color: #e2e8f0 !important;
+}
+
+:root[data-theme='dark'] #modalOrdenar .text-muted,
+:root[data-theme='dark'] #modalOrdenar .text-secondary {
+    color: #94a3b8 !important;
+}
+
+:root[data-theme='dark'] #modalOrdenar .orden-btn {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+    box-shadow: none;
+}
+
+:root[data-theme='dark'] #modalOrdenar .orden-btn:hover {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    color: #f8fafc !important;
+}
+
+:root[data-theme='dark'] #modalOrdenar .orden-btn.active {
+    background: rgba(59, 130, 246, .18) !important;
+    border-color: #60a5fa !important;
+    color: #bfdbfe !important;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, .16) !important;
+}
+
+:root[data-theme='dark'] #modalOrdenar .modal-footer {
+    border-top-color: #334155 !important;
+}
+
+:root[data-theme='dark'] #btn-limpiar-orden {
+    background: rgba(148, 163, 184, .18) !important;
+    color: #e2e8f0 !important;
+}
+
+:root[data-theme='dark'] #btn-aplicar-orden {
+    background: rgba(37, 99, 235, .18) !important;
+    color: #93c5fd !important;
 }
 
 /* Mobile ajustes */
@@ -1228,3 +1253,18 @@ select.form-select-sm,
     }
 }
 
+
+
+:root[data-theme='dark'] #btn-pos-espera.btn-soft,
+:root[data-theme='dark'] #btn-ordenar.btn-soft {
+    background: rgba(148, 163, 184, .18) !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+:root[data-theme='dark'] #btn-pos-espera.btn-soft:hover,
+:root[data-theme='dark'] #btn-ordenar.btn-soft:hover {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    color: #f8fafc !important;
+}
