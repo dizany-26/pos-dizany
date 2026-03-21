@@ -50,6 +50,12 @@
                             <span class="menu-text">Ver Productos</span>
                         </a>
 
+                        <a href="{{ route('productos.create') }}"
+                        class="{{ request()->routeIs('productos.create') ? 'active' : '' }}">
+                            <i class="fas fa-plus me-1"></i>
+                            <span class="menu-text">Nuevo producto</span>
+                        </a>
+
                         <a href="{{ route('productos.parametros') }}"
                         class="{{ request()->routeIs('productos.parametros') ? 'active' : '' }}">
                             <i class="fas fa-cogs"></i>
@@ -178,20 +184,42 @@
                     </a>
                 @endif
 
-                @if($permisosUsuario->contains('productos'))
-                    <a href="{{ route('productos.index') }}"
-                    class="{{ request()->routeIs('productos.index') ? 'active' : '' }}">
-                        <i class="fas fa-box-open"></i>
-                        <span class="menu-text">Productos</span>
-                    </a>
-                @endif
+                @if($permisosUsuario->contains('productos') || $permisosUsuario->contains('productos.create') || $permisosUsuario->contains('parametros.productos'))
+                    <div class="submenu">
+                        <button class="submenu-toggle {{ request()->is('productos*') ? 'active' : '' }}">
+                            <div class="submenu-left">
+                                <i class="fas fa-box me-2"></i>
+                                <span class="menu-text">Productos</span>
+                            </div>
+                            <i class="fas fa-caret-down toggle-icon"></i>
+                        </button>
 
-                @if($permisosUsuario->contains('parametros.productos'))
-                    <a href="{{ route('productos.parametros') }}"
-                    class="{{ request()->routeIs('productos.parametros') ? 'active' : '' }}">
-                        <i class="fas fa-cogs"></i>
-                        <span class="menu-text">Parámetros de productos</span>
-                    </a>
+                        <div class="submenu-items {{ request()->is('productos*') ? 'show' : '' }}">
+                            @if($permisosUsuario->contains('productos'))
+                                <a href="{{ route('productos.index') }}"
+                                class="{{ request()->routeIs('productos.index') ? 'active' : '' }}">
+                                    <i class="fas fa-box-open me-1"></i>
+                                    <span class="menu-text">Ver Productos</span>
+                                </a>
+                            @endif
+
+                            @if($permisosUsuario->contains('productos.create'))
+                                <a href="{{ route('productos.create') }}"
+                                class="{{ request()->routeIs('productos.create') ? 'active' : '' }}">
+                                    <i class="fas fa-plus me-1"></i>
+                                    <span class="menu-text">Nuevo producto</span>
+                                </a>
+                            @endif
+
+                            @if($permisosUsuario->contains('parametros.productos'))
+                                <a href="{{ route('productos.parametros') }}"
+                                class="{{ request()->routeIs('productos.parametros') ? 'active' : '' }}">
+                                    <i class="fas fa-cogs"></i>
+                                    <span class="menu-text">Parámetros</span>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
                 @endif
 
                 @if($permisosUsuario->contains('inventario.resumen'))
