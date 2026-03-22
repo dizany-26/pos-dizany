@@ -18,7 +18,7 @@ Nueva venta
 @section('header-buttons')
 
 <div class="pos-espera-wrapper">
-    <button id="btn-pos-espera" class="btn-pos-espera">
+    <button id="btn-pos-espera" class="btn-pos-espera btn-soft btn-soft-info">
         <i class="fas fa-receipt"></i>
         <span class="btn-text">Ventas en espera</span>
         <span id="pos-espera-count" class="badge">0</span>
@@ -28,7 +28,7 @@ Nueva venta
 </div>
 
 <div class="ordenar-wrapper">
-    <button id="btn-ordenar" class="btn-ordenar"
+    <button id="btn-ordenar" class="btn-ordenar btn-soft btn-soft-info btn-soft-icon"
             data-tooltip="Ordenar productos">
         <i class="fas fa-sort-amount-down"></i>
     </button>
@@ -345,43 +345,43 @@ Nueva venta
                 <!-- POR STOCK -->
                 <label class="fw-bold small text-secondary">Por stock</label>
                 <div class="d-flex gap-2 mb-3">
-                    <button class="orden-btn w-100" data-type="stock_asc">Menos stock</button>
-                    <button class="orden-btn w-100" data-type="stock_desc">Más stock</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="stock_asc">Menos stock</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="stock_desc">Más stock</button>
                 </div>
 
                 <!-- POR VENTAS -->
                 <label class="fw-bold small text-secondary">Por ventas (últimos 30 días)</label>
                 <div class="d-flex gap-2 mb-3">
-                    <button class="orden-btn w-100" data-type="menos_vendidos">Menos vendidos</button>
-                    <button class="orden-btn w-100" data-type="mas_vendidos">Más vendidos</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="menos_vendidos">Menos vendidos</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="mas_vendidos">Más vendidos</button>
                 </div>
 
                 <!-- POR NOMBRE -->
                 <label class="fw-bold small text-secondary">Por nombre</label>
                 <div class="d-flex gap-2 mb-3">
-                    <button class="orden-btn w-100" data-type="az">Nombre A-Z</button>
-                    <button class="orden-btn w-100" data-type="za">Nombre Z-A</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="az">Nombre A-Z</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="za">Nombre Z-A</button>
                 </div>
 
                 <!-- POR FECHA -->
                 <label class="fw-bold small text-secondary">Por fecha de creación</label>
                 <div class="d-flex gap-2 mb-3">
-                    <button class="orden-btn w-100" data-type="fecha_asc">Más antiguo</button>
-                    <button class="orden-btn w-100" data-type="fecha_desc">Más reciente</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="fecha_asc">Más antiguo</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="fecha_desc">Más reciente</button>
                 </div>
 
                 <!-- POR PRECIO -->
                 <label class="fw-bold small text-secondary">Por precio</label>
                 <div class="d-flex gap-2 mb-3">
-                    <button class="orden-btn w-100" data-type="precio_asc">Más bajo</button>
-                    <button class="orden-btn w-100" data-type="precio_desc">Más alto</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="precio_asc">Más bajo</button>
+                    <button class="orden-btn btn-soft btn-soft-info w-100 justify-content-center" data-type="precio_desc">Más alto</button>
                 </div>
 
             </div>
 
             <div class="modal-footer d-flex justify-content-between">
-                <button class="btn btn-light" id="btn-limpiar-orden">Limpiar</button>
-                <button class="btn btn-primary" id="btn-aplicar-orden">Aplicar</button>
+                <button class="btn-soft btn-soft-info" id="btn-limpiar-orden">Limpiar</button>
+                <button class="btn-soft btn-soft-primary" id="btn-aplicar-orden">Aplicar</button>
             </div>
 
         </div>
