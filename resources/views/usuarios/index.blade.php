@@ -13,6 +13,7 @@
         ],
         'INVENTARIO' => [
             'productos' => 'Productos',
+            'productos.create' => 'Nuevo producto',
             'inventario.resumen' => 'Resumen inventario',
             'parametros.productos' => 'Parámetros de productos',
             'inventario.lote' => 'Ingreso de lotes',
@@ -119,7 +120,8 @@ Usuarios
                                     data-nombre="{{ $usuario->nombre }}"
                                     data-usuario="{{ $usuario->usuario }}"
                                     data-email="{{ $usuario->email }}"
-                                    data-rol="{{ $usuario->rol_id }}">
+                                    data-rol="{{ $usuario->rol_id }}"
+                                    data-permisos='@json($usuario->permisos->pluck("permiso")->values())'>
                                     <i class="fa fa-edit"></i>
                                 </button>
 
@@ -259,8 +261,8 @@ Usuarios
 </div>
 
 <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-        <form method="POST" id="formEditarUsuario" class="modal-content">
+    <div class="modal-dialog modal-dialog-centered modal-xl usuario-modal-dialog">
+        <form method="POST" id="formEditarUsuario" class="modal-content usuario-modal-form">
             @csrf
             @method('PUT')
             <div class="modal-header">
@@ -270,28 +272,73 @@ Usuarios
             <div class="modal-body">
                 <input type="hidden" name="id" id="editar-id">
 
-                <div class="mb-3">
-                    <label class="form-label">Nombre</label>
-                    <input type="text" name="nombre" id="editar-nombre" class="form-control ui-input" required>
-                </div>
+                <div class="row g-4 usuario-modal-layout align-items-stretch">
+                    <div class="col-12 col-lg-5">
+                        <div class="usuario-modal-panel h-100">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" id="editar-nombre" class="form-control ui-input" required>
+                            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Usuario</label>
-                    <input type="text" name="usuario" id="editar-usuario" class="form-control ui-input" required>
-                </div>
+                            <div class="mb-3">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" name="usuario" id="editar-usuario" class="form-control ui-input" required>
+                            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Correo Electrónico</label>
-                    <input type="email" name="email" id="editar-email" class="form-control ui-input" required>
-                </div>
+                            <div class="mb-3">
+                                <label class="form-label">Correo Electrónico</label>
+                                <input type="email" name="email" id="editar-email" class="form-control ui-input" required>
+                            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Rol</label>
-                    <select name="rol_id" id="editar-rol" class="form-select ui-input" required>
-                        @foreach($roles as $rol)
-                            <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
-                        @endforeach
-                    </select>
+                            <div class="mb-0">
+                                <label class="form-label">Rol</label>
+                                <select name="rol_id" id="editar-rol" class="form-select ui-input" required>
+                                    @foreach($roles as $rol)
+                                        <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-7">
+                        <div class="usuario-modal-panel usuario-modal-panel-permisos h-100">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                <div>
+                                    <h6 class="usuario-modal-section-title mb-1">Permisos de acceso</h6>
+                                    <p class="usuario-modal-section-help mb-0">Edita los accesos del usuario según el rol y los permisos que necesites.</p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-light usuario-permisos-action" id="editarMarcarTodosPermisos">Marcar todo</button>
+                                    <button type="button" class="btn btn-sm btn-light usuario-permisos-action" id="editarLimpiarPermisos">Limpiar</button>
+                                </div>
+                            </div>
+
+                            <div class="usuario-permisos-grid">
+                                @foreach($catalogoPermisos as $grupo => $permisos)
+                                    <div class="usuario-permisos-card">
+                                        <div class="usuario-permisos-card-title">{{ $grupo }}</div>
+                                        <div class="row g-2">
+                                            @foreach($permisos as $valor => $label)
+                                                <div class="col-12 col-md-6">
+                                                    <div class="form-check usuario-permiso-item">
+                                                        <input class="form-check-input editar-permiso-checkbox"
+                                                            type="checkbox"
+                                                            name="permisos[]"
+                                                            value="{{ $valor }}"
+                                                            id="editar_permiso_{{ Str::slug($valor, '_') }}">
+                                                        <label class="form-check-label" for="editar_permiso_{{ Str::slug($valor, '_') }}">
+                                                            {{ $label }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
