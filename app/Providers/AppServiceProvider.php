@@ -6,10 +6,10 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 
 use App\Models\Producto;
 use App\Models\Lote;
-
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,34 +19,30 @@ class AppServiceProvider extends ServiceProvider
     }
 
     public function boot()
-{
-    Paginator::useBootstrapFive();
+    {
+        Paginator::useBootstrapFive();
 
-    View::composer('*', function ($view) {
+        if (request()->isSecure() || str_contains(request()->getHost(), 'ngrok-free.dev')) {
+            URL::forceScheme('https');
+        }
 
-        // =========================
-        // ALERTAS INVENTARIO
-        // =========================
+        View::composer('*', function ($view) {
+            $alertaStockBajo = Producto::withSum('lotes as stock_total', 'stock_actual')
+                ->having('stock_total', '<=', 10)
+                ->count();
 
-        // Productos con stock bajo (<=10)
-        $alertaStockBajo = Producto::withSum('lotes as stock_total', 'stock_actual')
-            ->having('stock_total', '<=', 10)
-            ->count();
+            $alertaPorVencer = Lote::whereNotNull('fecha_vencimiento')
+                ->whereDate('fecha_vencimiento', '<=', now()->addDays(30))
+                ->where('stock_actual', '>', 0)
+                ->count();
 
-        // Lotes próximos a vencer (30 días)
-        $alertaPorVencer = Lote::whereNotNull('fecha_vencimiento')
-            ->whereDate('fecha_vencimiento', '<=', now()->addDays(30))
-            ->where('stock_actual', '>', 0)
-            ->count();
+            $totalAlertas = $alertaStockBajo + $alertaPorVencer;
 
-        $totalAlertas = $alertaStockBajo + $alertaPorVencer;
-
-        $view->with(compact(
-            'alertaStockBajo',
-            'alertaPorVencer',
-            'totalAlertas'
-        ));
-    });
-}
-
+            $view->with(compact(
+                'alertaStockBajo',
+                'alertaPorVencer',
+                'totalAlertas'
+            ));
+        });
+    }
 }
