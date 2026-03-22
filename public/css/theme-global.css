@@ -228,6 +228,10 @@
     background: #ffffff !important;
     color: #0f172a !important;
     border-bottom-color: #e2e8f0 !important;
+    background: #162033 !important;
+    color: #f8fafc !important;
+    border-bottom-color: #334155 !important;
+
 }
 
 :root[data-theme='light'] .user-password-modal .modal-footer {

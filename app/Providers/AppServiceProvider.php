@@ -5,11 +5,11 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
 use App\Models\Producto;
 use App\Models\Lote;
-
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,5 +45,3 @@ class AppServiceProvider extends ServiceProvider
             ));
         });
     }
-
-}
