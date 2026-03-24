@@ -49,9 +49,7 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::get('/productos', [ProductoController::class, 'index'])->name('productos.index');
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-    Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
     Route::get('/productos/export', [ProductoController::class, 'export'])->name('productos.export');
-    Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/clientes/{id}', [ClienteController::class, 'show'])->name('clientes.show');
     Route::get('/clientes/{id}/edit', [ClienteController::class, 'edit'])->name('clientes.edit');
@@ -79,6 +77,8 @@ Route::middleware(['auth', 'role:Empleado'])->group(function () {
 
 // Rutas compartidas por Admin y Empleado
 Route::middleware(['auth', 'role:Administrador,Empleado'])->group(function () {
+    Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
+    Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
     Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
     Route::get('/gastos', [GastoController::class, 'index'])->name('gastos.index');
     Route::get('/gastos/crear', [GastoController::class, 'create'])->name('gastos.create');

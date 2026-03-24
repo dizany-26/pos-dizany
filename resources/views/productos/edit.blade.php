@@ -2,6 +2,7 @@
 
 @push('styles')
 <link href="{{ asset('css/edit_productos.css') }}" rel="stylesheet" />
+<link href="{{ asset('css/crear_productos.css') }}" rel="stylesheet" />
 @endpush
 
 {{-- BOTÓN ATRÁS --}}
@@ -56,11 +57,27 @@ Editar Producto
             {{-- ================= DATOS BÁSICOS ================= --}}
             <div class="col-md-4">
                 <label class="form-label">Código de Barras</label>
-                <input type="text"
-                       name="codigo_barras"
-                       id="codigo_barras"
-                       class="form-control ui-input"
-                       value="{{ old('codigo_barras', $producto->codigo_barras) }}">
+                <div class="codigo-barras-field">
+                    <input type="text"
+                           name="codigo_barras"
+                           id="codigo_barras"
+                           class="form-control ui-input"
+                           inputmode="numeric"
+                           autocomplete="off"
+                           value="{{ old('codigo_barras', $producto->codigo_barras) }}">
+
+                    <button type="button"
+                            class="btn-soft btn-soft-info codigo-barras-scan-btn"
+                            id="btnEscanearCodigo"
+                            title="Escanear código de barras"
+                            aria-label="Escanear código de barras con cámara">
+                        <i class="fas fa-barcode"></i>
+                    </button>
+                </div>
+
+                <small class="codigo-barras-help">
+                    En móvil abre la cámara para escanear. En PC puedes usar una pistola lectora con el cursor en este campo.
+                </small>
 
                 <div id="codigo_barras_error"
                      class="invalid-feedback d-none">
@@ -71,6 +88,7 @@ Editar Producto
             <div class="col-md-4">
                 <label class="form-label">Nombre</label>
                 <input type="text"
+                       id="nombre"
                        name="nombre"
                        class="form-control ui-input"
                        value="{{ old('nombre', $producto->nombre) }}"
@@ -270,6 +288,65 @@ Editar Producto
     </div>
 </div>
 
+<!-- Modal Escanear Código de Barras -->
+<div class="modal fade" id="modalEscanearCodigoBarras" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Escanear código de barras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="barcode-scanner-shell">
+                    <div class="barcode-reader-frame">
+                        <div id="barcode-reader" class="barcode-reader"></div>
+                    </div>
+
+                    <div class="barcode-reader-toolbar">
+                        <button type="button"
+                            class="btn-soft btn-soft-info barcode-tool-btn d-none"
+                            id="btnBarcodeTorch"
+                            title="Encender o apagar linterna"
+                            aria-label="Encender o apagar linterna">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Linterna</span>
+                        </button>
+
+                        <button type="button"
+                            class="btn-soft btn-soft-info barcode-tool-btn d-none"
+                            id="btnBarcodeZoom"
+                            title="Activar modo macro"
+                            aria-label="Activar modo macro">
+                            <i class="fas fa-seedling"></i>
+                            <span>Macro</span>
+                        </button>
+                    </div>
+
+                    <div class="barcode-fallback-actions d-none" id="barcodeFallbackActions">
+                        <button type="button" class="btn-soft btn-soft-primary barcode-fallback-btn" id="btnEscanerExterno">
+                            <i class="fas fa-barcode"></i>
+                            Escanear con app externa
+                        </button>
+                    </div>
+
+                    <p id="barcodeScannerStatus" class="barcode-scanner-status barcode-scanner-status-info">
+                        En móvil usa la cámara. En PC puedes usar una pistola lectora enfocando el campo.
+                    </p>
+
+                    <small class="barcode-scanner-tip">
+                        Si el código es pequeño, usa el botón de enfoque <i class="fas fa-search-plus"></i> o acerca la cámara lentamente.
+                    </small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-soft btn-soft-info" id="btnCerrarEscaner">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Nueva Categoría -->
 <div class="modal fade" id="modalNuevaCategoria" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -353,6 +430,8 @@ Editar Producto
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="{{ asset('js/productoScanner.js') }}"></script>
 
 <script>
     /* ==========================
