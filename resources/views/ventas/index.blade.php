@@ -59,6 +59,13 @@ Nueva venta
                     <i class="fas fa-search me-2 text-primary"></i>
                     <input type="text" id="buscar_producto" class="form-control"
                         placeholder="Buscar productos por nombre o código...">
+                    <button type="button"
+                        id="btnEscanearVenta"
+                        class="btn-soft btn-soft-info ventas-scan-btn ms-2"
+                        title="Escanear código de barras"
+                        aria-label="Escanear código de barras">
+                        <i class="fas fa-barcode"></i>
+                    </button>
                 </div>
 
                 <!-- CATEGORÍAS -->
@@ -437,6 +444,53 @@ Nueva venta
         </div>
     </div>
 </div>
+<!-- Modal Escanear Código de Barras en Ventas -->
+<div class="modal fade" id="modalEscanearVenta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Escanear para venta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="barcode-scanner-shell">
+          <div class="barcode-reader-frame">
+            <div id="venta-barcode-reader" class="barcode-reader"></div>
+          </div>
+
+          <div class="barcode-reader-toolbar">
+            <button type="button"
+                class="btn-soft btn-soft-info barcode-tool-btn d-none"
+                id="btnVentaBarcodeTorch"
+                title="Encender o apagar linterna"
+                aria-label="Encender o apagar linterna">
+                <i class="fas fa-lightbulb"></i>
+                <span>Linterna</span>
+            </button>
+
+            <button type="button"
+                class="btn-soft btn-soft-info barcode-tool-btn d-none"
+                id="btnVentaBarcodeZoom"
+                title="Acercar vista"
+                aria-label="Acercar vista">
+                <i class="fas fa-search-plus"></i>
+                <span>Zoom</span>
+            </button>
+          </div>
+
+          <p id="ventaBarcodeScannerStatus" class="barcode-scanner-status barcode-scanner-status-info">
+            Escanea un código para enviarlo directo al carrito.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-soft btn-soft-info" id="btnCerrarEscanerVenta">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Modal de Venta Exitosa -->
 <div class="modal fade" id="modalVentaExitosa" tabindex="-1" aria-labelledby="modalVentaExitosaLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -465,6 +519,7 @@ Nueva venta
 
 
 <script src="{{ asset('js/ventas_dniruc.js') }}"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 @php
 $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'cantidad')
     ->where('activo', 1)
@@ -481,6 +536,7 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 
 <script src="js/ventas_productos.js"></script>
 <script src="js/ventas_carrito.js"></script>
+<script src="js/ventas_scanner.js"></script>
 
 <script src="js/ventas_ui.js"></script>
 <script src="js/ventas_espera.js"></script>
