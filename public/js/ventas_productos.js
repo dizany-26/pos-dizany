@@ -32,6 +32,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================
     const buscarInput   = document.getElementById("buscar_producto");
     const resultadosDiv = document.getElementById("resultados-busqueda");
+    const esEscritorioPOS = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+    function enfocarBuscadorPOS() {
+        if (!buscarInput || !esEscritorioPOS) return;
+
+        window.setTimeout(() => {
+            buscarInput.focus();
+            buscarInput.select?.();
+        }, 150);
+    }
+
+    function normalizarTexto(valor) {
+        return String(valor || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function normalizarCodigo(valor) {
+        return String(valor || "")
+            .replace(/[^0-9A-Za-z]/g, "")
+            .trim();
+    }
 
     // ============================
     // CACHE DE PRODUCTOS
@@ -218,6 +240,87 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
+    async function buscarProductosApi(searchTerm) {
+        const response = await fetch(`/buscar-producto?search=${encodeURIComponent(searchTerm)}`);
+        if (!response.ok) {
+            throw new Error("Error al buscar productos");
+        }
+
+        const list = await response.json();
+        cacheProductos(list);
+        return list;
+    }
+
+    async function agregarProductoDesdeBusqueda(prod) {
+        if (!prod) {
+            return { added: false, reason: "missing" };
+        }
+
+        if (Number(prod.stock || 0) <= 0) {
+            mostrarAlerta(`No hay stock para "${prod.nombre}".`);
+            enfocarBuscadorPOS();
+            return { added: false, reason: "out_of_stock" };
+        }
+
+        const v = ventaActiva();
+        if ((v.productos || []).some(it => Number(it.id) === Number(prod.id))) {
+            mostrarAlerta(`El producto "${prod.nombre}" ya está en la canasta.`);
+            enfocarBuscadorPOS();
+            return { added: false, reason: "duplicate" };
+        }
+
+        await agregarProductoAVentaActiva(prod);
+
+        const carritoLista = document.getElementById("carrito-lista");
+        carritoLista?.scrollTo({ top: 0, behavior: "smooth" });
+        buscarInput.value = "";
+        enfocarBuscadorPOS();
+        renderGrillaProductos(window.PRODUCTOS_SNAPSHOT || []);
+        return { added: true, reason: "added", product: prod };
+    }
+
+    async function resolverBusquedaPOS(searchTerm, options = {}) {
+        const { render = true } = options;
+        const term = String(searchTerm || "").trim();
+
+        if (!term) {
+            if (render) {
+                renderGrillaProductos(window.PRODUCTOS_SNAPSHOT || []);
+            }
+            enfocarBuscadorPOS();
+            return { added: false, reason: "empty" };
+        }
+
+        const list = await buscarProductosApi(term);
+
+        if (render) {
+            renderGrillaProductos(list);
+        }
+
+        if (!list.length) {
+            mostrarAlerta("No se encontraron productos");
+            enfocarBuscadorPOS();
+            return { added: false, reason: "not_found" };
+        }
+
+        const codigoNormalizado = normalizarCodigo(term);
+        const nombreNormalizado = normalizarTexto(term);
+
+        const coincidenciaExacta = list.find(prod =>
+            normalizarCodigo(prod.codigo_barras) === codigoNormalizado ||
+            normalizarTexto(prod.nombre) === nombreNormalizado
+        );
+
+        const candidato = coincidenciaExacta || (list.length === 1 ? list[0] : null);
+
+        if (!candidato) {
+            enfocarBuscadorPOS();
+            return { added: false, reason: "multiple_matches", results: list };
+        }
+
+        return agregarProductoDesdeBusqueda(candidato);
+    }
+
     // ============================
     // ACTUALIZAR STOCK DESDE BACKEND
     // ============================
@@ -282,12 +385,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            fetch(`/buscar-producto?search=${encodeURIComponent(q)}`)
-                .then(res => res.json())
+            buscarProductosApi(q)
                 .then(list => renderGrillaProductos(list))
                 .catch(() =>
                     mostrarAlerta("Error al buscar productos")
                 );
+        });
+
+        buscarInput.addEventListener("keydown", async (event) => {
+            if (event.key !== "Enter") return;
+
+            event.preventDefault();
+
+            try {
+                await resolverBusquedaPOS(buscarInput.value, { render: true });
+            } catch (error) {
+                console.error(error);
+                mostrarAlerta("Error al buscar productos");
+            }
         });
     }
 
@@ -295,11 +410,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // INICIAL
     // ============================
     actualizarProductosStock();
+    enfocarBuscadorPOS();
 
     // ============================
     // EXPONER
     // ============================
     window.renderGrillaProductos = renderGrillaProductos;
     window.actualizarProductosStock = actualizarProductosStock;
+    window.buscarProductosPOS = buscarProductosApi;
+    window.posResolverYAgregarProducto = resolverBusquedaPOS;
+    window.posAgregarProductoDesdeBusqueda = agregarProductoDesdeBusqueda;
 
 });
