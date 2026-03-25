@@ -201,6 +201,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const enhanceVideoQuality = async () => {
+        const capabilities = getTrackCapabilities();
+        const advancedConstraints = [];
+
+        if (Array.isArray(capabilities?.focusMode) && capabilities.focusMode.includes('continuous')) {
+            advancedConstraints.push({ focusMode: 'continuous' });
+        }
+
+        if (Array.isArray(capabilities?.exposureMode) && capabilities.exposureMode.includes('continuous')) {
+            advancedConstraints.push({ exposureMode: 'continuous' });
+        }
+
+        if (Array.isArray(capabilities?.whiteBalanceMode) && capabilities.whiteBalanceMode.includes('continuous')) {
+            advancedConstraints.push({ whiteBalanceMode: 'continuous' });
+        }
+
+        if (typeof capabilities?.sharpness !== 'undefined' && typeof capabilities.sharpness.max === 'number') {
+            advancedConstraints.push({ sharpness: capabilities.sharpness.max });
+        }
+
+        if (typeof capabilities?.contrast !== 'undefined' && typeof capabilities.contrast.max === 'number') {
+            const boostedContrast = Math.max(
+                capabilities.contrast.min ?? capabilities.contrast.max,
+                capabilities.contrast.max * 0.85
+            );
+            advancedConstraints.push({ contrast: boostedContrast });
+        }
+
+        for (const constraint of advancedConstraints) {
+            await applyVideoConstraints({ advanced: [constraint] });
+        }
+    };
+
     const verifyTorchState = (expectedState) => {
         const settings = getRunningTrackSettings();
         console.log('Settings actuales cámara:', settings);
@@ -328,6 +361,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -363,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Settings detectados:', getRunningTrackSettings());
 
         syncCameraTools();
+        await enhanceVideoQuality();
 
         if (keepMacroMessage) {
             setStatus('Modo macro activado.', 'info');
@@ -392,6 +431,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -428,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Settings detectados:', getRunningTrackSettings());
 
             syncCameraTools();
+            await enhanceVideoQuality();
             return true;
         } catch (error) {
             console.warn('No se pudo reiniciar la cámara:', error);
@@ -677,6 +722,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -720,8 +770,6 @@ document.addEventListener('DOMContentLoaded', () => {
             rearDeviceByLabel?.id,
             { facingMode: { exact: 'environment' } },
             { facingMode: 'environment' },
-            devices[0]?.id,
-            { facingMode: 'user' },
         ].filter(Boolean);
 
         for (const cameraConfig of cameraCandidates) {
@@ -738,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Settings detectados:', getRunningTrackSettings());
 
                 syncCameraTools();
+                await enhanceVideoQuality();
                 await applyAutoMacroPreset();
 
                 if (!autoMacroApplied) {
@@ -750,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        setStatus('No se pudo iniciar la cámara en vivo. Usa Escanear con app externa o una pistola lectora en PC.', 'error');
+        setStatus('No se pudo iniciar la cámara trasera. Usa Escanear con app externa o revisa permisos.', 'error');
         toggleFallback(true);
     };
 
