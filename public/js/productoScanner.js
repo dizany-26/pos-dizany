@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let autoMacroApplied = false;
     let activeCameraConfig = null;
     let currentDevices = [];
+    let isProcessingScan = false;
+    let scanLockUntil = 0;
+    const SCAN_RELOCK_MS = 1500;
 
     const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
 
@@ -98,11 +101,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const handleBarcodeDetected = async (decodedText) => {
-        fillBarcode(decodedText);
-        await playSuccessFeedback();
-        setStatus('Código detectado correctamente. Cerrando escáner…', 'success');
-        await stopScanner();
-        modal?.hide();
+        const now = Date.now();
+        if (isProcessingScan || now < scanLockUntil) {
+            return;
+        }
+
+        isProcessingScan = true;
+        scanLockUntil = now + SCAN_RELOCK_MS;
+
+        try {
+            fillBarcode(decodedText);
+            await playSuccessFeedback();
+            setStatus('Código detectado correctamente. Cerrando escáner…', 'success');
+            await stopScanner();
+            modal?.hide();
+        } finally {
+            isProcessingScan = false;
+        }
     };
 
     const returnedBarcode = new URLSearchParams(window.location.search).get('barcode');
@@ -198,6 +213,39 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.warn('No se pudieron aplicar restricciones de video:', constraints, error);
             return false;
+        }
+    };
+
+    const enhanceVideoQuality = async () => {
+        const capabilities = getTrackCapabilities();
+        const advancedConstraints = [];
+
+        if (Array.isArray(capabilities?.focusMode) && capabilities.focusMode.includes('continuous')) {
+            advancedConstraints.push({ focusMode: 'continuous' });
+        }
+
+        if (Array.isArray(capabilities?.exposureMode) && capabilities.exposureMode.includes('continuous')) {
+            advancedConstraints.push({ exposureMode: 'continuous' });
+        }
+
+        if (Array.isArray(capabilities?.whiteBalanceMode) && capabilities.whiteBalanceMode.includes('continuous')) {
+            advancedConstraints.push({ whiteBalanceMode: 'continuous' });
+        }
+
+        if (typeof capabilities?.sharpness !== 'undefined' && typeof capabilities.sharpness.max === 'number') {
+            advancedConstraints.push({ sharpness: capabilities.sharpness.max });
+        }
+
+        if (typeof capabilities?.contrast !== 'undefined' && typeof capabilities.contrast.max === 'number') {
+            const boostedContrast = Math.max(
+                capabilities.contrast.min ?? capabilities.contrast.max,
+                capabilities.contrast.max * 0.85
+            );
+            advancedConstraints.push({ contrast: boostedContrast });
+        }
+
+        for (const constraint of advancedConstraints) {
+            await applyVideoConstraints({ advanced: [constraint] });
         }
     };
 
@@ -328,6 +376,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -363,6 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Settings detectados:', getRunningTrackSettings());
 
         syncCameraTools();
+        await enhanceVideoQuality();
 
         if (keepMacroMessage) {
             setStatus('Modo macro activado.', 'info');
@@ -392,6 +446,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -428,6 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Settings detectados:', getRunningTrackSettings());
 
             syncCameraTools();
+            await enhanceVideoQuality();
             return true;
         } catch (error) {
             console.warn('No se pudo reiniciar la cámara:', error);
@@ -677,6 +737,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -720,8 +785,6 @@ document.addEventListener('DOMContentLoaded', () => {
             rearDeviceByLabel?.id,
             { facingMode: { exact: 'environment' } },
             { facingMode: 'environment' },
-            devices[0]?.id,
-            { facingMode: 'user' },
         ].filter(Boolean);
 
         for (const cameraConfig of cameraCandidates) {
@@ -738,6 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Settings detectados:', getRunningTrackSettings());
 
                 syncCameraTools();
+                await enhanceVideoQuality();
                 await applyAutoMacroPreset();
 
                 if (!autoMacroApplied) {
@@ -750,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        setStatus('No se pudo iniciar la cámara en vivo. Usa Escanear con app externa o una pistola lectora en PC.', 'error');
+        setStatus('No se pudo iniciar la cámara trasera. Usa Escanear con app externa o revisa permisos.', 'error');
         toggleFallback(true);
     };
 
