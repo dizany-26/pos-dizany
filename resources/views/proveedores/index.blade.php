@@ -98,7 +98,7 @@ Proveedores
                                 <td data-label="Acciones">
                                     <div class="d-flex justify-content-center gap-2 action-buttons">
                                         <button type="button"
-                                                class="btn-soft btn-soft-warning btn-soft-icon"
+                                                class="btn-soft btn-soft-warning btn-soft-icon btn-edit"
                                                 data-id="{{ $proveedor->id }}"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#modalEditarProveedor">
