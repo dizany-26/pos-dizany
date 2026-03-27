@@ -302,6 +302,7 @@ public function toggleEstado($id)
             return [
                 'id' => $p->id,
                 'nombre' => $p->nombre,
+                'codigo_barras' => $p->codigo_barras,
                 'descripcion' => $p->descripcion,
                 'imagen' => $p->imagen,
 
