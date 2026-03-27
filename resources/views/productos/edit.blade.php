@@ -67,10 +67,10 @@ Editar Producto
                            value="{{ old('codigo_barras', $producto->codigo_barras) }}">
 
                     <button type="button"
-                            class="btn-soft btn-soft-info codigo-barras-scan-btn"
-                            id="btnEscanearCodigo"
-                            title="Escanear código de barras"
-                            aria-label="Escanear código de barras con cámara">
+                        class="btn-soft btn-soft-info codigo-barras-scan-btn d-lg-none"
+                        id="btnEscanearCodigo"
+                        title="Escanear código de barras"
+                        aria-label="Escanear código de barras con cámara">
                         <i class="fas fa-barcode"></i>
                     </button>
                 </div>
