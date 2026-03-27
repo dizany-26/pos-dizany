@@ -65,6 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 padding:14px; text-align:center;
                 color:#777; font-size:13px;
             }
+            .pos-espera-add-btn{
+                display:inline-flex; align-items:center; justify-content:center;
+                min-width: 152px; margin: 10px auto 2px;
+                padding: 8px 14px; font-size: 13px;
+            }
             :root[data-theme='dark'] .pos-espera-panel{
                 background: linear-gradient(180deg, #0f223f 0%, #0b1c35 100%);
                 border: 1px solid #2d4e7a;
@@ -86,6 +91,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 color:#ff8e9b;
             }
             :root[data-theme='dark'] .pos-espera-empty{ color:#b7cae7; }
+            :root[data-theme='dark'] .pos-espera-add-btn{
+                background: rgba(37,99,235,.22) !important;
+                color:#bfdbfe !important;
+            }
         `;
         document.head.appendChild(st);
     })();
@@ -207,8 +216,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const add = document.createElement("button");
         add.type = "button";
-        add.className = "btn btn-sm btn-primary w-100 mt-2";
-        add.innerHTML = `<i class="fas fa-plus-circle me-1"></i> Nueva venta`;
+        add.className = "btn-soft btn-soft-primary pos-espera-add-btn";
+        add.innerHTML = `<i class="fas fa-plus-circle"></i> Nueva venta`;
         add.addEventListener("click", () => {
 
         const id = uidVenta();
