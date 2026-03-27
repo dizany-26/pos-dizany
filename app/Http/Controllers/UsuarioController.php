@@ -25,62 +25,58 @@ class UsuarioController extends Controller
 
     // Guarda un nuevo usuario
     public function store(Request $request)
-{
-    $request->validate([
-        'nombre' => 'required',
-        'usuario' => 'required|unique:usuarios,usuario',
-        'email' => 'required|email|unique:usuarios,email', // ✅ validación
-        'password' => 'required',
-        'rol_id' => 'required|exists:roles,id',
-    ]);
-
-    DB::transaction(function () use ($request) {
-        $usuario = User::create([
-            'nombre' => $request->nombre,
-            'usuario' => $request->usuario,
-            'email' => $request->email, // ✅ nuevo campo
-            'clave' => Hash::make($request->password),
-            'rol_id' => $request->rol_id,
+    {
+        $request->validate([
+            'nombre' => 'required',
+            'usuario' => 'required|unique:usuarios,usuario',
+            'email' => 'required|email|unique:usuarios,email',
+            'password' => 'required',
+            'rol_id' => 'required|exists:roles,id',
+            'permisos' => 'nullable|array',
+            'permisos.*' => 'string',
         ]);
 
-        $permisos = collect($request->input('permisos', []))
-            ->filter()
-            ->unique()
-            ->values();
+        DB::transaction(function () use ($request) {
+            $usuario = User::create([
+                'nombre' => $request->nombre,
+                'usuario' => $request->usuario,
+                'email' => $request->email,
+                'clave' => Hash::make($request->password),
+                'rol_id' => $request->rol_id,
+            ]);
 
-        if ($permisos->isNotEmpty()) {
-            UsuarioPermiso::insert(
-                $permisos->map(fn ($permiso) => [
-                    'usuario_id' => $usuario->id,
-                    'permiso' => $permiso,
-                ])->all()
-            );
-        }
-    });
+            $this->syncPermisos($usuario->id, $request->input('permisos', []));
+        });
 
-    return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
-}
+        return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
+    }
 
 
     public function update(Request $request, $id)
-{
-    $request->validate([
-        'nombre' => 'required',
-        'usuario' => 'required|unique:usuarios,usuario,' . $id,
-        'email' => 'required|email|unique:usuarios,email,' . $id, // ✅ validación
-        'rol_id' => 'required|exists:roles,id',
-    ]);
+    {
+        $request->validate([
+            'nombre' => 'required',
+            'usuario' => 'required|unique:usuarios,usuario,' . $id,
+            'email' => 'required|email|unique:usuarios,email,' . $id,
+            'rol_id' => 'required|exists:roles,id',
+            'permisos' => 'nullable|array',
+            'permisos.*' => 'string',
+        ]);
 
-    $usuario = User::findOrFail($id);
-    $usuario->update([
-        'nombre' => $request->nombre,
-        'usuario' => $request->usuario,
-        'email' => $request->email, // ✅ nuevo campo
-        'rol_id' => $request->rol_id,
-    ]);
+        DB::transaction(function () use ($request, $id) {
+            $usuario = User::findOrFail($id);
+            $usuario->update([
+                'nombre' => $request->nombre,
+                'usuario' => $request->usuario,
+                'email' => $request->email,
+                'rol_id' => $request->rol_id,
+            ]);
 
-    return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado correctamente.');
-}
+            $this->syncPermisos($usuario->id, $request->input('permisos', []));
+        });
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado correctamente.');
+    }
 
     public function destroy($id)
     {
@@ -119,4 +115,24 @@ class UsuarioController extends Controller
         return Excel::download(new UsuariosExport, 'usuarios.xlsx');
     }
 
+    private function syncPermisos(int $usuarioId, array $permisos): void
+    {
+        $permisosNormalizados = collect($permisos)
+            ->filter()
+            ->unique()
+            ->values();
+
+        UsuarioPermiso::where('usuario_id', $usuarioId)->delete();
+
+        if ($permisosNormalizados->isEmpty()) {
+            return;
+        }
+
+        UsuarioPermiso::insert(
+            $permisosNormalizados->map(fn ($permiso) => [
+                'usuario_id' => $usuarioId,
+                'permiso' => $permiso,
+            ])->all()
+        );
+    }
 }
