@@ -87,7 +87,7 @@ Nueva venta
 
         </div> <!-- cierre columna izquierda -->
                 <!-- ====================== 🟥 COLUMNA DERECHA ====================== -->
-        <div class="treinta-col derecha">
+        <div class="treinta-col derecha" id="ventas-carrito-panel">
         <div class="venta-steps">
 
             <!-- █████████████████████████████ -->
@@ -98,9 +98,17 @@ Nueva venta
 
                 <!-- HEADER FIJO -->
                 <div class="card shadow-sm mb-0">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                         <span>Productos</span>
-                        <a href="#" id="vaciar-canasta" class="text-white">Vaciar canasta</a>
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="button"
+                                id="btn-cerrar-carrito-movil"
+                                class="btn btn-sm btn-outline-light d-lg-none"
+                                aria-label="Ocultar carrito">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <a href="#" id="vaciar-canasta" class="text-white">Vaciar canasta</a>
+                        </div>
                     </div>
                 </div>
 
@@ -333,6 +341,18 @@ Nueva venta
     </div><!-- /.treinta-col.derecha -->
 
     </div> <!-- /.treinta-body -->
+
+    <button type="button"
+        id="btn-carrito-flotante"
+        class="mobile-cart-fab d-lg-none"
+        aria-label="Abrir carrito de ventas"
+        title="Carrito: 0 producto(s) · Total S/ 0.00">
+        <span id="mobile-cart-count" class="mobile-cart-fab__count">0</span>
+        <i class="fas fa-shopping-cart"></i>
+        <span id="mobile-cart-total" class="mobile-cart-fab__total">S/ 0.00</span>
+    </button>
+
+    <div id="mobile-cart-backdrop" class="mobile-cart-backdrop d-lg-none"></div>
 </div> <!-- /.ventas-treinta -->
 
 <!-- MODAL ORDENAR PRODUCTOS -->

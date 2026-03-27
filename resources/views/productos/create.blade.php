@@ -75,7 +75,7 @@ Nuevo Producto
                             value="{{ old('codigo_barras') }}">
 
                         <button type="button"
-                            class="btn-soft btn-soft-info codigo-barras-scan-btn"
+                            class="btn-soft btn-soft-info codigo-barras-scan-btn d-lg-none"
                             id="btnEscanearCodigo"
                             title="Escanear código de barras"
                             aria-label="Escanear código de barras con cámara">
@@ -441,6 +441,21 @@ Nuevo Producto
 
             reader.readAsDataURL(file);
         });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const codigoBarrasInput = document.getElementById('codigo_barras');
+        if (!codigoBarrasInput) return;
+
+        const esDesktop = window.matchMedia('(min-width: 992px) and (hover: hover) and (pointer: fine)').matches;
+        if (!esDesktop) return;
+
+        setTimeout(() => {
+            codigoBarrasInput.focus();
+            codigoBarrasInput.select();
+        }, 50);
     });
 </script>
 

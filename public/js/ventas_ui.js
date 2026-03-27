@@ -20,6 +20,40 @@ function formatPrecioDinamico(precio) {
     }
 }
 
+function esVistaMovilVentas() {
+    return window.matchMedia("(max-width: 991.98px)").matches;
+}
+
+function setMobileCartPanelOpen(open) {
+    document.body.classList.toggle("mobile-cart-open", !!open);
+}
+
+function initMobileCartPanel() {
+    const btnFab = document.getElementById("btn-carrito-flotante");
+    const btnCerrar = document.getElementById("btn-cerrar-carrito-movil");
+    const backdrop = document.getElementById("mobile-cart-backdrop");
+
+    if (!btnFab || !btnCerrar || !backdrop) return;
+
+    btnFab.addEventListener("click", () => {
+        setMobileCartPanelOpen(true);
+    });
+
+    btnCerrar.addEventListener("click", () => {
+        setMobileCartPanelOpen(false);
+    });
+
+    backdrop.addEventListener("click", () => {
+        setMobileCartPanelOpen(false);
+    });
+
+    window.addEventListener("resize", () => {
+        if (!esVistaMovilVentas()) {
+            setMobileCartPanelOpen(false);
+        }
+    });
+}
+
 // ===============================
 // UI / STEPS / CLIENTE / PAGO / VUELTO / SERIE-CORRELATIVO
 // ===============================
@@ -156,10 +190,16 @@ function actualizarBotonCarrito() {
 
     const v = ventaActiva();
     const cantidad = (v.productos || []).length;
+    const badgeFab = document.getElementById("mobile-cart-count");
+    const totalFab = document.getElementById("mobile-cart-total");
+    const btnFab = document.getElementById("btn-carrito-flotante");
 
     if (cantidad === 0) {
         btnIrStep2.innerHTML = `0 Continuar`;
         btnIrStep2.disabled = true;
+        if (badgeFab) badgeFab.innerText = "0";
+        if (totalFab) totalFab.innerText = "S/ 0.00";
+        if (btnFab) btnFab.title = "Carrito: 0 producto(s) · Total S/ 0.00";
         return;
     }
 
@@ -174,6 +214,10 @@ function actualizarBotonCarrito() {
         <span class="fw-semibold">S/ ${totalFormateado}</span>
         <i class="fas fa-arrow-right ms-2"></i>
     `;
+
+    if (badgeFab) badgeFab.innerText = String(cantidad);
+    if (totalFab) totalFab.innerText = `S/ ${totalFormateado}`;
+    if (btnFab) btnFab.title = `Carrito: ${cantidad} producto(s) · Total S/ ${totalFormateado}`;
 }
 
 // ============================
@@ -347,6 +391,7 @@ if (estado === "pagado") {
 // DOM
 // ============================
 document.addEventListener("DOMContentLoaded", () => {
+    initMobileCartPanel();
 
     // Serie/correlativo
     const tipoComprobanteSelect = document.getElementById("tipo_comprobante");
@@ -430,6 +475,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // 🔥 VALIDAR STOCK ANTES DE CONTINUAR
         if (!validarStockVentaActiva()) {
             return; // 🚫 no avanzar
+        }
+        if (esVistaMovilVentas()) {
+            setMobileCartPanelOpen(true);
         }
         showStep(2);
     });
