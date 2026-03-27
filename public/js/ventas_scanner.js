@@ -17,6 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let scannerRunning = false;
     let torchEnabled = false;
     let zoomEnabled = false;
+    let beepAudioContext = null;
+    let isProcessingScan = false;
+    let lastAcceptedScanAt = 0;
+    let lastAcceptedCode = '';
+    const GLOBAL_SCAN_THROTTLE_MS = 250;
+    const SAME_CODE_COOLDOWN_MS = 1500;
 
     const setStatus = (message, type = 'info') => {
         status.textContent = message;
@@ -37,6 +43,38 @@ document.addEventListener('DOMContentLoaded', () => {
         String(value || '')
             .replace(/[^0-9A-Za-z]/g, '')
             .trim();
+
+    const playSuccessFeedback = async () => {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(90);
+        }
+
+        try {
+            const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextCtor) return;
+
+            beepAudioContext = beepAudioContext || new AudioContextCtor();
+            if (beepAudioContext.state === 'suspended') {
+                await beepAudioContext.resume();
+            }
+
+            const oscillator = beepAudioContext.createOscillator();
+            const gainNode = beepAudioContext.createGain();
+
+            oscillator.type = 'triangle';
+            oscillator.frequency.value = 1174;
+            gainNode.gain.setValueAtTime(0.0001, beepAudioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.15, beepAudioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, beepAudioContext.currentTime + 0.12);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(beepAudioContext.destination);
+            oscillator.start();
+            oscillator.stop(beepAudioContext.currentTime + 0.12);
+        } catch (error) {
+            console.warn('No se pudo reproducir el beep de éxito en ventas:', error);
+        }
+    };
 
     const getTrackCapabilities = () => {
         if (!html5QrCode || !scannerRunning || typeof html5QrCode.getRunningTrackCapabilities !== 'function') {
@@ -62,6 +100,41 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.warn('No se pudieron aplicar restricciones de video en ventas:', constraints, error);
             return false;
+        }
+    };
+
+    const enhanceVideoQuality = async () => {
+        const capabilities = getTrackCapabilities();
+        const advancedConstraints = [];
+
+        if (Array.isArray(capabilities?.focusMode) && capabilities.focusMode.includes('continuous')) {
+            advancedConstraints.push({ focusMode: 'continuous' });
+        }
+
+        if (Array.isArray(capabilities?.exposureMode) && capabilities.exposureMode.includes('continuous')) {
+            advancedConstraints.push({ exposureMode: 'continuous' });
+        }
+
+        if (Array.isArray(capabilities?.whiteBalanceMode) && capabilities.whiteBalanceMode.includes('continuous')) {
+            advancedConstraints.push({ whiteBalanceMode: 'continuous' });
+        }
+
+        if (typeof capabilities?.sharpness !== 'undefined' && typeof capabilities.sharpness.max === 'number') {
+            advancedConstraints.push({ sharpness: capabilities.sharpness.max });
+        }
+
+        if (typeof capabilities?.contrast !== 'undefined' && typeof capabilities.contrast.max === 'number') {
+            const boostedContrast = Math.max(
+                capabilities.contrast.min ?? capabilities.contrast.max,
+                capabilities.contrast.max * 0.85
+            );
+            advancedConstraints.push({ contrast: boostedContrast });
+        }
+
+        if (!advancedConstraints.length) return;
+
+        for (const constraint of advancedConstraints) {
+            await applyVideoConstraints({ advanced: [constraint] });
         }
     };
 
@@ -104,8 +177,30 @@ document.addEventListener('DOMContentLoaded', () => {
         setToolVisibility(btnZoom, false);
     };
 
+    const shouldIgnoreScan = (codigoNormalizado) => {
+        const now = Date.now();
+        const isSameCode = codigoNormalizado && codigoNormalizado === lastAcceptedCode;
+
+        if ((now - lastAcceptedScanAt) < GLOBAL_SCAN_THROTTLE_MS) {
+            return true;
+        }
+
+        if (isSameCode && (now - lastAcceptedScanAt) < SAME_CODE_COOLDOWN_MS) {
+            return true;
+        }
+
+        return false;
+    };
+
     const procesarCodigoDetectado = async (decodedText) => {
         const codigo = normalizarEscaneo(decodedText);
+        if (isProcessingScan || shouldIgnoreScan(codigo)) {
+            return;
+        }
+
+        isProcessingScan = true;
+        lastAcceptedScanAt = Date.now();
+        lastAcceptedCode = codigo;
         input.value = codigo || decodedText.trim();
         input.dispatchEvent(new Event('input', { bubbles: true }));
 
@@ -114,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultado = await window.posResolverYAgregarProducto?.(termino, { render: true });
 
             if (resultado?.added) {
+                await playSuccessFeedback();
                 setStatus('Producto enviado al carrito.', 'success');
                 await stopScanner();
                 modal?.hide();
@@ -133,6 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error(error);
             setStatus('No se pudo procesar el código escaneado.', 'error');
+        } finally {
+            isProcessingScan = false;
         }
     };
 
@@ -159,6 +257,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return { width: Math.round(width), height: Math.round(height) };
             },
             aspectRatio: 1.7778,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -177,11 +280,22 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
         }
 
+        let devices = [];
+        try {
+            devices = await Html5Qrcode.getCameras();
+        } catch (error) {
+            console.warn('No se pudieron listar cámaras en ventas:', error);
+        }
+
+        const rearDeviceByLabel = devices.find((device) =>
+            /back|rear|environment|tr[aá]s|posterior/i.test(device.label || '')
+        );
+
         const cameraCandidates = [
+            rearDeviceByLabel?.id,
             { facingMode: { exact: 'environment' } },
             { facingMode: 'environment' },
-            { facingMode: 'user' },
-        ];
+        ].filter(Boolean);
 
         for (const cameraConfig of cameraCandidates) {
             try {
@@ -195,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 scannerRunning = true;
                 syncTools();
+                await enhanceVideoQuality();
                 setStatus('Apunta la cámara al código de barras.', 'info');
                 return;
             } catch (error) {
@@ -202,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        setStatus('No se pudo iniciar la cámara del buscador POS.', 'error');
+        setStatus('No se pudo iniciar la cámara trasera. Verifica permisos de cámara.', 'error');
     };
 
     btnEscanear.addEventListener('click', () => {
