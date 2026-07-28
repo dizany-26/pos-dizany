@@ -22,6 +22,9 @@ class Producto extends Model
         'unidades_por_paquete',
         'paquetes_por_caja',
         'unidades_por_caja',
+        'precio_venta',
+        'precio_paquete',
+        'precio_caja',
 
         // Ubicación / imagen
         'ubicacion',
@@ -43,6 +46,9 @@ class Producto extends Model
         'activo'               => 'boolean',
         'visible_en_catalogo'  => 'boolean',
         'maneja_vencimiento'   => 'boolean',
+        'precio_venta'         => 'decimal:2',
+        'precio_paquete'       => 'decimal:2',
+        'precio_caja'          => 'decimal:2',
     ];
 
 

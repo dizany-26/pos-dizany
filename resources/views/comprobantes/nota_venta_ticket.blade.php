@@ -79,8 +79,8 @@
             @foreach($venta->detalleVentas as $detalle)
                 <tr>
                     <td>{{ Str::limit($detalle->producto->nombre, 10) }}</td>
-                    <td>{{ $detalle->cantidad }}</td>
-                    <td>{{ number_format($detalle->precio_unitario, 2) }}</td>
+                    <td>{{ $detalle->cantidad }} {{ ucfirst($detalle->presentacion) }}</td>
+                    <td>{{ number_format($detalle->precio_presentacion, 2) }}</td>
                     <td>{{ number_format($detalle->subtotal, 2) }}</td>
                 </tr>
             @endforeach

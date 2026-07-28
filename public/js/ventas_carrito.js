@@ -86,6 +86,9 @@ function factorPresentacion(it) {
         return parseInt(it.unidades_por_paquete) || 0;
     }
     if (it.tipo_venta === "caja") {
+        const uc = parseInt(it.unidades_por_caja) || 0;
+        if (uc > 0) return uc;
+
         const up = parseInt(it.unidades_por_paquete) || 0;
         const pc = parseInt(it.paquetes_por_caja) || 0;
         return up * pc;
@@ -134,79 +137,97 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnIrStep2   = document.getElementById("btn-ir-step2");
 
     async function descomponerFIFO(producto, cantidadPresentaciones, tipoVenta) {
-
         const res = await fetch(`/ventas/stock-fifo/${producto.id}`);
         const lotes = await res.json();
 
-        if (!Array.isArray(lotes) || !lotes.length) {
+        if (!res.ok || !Array.isArray(lotes) || !lotes.length) {
             throw new Error("No hay stock disponible");
         }
 
-        // factor en UNIDADES por presentación
         let factor = 1;
         if (tipoVenta === "paquete") {
             factor = parseInt(producto.unidades_por_paquete) || 0;
         } else if (tipoVenta === "caja") {
-            const up = parseInt(producto.unidades_por_paquete) || 0;
-            const pc = parseInt(producto.paquetes_por_caja) || 0;
-            factor = up * pc;
+            factor = parseInt(producto.unidades_por_caja) || 0;
+            if (factor <= 0) {
+                const up = parseInt(producto.unidades_por_paquete) || 0;
+                const pc = parseInt(producto.paquetes_por_caja) || 0;
+                factor = up * pc;
+            }
         }
 
         if (factor <= 0) {
-            throw new Error("Presentación inválida (factor 0). Revisa unidades/paquetes.");
+            throw new Error("Presentación inválida. Revisa la configuración del producto.");
         }
 
-        let restante = parseInt(cantidadPresentaciones) || 0; // PRESENTACIONES
-        const items = [];
+        const cantidad = parseInt(cantidadPresentaciones) || 0;
+        let unidadesRestantes = cantidad * factor;
+        let subtotal = 0;
+        const tramosPrecio = [];
 
         for (const lote of lotes) {
-            if (restante <= 0) break;
+            if (unidadesRestantes <= 0) break;
 
-            const stockUnidades = parseInt(lote.stock || 0); // 👈 unidades
+            const stockUnidades = parseInt(lote.stock || 0);
             if (stockUnidades <= 0) continue;
 
-            // cuántas presentaciones completas caben en este lote
-            const capacidadPres = Math.floor(stockUnidades / factor);
-            if (capacidadPres <= 0) continue;
+            const unidadesTomadas = Math.min(stockUnidades, unidadesRestantes);
+            const precioPresentacion = parseFloat(
+                tipoVenta === "paquete"
+                    ? lote.precio_paquete
+                    : tipoVenta === "caja"
+                        ? lote.precio_caja
+                        : lote.precio_unidad
+            ) || 0;
 
-            const tomarPres = Math.min(capacidadPres, restante);
-            const tomarUnidades = tomarPres * factor;
+            if (precioPresentacion <= 0) {
+                throw new Error(`El lote ${lote.numero_lote || lote.id} no tiene precio para ${tipoVenta}.`);
+            }
 
-            let precioUnit = 0;
-            if (tipoVenta === "unidad")  precioUnit = lote.precio_unidad;
-            if (tipoVenta === "paquete") precioUnit = lote.precio_paquete;
-            if (tipoVenta === "caja")    precioUnit = lote.precio_caja;
+            const subtotalTramo = Math.round(
+                unidadesTomadas * (precioPresentacion / factor) * 100
+            ) / 100;
 
-            items.push({
-            producto_id: producto.id,
-            lote_id: lote.id,
-
-            nombre: producto.nombre,
-            imagen: producto.imagen,
-            descripcion: producto.descripcion,
-
-            tipo_venta: tipoVenta,
-            cantidad: tomarPres, // 👈 PRESENTACIONES (no unidades)
-
-            precio_unitario: parseFloat(precioUnit || 0),
-            precio_venta: parseFloat(lote.precio_unidad || 0),
-            precio_paquete: parseFloat(lote.precio_paquete || 0),
-            precio_caja: parseFloat(lote.precio_caja || 0),
-
-            stock_lote: stockUnidades, // 👈 unidades del lote (para badge)
-            unidades_por_paquete: producto.unidades_por_paquete || 0,
-            paquetes_por_caja: producto.paquetes_por_caja || 0
+            subtotal += subtotalTramo;
+            tramosPrecio.push({
+                lote_id: Number(lote.id),
+                numero_lote: lote.numero_lote || lote.id,
+                unidades: unidadesTomadas,
+                precio_presentacion: precioPresentacion,
+                subtotal: subtotalTramo
             });
-
-            restante -= tomarPres;
+            unidadesRestantes -= unidadesTomadas;
         }
 
-        if (restante > 0) {
+        if (unidadesRestantes > 0) {
             throw new Error("Stock insuficiente");
         }
 
-        return items;
-        }
+        const primerLote = lotes[0];
+
+        return [{
+            id: Number(producto.id),
+            producto_id: Number(producto.id),
+            lote_id: Number(primerLote.id),
+            nombre: producto.nombre,
+            imagen: producto.imagen,
+            descripcion: producto.descripcion,
+            tipo_venta: tipoVenta,
+            cantidad,
+            precio_unitario: subtotal / cantidad,
+            precio_venta: parseFloat(primerLote.precio_unidad || 0),
+            precio_paquete: parseFloat(primerLote.precio_paquete || 0),
+            precio_caja: parseFloat(primerLote.precio_caja || 0),
+            stock_lote: lotes.reduce(
+                (total, lote) => total + (parseInt(lote.stock) || 0),
+                0
+            ),
+            unidades_por_paquete: producto.unidades_por_paquete || 0,
+            paquetes_por_caja: producto.paquetes_por_caja || 0,
+            unidades_por_caja: producto.unidades_por_caja || 0,
+            tramos_precio: tramosPrecio
+        }];
+    }
     // ============================
     // AGREGAR PRODUCTO A VENTA ACTIVA
     // ============================
@@ -254,6 +275,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         paquetes_por_caja: producto.paquetes_por_caja
             ? parseInt(producto.paquetes_por_caja)
+            : 0,
+        unidades_por_caja: producto.unidades_por_caja
+            ? parseInt(producto.unidades_por_caja)
             : 0
     };
 
@@ -289,7 +313,8 @@ document.addEventListener("DOMContentLoaded", () => {
     imagen: it.imagen,
     descripcion: it.descripcion,
     unidades_por_paquete: it.unidades_por_paquete || 0,
-    paquetes_por_caja: it.paquetes_por_caja || 0
+    paquetes_por_caja: it.paquetes_por_caja || 0,
+    unidades_por_caja: it.unidades_por_caja || 0
   };
 }
 
@@ -402,8 +427,6 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
             // 👇 USA LA FUNCIÓN DINÁMICA
             const subtotalFormateado = formatPrecioDinamico(subtotal);
 
-            const pid = Number(p.producto_id || p.id);
-            
             // ===============================
             // 🔥 STOCK POR LOTE (FIFO)
             // ===============================
@@ -419,45 +442,6 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
             if (queda <= 0) stockClase = "bg-danger";
             else if (queda <= 5) stockClase = "bg-warning";
 
-            // ===============================
-            // 🔥 determinar si esta fila es la activa del producto
-            // ===============================
-            let esFilaActiva = false;
-
-            const indicesProducto = items
-                .map((it, idx) => ({ it, idx }))
-                .filter(x => Number(x.it.producto_id || x.it.id) === pid)
-                .map(x => x.idx);
-
-            if (indicesProducto.length > 0) {
-                const indiceUltimaFilaProducto = Math.max(...indicesProducto);
-                esFilaActiva = index === indiceUltimaFilaProducto;
-            }
-
-            let siguienteLote = null;
-
-            if (stockMostrar === 0 && esFilaActiva) {
-                const prod = productosCache.get(pid);
-
-                if (prod && Array.isArray(prod.lotes_fifo)) {
-
-                    // índice del lote actual dentro del orden FEFO
-                    const idxActual = prod.lotes_fifo.findIndex(
-                        l => Number(l.id) === Number(p.lote_id)
-                    );
-
-                    // el siguiente ES el siguiente en el array
-                    if (idxActual !== -1 && prod.lotes_fifo[idxActual + 1]) {
-                        const candidato = prod.lotes_fifo[idxActual + 1];
-
-                        if (parseInt(candidato.stock) > 0) {
-                            siguienteLote = candidato;
-                        }
-                    }
-                }
-            }
-
-
             const card = `
                 <div class="carrito-item border-bottom pb-3 mb-3" data-index="${index}">
                     <div class="d-flex justify-content-between align-items-start">
@@ -467,14 +451,7 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                                 <div class="d-flex justify-content-between align-items-center" style="min-width:200px;">
                                     <span class="fw-semibold small">${p.nombre}</span>
                                     <span class="badge ${stockClase} ms-2">
-                                        Stock: ${stockMostrar}
-                                        ${
-                                            stockMostrar === 0 && siguienteLote && esFilaActiva
-                                            ? `<span class="ms-1 text-warning">
-                                                • Lote ${siguienteLote.numero} (+${siguienteLote.stock} und)
-                                            </span>`
-                                            : ""
-                                        }
+                                        Quedará: ${stockMostrar}
                                     </span>
 
                                 </div>
@@ -500,7 +477,9 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                                     p.precio_caja > 0
                                         ? (() => {
                                             let texto = "Caja";
-                                            if (p.paquetes_por_caja > 0 && p.unidades_por_paquete > 0) {
+                                            if (p.unidades_por_caja > 0) {
+                                                texto = `Caja (${p.unidades_por_caja} und.)`;
+                                            } else if (p.paquetes_por_caja > 0 && p.unidades_por_paquete > 0) {
                                                 texto = `Caja (${p.paquetes_por_caja * p.unidades_por_paquete} und.)`;
                                             } else if (p.unidades_por_paquete > 0) {
                                                 texto = `Caja (${p.unidades_por_paquete} und.)`;
@@ -560,57 +539,17 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                 let factor = 1;
                 if (nuevoTipo === "paquete") factor = it.unidades_por_paquete || 0;
                 if (nuevoTipo === "caja") {
-                    factor = (it.unidades_por_paquete || 0) * (it.paquetes_por_caja || 0);
+                    factor = it.unidades_por_caja || 0;
+                    if (factor <= 0) {
+                        factor = (it.unidades_por_paquete || 0) * (it.paquetes_por_caja || 0);
+                    }
                 }
 
                 if (factor <= 0) {
                     throw new Error("Presentación inválida");
                 }
 
-                // 🔎 verificar si el lote actual alcanza
-                const loteActualInsuficiente =
-                    typeof it.stock_lote === "number" &&
-                    it.stock_lote < factor;
-
-                // 🔎 verificar si existe OTRO lote válido
-                const pid = Number(it.producto_id || it.id);
-                const prod = productosCache.get(pid);
-
-                const hayOtroLoteValido = Array.isArray(prod?.lotes_fifo)
-                    && prod.lotes_fifo.some(
-                        l => Number(l.id) !== Number(it.lote_id)
-                        && parseInt(l.stock) >= factor
-                    );
-
-                // ⚠️ avisar SOLO si:
-                // - el lote actual no alcanza
-                // - existe otro lote que sí puede cubrir la presentación
-                if (loteActualInsuficiente && hayOtroLoteValido) {
-                    const r = await Swal.fire({
-                        icon: "info",
-                        title: "Cambio de lote",
-                        text: "Este lote no cubre la presentación seleccionada. ¿Usar el siguiente disponible?",
-                        showCancelButton: true,
-                        confirmButtonText: "Sí, usar siguiente",
-                        cancelButtonText: "Cancelar",
-                        reverseButtons: true
-                    });
-
-                    if (!r.isConfirmed) {
-                        // 🔙 revertir selección
-                        e.target.value = tipoAnterior;
-                        it.tipo_venta = tipoAnterior;
-                        renderCarritoTreinta();
-                        return;
-                    }
-                }
-
-                // ❌ si no hay ningún lote válido → error directo (sin preguntar)
-                if (loteActualInsuficiente && !hayOtroLoteValido) {
-                    throw new Error("No hay stock suficiente para esta presentación.");
-                }
-
-                // ✅ confirmado → recalcular FEFO real
+                // Recalcular con el stock total disponible y distribución FEFO.
                 await recalcularYReemplazarGrupo(v.productos, i, 1, nuevoTipo);
                 renderCarritoTreinta();
 
@@ -705,7 +644,8 @@ carritoLista.addEventListener("blur", async (e) => {
                         imagen: it.imagen,
                         descripcion: it.descripcion,
                         unidades_por_paquete: it.unidades_por_paquete,
-                        paquetes_por_caja: it.paquetes_por_caja
+                        paquetes_por_caja: it.paquetes_por_caja,
+                        unidades_por_caja: it.unidades_por_caja
                     };
 
                     const nuevosItems = await descomponerFIFO(
@@ -858,4 +798,3 @@ function validarStockVentaActiva() {
 
     return true;
 }
-

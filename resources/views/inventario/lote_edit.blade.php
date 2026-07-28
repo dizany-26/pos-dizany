@@ -37,6 +37,17 @@ Panel de Editar
                     {{-- COLUMNA IZQUIERDA --}}
                     <div class="col-md-6">
 
+                        <div class="alert alert-info small">
+                            <div class="fw-semibold mb-1">Precio público vigente</div>
+                            Unidad: S/ {{ number_format($lote->producto->precio_venta ?? 0, 2) }}
+                            @if($lote->producto->precio_paquete)
+                                · Paquete: S/ {{ number_format($lote->producto->precio_paquete, 2) }}
+                            @endif
+                            @if($lote->producto->precio_caja)
+                                · Caja: S/ {{ number_format($lote->producto->precio_caja, 2) }}
+                            @endif
+                        </div>
+
                         <div class="mb-3">
                             <label class="inv-label">Cd. Comprobante</label>
                             <input type="text"
@@ -69,6 +80,23 @@ Panel de Editar
                                 name="fecha_vencimiento"
                                 class="form-control"
                                 value="{{ $lote->fecha_vencimiento }}">
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="hidden" name="actualizar_precio_producto" value="0">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="actualizar_precio_producto"
+                                id="actualizar_precio_producto"
+                                value="1"
+                            >
+                            <label class="form-check-label fw-semibold" for="actualizar_precio_producto">
+                                Aplicar estos precios a todos los lotes del producto
+                            </label>
+                            <div class="form-text">
+                                Márcalo solo si deseas cambiar el precio que verá el cliente en POS, catálogo y comprobante.
+                            </div>
                         </div>
 
                     </div>

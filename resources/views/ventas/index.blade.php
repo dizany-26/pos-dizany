@@ -88,6 +88,17 @@ Nueva venta
         </div> <!-- cierre columna izquierda -->
                 <!-- ====================== 🟥 COLUMNA DERECHA ====================== -->
         <div class="treinta-col derecha">
+        <div class="mobile-cart-header">
+            <div>
+                <span class="mobile-cart-eyebrow">Venta actual</span>
+                <strong>Mi carrito</strong>
+                <span id="mobile-cart-panel-count" class="mobile-cart-panel-count">0 productos</span>
+            </div>
+            <button type="button" id="btn-cerrar-carrito-movil" class="mobile-cart-close" aria-label="Cerrar carrito">
+                <i class="fas fa-xmark"></i>
+                <span>Cerrar</span>
+            </button>
+        </div>
         <div class="venta-steps">
 
             <!-- █████████████████████████████ -->
@@ -335,6 +346,25 @@ Nueva venta
     </div> <!-- /.treinta-body -->
 </div> <!-- /.ventas-treinta -->
 
+<button
+    type="button"
+    id="btn-carrito-movil"
+    class="mobile-cart-launcher"
+    aria-controls="step-1"
+    aria-expanded="false"
+    aria-label="Abrir carrito"
+>
+    <span class="mobile-cart-launcher-icon">
+        <i class="fas fa-cart-shopping"></i>
+        <span id="mobile-cart-count" class="mobile-cart-count">0</span>
+    </span>
+    <span class="mobile-cart-launcher-copy">
+        <small>Mi carrito</small>
+        <strong id="mobile-cart-total">S/ 0.00</strong>
+    </span>
+    <i class="fas fa-chevron-left mobile-cart-launcher-arrow"></i>
+</button>
+
 <!-- MODAL ORDENAR PRODUCTOS -->
 <div class="modal fade" id="modalOrdenar" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -539,6 +569,7 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 <script src="js/ventas_scanner.js"></script>
 
 <script src="js/ventas_ui.js"></script>
+<script src="js/ventas_mobile_cart.js"></script>
 <script src="js/ventas_espera.js"></script>
 <script src="js/ventas_ordenar.js"></script>
 <script src="js/ventas_registro.js"></script>

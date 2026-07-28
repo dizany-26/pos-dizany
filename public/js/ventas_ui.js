@@ -156,16 +156,25 @@ function actualizarBotonCarrito() {
 
     const v = ventaActiva();
     const cantidad = (v.productos || []).length;
+    const { total } = calcularTotal();
+    const totalFormateado = formatPrecioDinamico(total);
+    const mobileCount = document.getElementById("mobile-cart-count");
+    const mobileTotal = document.getElementById("mobile-cart-total");
+    const mobilePanelCount = document.getElementById("mobile-cart-panel-count");
+    const mobileLauncher = document.getElementById("btn-carrito-movil");
+
+    if (mobileCount) mobileCount.textContent = cantidad;
+    if (mobileTotal) mobileTotal.textContent = `S/ ${totalFormateado}`;
+    if (mobilePanelCount) {
+        mobilePanelCount.textContent = `${cantidad} ${cantidad === 1 ? "producto" : "productos"}`;
+    }
+    mobileLauncher?.classList.toggle("has-items", cantidad > 0);
 
     if (cantidad === 0) {
         btnIrStep2.innerHTML = `0 Continuar`;
         btnIrStep2.disabled = true;
         return;
     }
-
-    const { total } = calcularTotal();
-    // 👇 AHORA USA LA FUNCIÓN DINÁMICA
-    const totalFormateado = formatPrecioDinamico(total);
 
     btnIrStep2.disabled = false;
     btnIrStep2.innerHTML = `

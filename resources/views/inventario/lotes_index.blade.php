@@ -9,6 +9,20 @@
     display: inline-block;
     }
 
+    .fefo-empty-box {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 25px;
+        border: 1px solid #d69e5b;
+        border-radius: 7px;
+        color: #a85d16;
+        background: linear-gradient(145deg, #fff4d6, #e9bd78);
+        box-shadow: 0 2px 4px rgba(120, 72, 20, .22);
+        font-size: 15px;
+    }
+
 </style>
 @endpush
 {{-- BOTÓN ATRÁS --}}
@@ -147,13 +161,22 @@
                                 // FEFO POR PRODUCTO
                                 // =========================
                                 $pid = $lote->producto_id;
-                                $fefoIndex[$pid] = ($fefoIndex[$pid] ?? 0) + 1;
 
-                                if ($lote->fecha_vencimiento && \Carbon\Carbon::parse($lote->fecha_vencimiento)->isPast()) {
+                                if ($lote->stock_actual <= 0) {
+                                    $fefoIcon = '<span class="fefo-empty-box" title="Lote agotado" aria-label="Lote agotado"><i class="fas fa-box-open"></i></span>';
+                                    $prioridadFefo = null;
+                                } else {
+                                    $fefoIndex[$pid] = ($fefoIndex[$pid] ?? 0) + 1;
+                                    $prioridadFefo = $fefoIndex[$pid];
+                                }
+
+                                if ($lote->stock_actual <= 0) {
+                                    // Un lote agotado ya no participa en la prioridad FEFO.
+                                } elseif ($lote->fecha_vencimiento && \Carbon\Carbon::parse($lote->fecha_vencimiento)->isPast()) {
                                     $fefoIcon = '<i class="fas fa-times-circle text-danger" title="Lote vencido"></i>';
-                                } elseif ($fefoIndex[$pid] === 1) {
+                                } elseif ($prioridadFefo === 1) {
                                     $fefoIcon = '<i class="fas fa-circle text-success" title="Primer lote en salir (FEFO)"></i>';
-                                } elseif ($fefoIndex[$pid] === 2) {
+                                } elseif ($prioridadFefo === 2) {
                                     $fefoIcon = '<i class="fas fa-circle text-warning" title="Segundo en prioridad FEFO"></i>';
                                 } else {
                                     $fefoIcon = '<i class="fas fa-circle text-secondary" title="Lote posterior"></i>';
@@ -184,7 +207,7 @@
                                 data-estado="{{ $estadoVenc }}"
                                 data-producto="{{ strtolower($lote->producto->nombre ?? '') }}"
                                 data-stock="{{ $lote->stock_actual > 0 ? 'con' : 'sin' }}"
-                                data-fefo="{{ $fefoIndex[$pid] === 1 ? '1' : '0' }}"
+                                data-fefo="{{ $prioridadFefo === 1 ? '1' : '0' }}"
                                 data-movimientos="{{ $lote->movimientos_count > 0 ? '1' : '0' }}"
                                 data-texto="{{ strtolower(
                                     ($lote->codigo_comprobante ?? '') . ' ' .

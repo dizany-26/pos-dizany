@@ -26,9 +26,33 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("modalVentaExitosa");
 
     let modalVentaExitosa = null;
+    let ventaEnProceso = false;
+    let ventaPendienteDeReinicio = false;
+
     if (modalVentaExitosaElement && window.bootstrap) {
         modalVentaExitosa =
             bootstrap.Modal.getOrCreateInstance(modalVentaExitosaElement);
+    }
+
+    function mostrarProcesandoVenta(procesando) {
+        ventaEnProceso = procesando;
+
+        [btnConfirmar3, btnConfirmarDirecto].forEach(button => {
+            if (button) button.disabled = procesando;
+        });
+
+        if (procesando) {
+            Swal.fire({
+                title: "Procesando venta",
+                html: "Registrando productos, actualizando stock y generando el comprobante...",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading()
+            });
+        } else if (Swal.isVisible()) {
+            Swal.close();
+        }
     }
 
     // ============================
@@ -57,6 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // REGISTRAR VENTA
     // ============================
     function registrarVenta() {
+
+        if (ventaEnProceso) return;
 
         if (typeof window.volcarUIaVentaActiva === "function") {
             window.volcarUIaVentaActiva();
@@ -110,7 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 it.tipo_venta === "paquete"
                     ? it.unidades_por_paquete
                     : it.tipo_venta === "caja"
-                        ? it.unidades_por_paquete * it.paquetes_por_caja
+                        ? (
+                            it.unidades_por_caja ||
+                            it.unidades_por_paquete * it.paquetes_por_caja
+                        )
                         : 1;
 
             const cantidad = parseInt(it.cantidad);
@@ -126,6 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 presentacion: it.tipo_venta
             };
         });
+
+        mostrarProcesandoVenta(true);
 
         fetch("/ventas/registrar", {    
     method: "POST",
@@ -159,9 +190,10 @@ document.addEventListener("DOMContentLoaded", () => {
 .then(data => {
 
     if (!data.success) {
-        return mostrarAlerta(data.message || "Error al registrar venta.");
+        throw new Error(data.message || "Error al registrar venta.");
     }
 
+    mostrarProcesandoVenta(false);
     configurarBotonesComprobante(data);
 
     // 🔥 LIMPIEZA CORRECTA POS
@@ -177,8 +209,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     actualizarProductosStock();
 
+    ventaPendienteDeReinicio = true;
     if (modalVentaExitosa) {
         modalVentaExitosa.show();
+    } else {
+        reiniciarDespuesDeVenta();
     }
 
     try {
@@ -189,6 +224,8 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTodo();
 })
 .catch(error => {
+
+  mostrarProcesandoVenta(false);
 
   // 👇 si vino como string o Error normal, normalizamos
   const type = error?.type;
@@ -244,15 +281,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (modalVentaExitosa) {
         modalVentaExitosa.hide();
+    } else {
+        reiniciarDespuesDeVenta();
     }
+}
 
-    // 🔥 NO reutilizar ninguna venta existente
-    // 🔥 CREAR UNA NUEVA VENTA
-    const id = uidVenta();
+function reiniciarDespuesDeVenta() {
+    if (!ventaPendienteDeReinicio) return;
+    ventaPendienteDeReinicio = false;
+
+    const id = POS.ventaActivaId || uidVenta();
     POS.ventas[id] = crearVentaVacia(id);
     POS.ventaActivaId = id;
-
     POS.ventas[id].metodo_pago = "efectivo";
+    POS.ventas[id].fase = 1;
+    window.cerrarCarritoMovil?.();
 
     // Guardar estado real
     if (typeof snapshotPOS === "function") {
@@ -291,6 +334,10 @@ document.addEventListener("DOMContentLoaded", () => {
     btnConfirmar3?.addEventListener("click", registrarVenta);
     btnConfirmarDirecto?.addEventListener("click", registrarVenta);
     btnNuevaVenta?.addEventListener("click", continuarVendiendo);
+    modalVentaExitosaElement?.addEventListener(
+        "hidden.bs.modal",
+        reiniciarDespuesDeVenta
+    );
 
     // ============================
     // EXPONER

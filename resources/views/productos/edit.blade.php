@@ -482,6 +482,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const grupoUP = document.getElementById('grupo_unidades_paquete');
     const grupoPC = document.getElementById('grupo_paquetes_caja');
     const grupoUC = document.getElementById('grupo_unidades_caja');
+    const inputPC = grupoPC?.querySelector('input');
+    const inputUC = grupoUC?.querySelector('input');
 
     // Si no existen (por seguridad), no romper
     if (!chkPaquete || !chkCaja) return;
@@ -503,15 +505,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Caja basada en paquetes
                 grupoPC.classList.remove('d-none');
                 grupoUC.classList.add('d-none');
+                if (inputUC) inputUC.value = '';
             } else {
                 // Caja directa
                 grupoUC.classList.remove('d-none');
                 grupoPC.classList.add('d-none');
+                if (inputPC) inputPC.value = '';
             }
 
         } else {
             grupoPC.classList.add('d-none');
             grupoUC.classList.add('d-none');
+            if (inputPC) inputPC.value = '';
+            if (inputUC) inputUC.value = '';
         }
     }
 

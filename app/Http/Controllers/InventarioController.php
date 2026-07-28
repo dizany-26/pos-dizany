@@ -121,11 +121,27 @@ public function storeLote(Request $request)
         'precio_unidad'     => 'required|numeric|min:0',
         'precio_paquete'    => 'nullable|numeric|min:0',
         'precio_caja'       => 'nullable|numeric|min:0',
+        'actualizar_precio_producto' => 'nullable|boolean',
         'fecha_ingreso'     => 'required|date',
         'fecha_vencimiento' => 'nullable|date|after_or_equal:fecha_ingreso',
     ]);
 
         DB::transaction(function () use ($request) {
+
+        $producto = Producto::whereKey($request->producto_id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $debeActualizarPrecio = $request->boolean('actualizar_precio_producto')
+            || $producto->precio_venta === null;
+
+        if ($debeActualizarPrecio) {
+            $producto->update([
+                'precio_venta' => $request->precio_unidad,
+                'precio_paquete' => $request->precio_paquete,
+                'precio_caja' => $request->precio_caja,
+            ]);
+        }
 
         $ultimoNumero = Lote::where('producto_id', $request->producto_id)
             ->lockForUpdate()
@@ -143,9 +159,15 @@ public function storeLote(Request $request)
             'stock_inicial'     => $request->stock_inicial,
             'stock_actual'      => $request->stock_inicial,
             'precio_compra'     => $request->precio_compra,
-            'precio_unidad'     => $request->precio_unidad,
-            'precio_paquete'    => $request->precio_paquete,
-            'precio_caja'       => $request->precio_caja,
+            'precio_unidad'     => $debeActualizarPrecio
+                ? $request->precio_unidad
+                : $producto->precio_venta,
+            'precio_paquete'    => $debeActualizarPrecio
+                ? $request->precio_paquete
+                : $producto->precio_paquete,
+            'precio_caja'       => $debeActualizarPrecio
+                ? $request->precio_caja
+                : $producto->precio_caja,
             'activo'            => 1,
         ]);
     });
@@ -168,19 +190,40 @@ public function update(Request $request, Lote $lote)
         'precio_unidad'     => 'nullable|numeric|min:0',
         'precio_paquete'    => 'nullable|numeric|min:0',
         'precio_caja'       => 'nullable|numeric|min:0',
+        'actualizar_precio_producto' => 'nullable|boolean',
     ]);
 
-    $lote->update([
-        'codigo_comprobante'        => $request->codigo_comprobante,
-        'fecha_vencimiento' => $request->fecha_vencimiento,
-        'precio_unidad'     => $request->precio_unidad,
-        'precio_paquete'    => $request->precio_paquete,
-        'precio_caja'       => $request->precio_caja,
-    ]);
+    DB::transaction(function () use ($request, $lote) {
+        $lote = Lote::whereKey($lote->id)->lockForUpdate()->firstOrFail();
+
+        $lote->update([
+            'codigo_comprobante' => $request->codigo_comprobante,
+            'fecha_vencimiento' => $request->fecha_vencimiento,
+            'precio_unidad' => $request->precio_unidad,
+            'precio_paquete' => $request->precio_paquete,
+            'precio_caja' => $request->precio_caja,
+        ]);
+
+        if ($request->boolean('actualizar_precio_producto')) {
+            Producto::whereKey($lote->producto_id)
+                ->lockForUpdate()
+                ->firstOrFail()
+                ->update([
+                    'precio_venta' => $request->precio_unidad,
+                    'precio_paquete' => $request->precio_paquete,
+                    'precio_caja' => $request->precio_caja,
+                ]);
+        }
+    });
 
     return redirect()
         ->route('inventario.lotes')
-        ->with('success', 'Lote actualizado correctamente');
+        ->with(
+            'success',
+            $request->boolean('actualizar_precio_producto')
+                ? 'Lote y precio público del producto actualizados correctamente'
+                : 'Lote actualizado; se conservó el precio público del producto'
+        );
 }
     
 

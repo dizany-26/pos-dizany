@@ -38,13 +38,7 @@ class LoginController extends Controller
         if (Auth::attempt(['usuario' => $credentials['usuario'], 'password' => $credentials['password']])) {
             $request->session()->regenerate();
 
-            if ($request->user()->rol->nombre == 'Administrador') {
-                return redirect()->intended('/admin/dashboard');
-            } elseif ($request->user()->rol->nombre == 'Empleado') {
-                return redirect()->intended('/empleado/dashboard');
-            }
-
-            return redirect('/login'); // Por si no tiene rol asignado correctamente
+            return redirect()->intended(route($request->user()->rutaInicio()));
         }
 
         return back()->withErrors([
@@ -73,15 +67,10 @@ public function loginAjax(Request $request)
     if (Auth::attempt(['usuario' => $credentials['usuario'], 'password' => $credentials['password']])) {
         $request->session()->regenerate();
 
-        $rol = $request->user()->rol->nombre ?? null;
-
-        if ($rol === 'Administrador') {
-            return response()->json(['success' => true, 'redirect_to' => route('admin.dashboard')]);
-        } elseif ($rol === 'Empleado') {
-            return response()->json(['success' => true, 'redirect_to' => route('empleado.dashboard')]);
-        }
-
-        return response()->json(['success' => false, 'message' => 'Rol no reconocido.']);
+        return response()->json([
+            'success' => true,
+            'redirect_to' => route($request->user()->rutaInicio()),
+        ]);
     }
 
     return response()->json(['success' => false, 'message' => 'Usuario o contraseña incorrectos.']);

@@ -56,6 +56,9 @@ Ingreso de Mercadería
                                     @foreach($productos as $producto)
                                         <option value="{{ $producto->id }}"
                                             data-vencimiento="{{ $producto->maneja_vencimiento }}"
+                                            data-precio-unidad="{{ $producto->precio_venta }}"
+                                            data-precio-paquete="{{ $producto->precio_paquete }}"
+                                            data-precio-caja="{{ $producto->precio_caja }}"
                                             data-descripcion="{{ \Illuminate\Support\Str::limit($producto->descripcion, 40) }}">
                                             {{ $producto->nombre }}
                                         </option>
@@ -134,7 +137,25 @@ Ingreso de Mercadería
 
                             <div class="col-md-4 mb-3">
                                 <label class="inv-label">Precio unidad (S/)</label>
-                                <input type="number" name="precio_unidad" class="form-control ui-input" step="0.001" min="0" required>
+                                <input type="number" name="precio_unidad" id="input_precio_unidad" class="form-control ui-input" step="0.01" min="0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="hidden" name="actualizar_precio_producto" value="0">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="actualizar_precio_producto"
+                                id="actualizar_precio_producto"
+                                value="1"
+                                checked
+                            >
+                            <label class="form-check-label" for="actualizar_precio_producto">
+                                Aplicar estos precios como precio público vigente del producto
+                            </label>
+                            <div class="form-text">
+                                Si lo desmarcas, se conservará el precio público actual para todos los lotes.
                             </div>
                         </div>
 
@@ -161,7 +182,7 @@ Ingreso de Mercadería
                                     name="precio_paquete"
                                     id="input_precio_paquete"
                                     class="form-control inv-input d-none"
-                                    step="0.001"
+                                    step="0.01"
                                     min="0"
                                 >
                             </div>
@@ -182,7 +203,7 @@ Ingreso de Mercadería
                                     name="precio_caja"
                                     id="input_precio_caja"
                                     class="form-control inv-input d-none"
-                                    step="0.001"
+                                    step="0.01"
                                     min="0"
                                 >
                             </div>
@@ -309,13 +330,30 @@ Ingreso de Mercadería
         // MOSTRAR / OCULTAR VENCIMIENTO
         // ===============================
         $('#producto-select').on('change', function () {
-            const vence = $(this).find(':selected').data('vencimiento');
+            const selected = $(this).find(':selected');
+            const vence = selected.data('vencimiento');
             if (vence == 1) {
                 $('#grupo-vencimiento').slideDown();
             } else {
                 $('#grupo-vencimiento').slideUp();
                 $('input[name="fecha_vencimiento"]').val('');
             }
+
+            const precioUnidad = selected.data('precio-unidad');
+            const precioPaquete = selected.data('precio-paquete');
+            const precioCaja = selected.data('precio-caja');
+
+            $('#input_precio_unidad').val(precioUnidad ?? '');
+            $('#input_precio_paquete').val(precioPaquete ?? '');
+            $('#input_precio_caja').val(precioCaja ?? '');
+
+            const usaPaquete = Number(precioPaquete) > 0;
+            const usaCaja = Number(precioCaja) > 0;
+
+            $('#chk_precio_paquete').prop('checked', usaPaquete);
+            $('#chk_precio_caja').prop('checked', usaCaja);
+            $('#input_precio_paquete').toggleClass('d-none', !usaPaquete);
+            $('#input_precio_caja').toggleClass('d-none', !usaCaja);
         });
 
         // ===============================
