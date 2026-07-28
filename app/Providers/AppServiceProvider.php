@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
-        if (request()->isSecure() || str_contains(request()->getHost(), 'ngrok-free.dev')) {
+        if (! $this->app->runningInConsole() && $this->shouldForceHttps()) {
             URL::forceScheme('https');
         }
 
@@ -46,5 +46,12 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-}
+    private function shouldForceHttps(): bool
+    {
+        $host = request()->getHost();
 
+        return request()->isSecure()
+            || str_contains($host, 'ngrok-free.dev')
+            || str_contains($host, 'ngrok.io');
+    }
+}

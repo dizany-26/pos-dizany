@@ -64,9 +64,7 @@ class ProductoController extends Controller
         // 🔥 STOCK TOTAL = suma de lotes
         $producto->stock_total = $producto->lotes->sum('stock_actual');
 
-        // 🔥 PRECIO ACTUAL = primer lote FIFO
-        $loteActivo = $producto->lotes->first();
-        $producto->precio_venta_actual = $loteActivo?->precio_unidad ?? 0;
+        $producto->precio_venta_actual = $producto->precio_venta ?? 0;
 
         return $producto;
     });
@@ -186,8 +184,18 @@ class ProductoController extends Controller
         'marca_id'             => 'nullable|exists:marcas,id',
 
         'imagen'               => 'nullable|image|mimes:jpg,jpeg,png,webp,avif|max:2048',
-        
     ]);
+
+    // Normalize the selected box model before checking logical conflicts.
+    // A hidden direct-box value may still be submitted after switching to packages.
+    $usaPaquete = $request->boolean('usa_paquete');
+    $usaCaja = $request->boolean('usa_caja');
+
+    if ($usaPaquete && $usaCaja) {
+        $validated['unidades_por_caja'] = null;
+    } elseif ($usaCaja) {
+        $validated['paquetes_por_caja'] = null;
+    }
 
     // ===== VALIDACIONES LÓGICAS =====
     if (
@@ -312,16 +320,17 @@ public function toggleEstado($id)
                 // 🔥 LOTES FIFO (CLAVE PARA PRECIO)
                 'lotes_fifo' => $p->lotes->map(fn ($l) => [
                     'id' => $l->id,
-                    'numero' => $l->id,
+                    'numero' => $l->numero_lote,
                     'stock' => (int) $l->stock_actual,
                     'fecha_vencimiento' => $l->fecha_vencimiento,
-                    'precio_unidad' => (float) $l->precio_unidad,
-                    'precio_paquete' => (float) $l->precio_paquete,
-                    'precio_caja' => (float) $l->precio_caja,
+                    'precio_unidad' => (float) $p->precio_venta,
+                    'precio_paquete' => (float) $p->precio_paquete,
+                    'precio_caja' => (float) $p->precio_caja,
                 ])->values(),
 
                 'unidades_por_paquete' => $p->unidades_por_paquete,
                 'paquetes_por_caja'    => $p->paquetes_por_caja,
+                'unidades_por_caja'    => $p->unidades_por_caja,
                 'categoria_id'         => $p->categoria_id,
             ];
         })
@@ -441,17 +450,18 @@ public function productosIniciales()
         // 👇 LOTES ORDENADOS FEFO (CLAVE)
         'lotes_fifo' => $p->lotes->map(fn($l) => [
             'id' => $l->id,
-            'numero' => $l->id, // o código_lote si tienes
+            'numero' => $l->numero_lote,
             'stock' => $l->stock_actual,
             'fecha_vencimiento' => $l->fecha_vencimiento,
-            'precio_unidad' => $l->precio_unidad,
-            'precio_paquete' => $l->precio_paquete,
-            'precio_caja' => $l->precio_caja,
+            'precio_unidad' => $p->precio_venta,
+            'precio_paquete' => $p->precio_paquete,
+            'precio_caja' => $p->precio_caja,
         ])->values(), // 👈 importante
 
             // presentaciones
             'unidades_por_paquete' => $p->unidades_por_paquete,
             'paquetes_por_caja'    => $p->paquetes_por_caja,
+            'unidades_por_caja'    => $p->unidades_por_caja,
         ];
     });
 }

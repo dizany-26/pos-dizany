@@ -103,8 +103,8 @@
                 <tr>
                     <td>{{ $i+1 }}</td>
                     <td>{{ $detalle->producto->nombre }}</td>
-                    <td>{{ $detalle->cantidad }}</td>
-                    <td>{{ $config->moneda }} {{ number_format($detalle->precio_unitario, 2) }}</td>
+                    <td>{{ $detalle->cantidad }} {{ ucfirst($detalle->presentacion) }}</td>
+                    <td>{{ $config->moneda }} {{ number_format($detalle->precio_presentacion, 2) }}</td>
                     <td>{{ $config->moneda }} {{ number_format($detalle->subtotal, 2) }}</td>
                 </tr>
             @endforeach

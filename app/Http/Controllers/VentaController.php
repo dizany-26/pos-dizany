@@ -22,6 +22,8 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Movimiento;
 use App\Models\PagoVenta;
 use App\Models\Lote;
+use App\Services\SaleLineCalculator;
+use App\Services\DocumentNumberService;
 
 
 class VentaController extends Controller
@@ -59,11 +61,14 @@ public function filtrarPorCategoria(Request $request)
 public function registrarVenta(Request $request)
     {
         $request->validate([
-            'tipo_comprobante' => 'required|string',
+            'tipo_comprobante' => 'required|in:boleta,factura,nota_venta',
             'documento'        => 'required|string',
             'fecha'            => 'required|date',
             'hora'             => 'required',
             'productos'        => 'required|array|min:1',
+            'productos.*.producto_id' => 'required|integer|exists:productos,id',
+            'productos.*.cantidad' => 'required|integer|min:1',
+            'productos.*.presentacion' => 'required|in:unidad,paquete,caja',
 
             'monto_pagado'     => 'required|numeric|min:0',
             'metodo_pago'      => 'nullable|string',
@@ -84,13 +89,9 @@ public function registrarVenta(Request $request)
 
             /* ================= SERIE ================= */
             $tipo = $request->tipo_comprobante;
-            $serie = match ($tipo) {
-                'boleta'  => 'B001',
-                'factura' => 'F001',
-                default   => 'NV01',
-            };
-
-            $correlativo = (int) (Venta::where('serie', $serie)->max('correlativo') ?? 0) + 1;
+            $numbering = app(DocumentNumberService::class);
+            $serie = $numbering->seriesFor($tipo);
+            $correlativo = $numbering->next($serie);
 
             /* ================= CONFIG ================= */
             $config = Configuracion::first();
@@ -120,6 +121,8 @@ public function registrarVenta(Request $request)
             $opGravadas = 0;
             \Log::info($request->productos);
 
+            $calculator = app(SaleLineCalculator::class);
+
             foreach ($request->productos as $item) {
 
                 $productoId = $item['producto_id'] ?? null;
@@ -130,15 +133,15 @@ public function registrarVenta(Request $request)
                 $producto = Producto::findOrFail($productoId);
 
                 $cantidadPresentaciones = (int)($item['cantidad'] ?? 0);
-                $unidadesAfectadas = (int)($item['unidades'] ?? 0);
                 $presentacion = (string)($item['presentacion'] ?? 'unidad');
 
-                if ($cantidadPresentaciones <= 0 || $unidadesAfectadas <= 0) {
+                if ($cantidadPresentaciones <= 0) {
                     throw new \Exception("Cantidad inválida para {$producto->nombre}");
                 }
 
                 // 🔒 Obtener lotes FEFO reales (bloqueados)
                 $lotes = Lote::where('producto_id', $producto->id)
+                    ->where('activo', 1)
                     ->where('stock_actual', '>', 0)
                     ->orderByRaw('fecha_vencimiento IS NULL')
                     ->orderBy('fecha_vencimiento', 'asc')
@@ -147,57 +150,16 @@ public function registrarVenta(Request $request)
                     ->lockForUpdate()
                     ->get();
 
-                // 🔢 Calcular stock total disponible
-                $stockDisponible = $lotes->sum('stock_actual');
+                $calculation = $calculator->calculate(
+                    $producto,
+                    $lotes,
+                    $cantidadPresentaciones,
+                    $presentacion
+                );
 
-                // 🚨 CASO 1: No existe ningún lote con stock
-                if ($lotes->isEmpty()) {
-
-                    $ultimoLote = Lote::where('producto_id', $producto->id)
-                        ->orderBy('fecha_vencimiento', 'asc')
-                        ->orderBy('fecha_ingreso', 'asc')
-                        ->orderBy('id', 'asc')
-                        ->first();
-
-                    throw new \Exception(
-                        "STOCK|{$producto->id}|{$producto->nombre}|0|{$unidadesAfectadas}|"
-                        . ($ultimoLote->numero_lote ?? '')
-                    );
-                }
-
-                // 🚨 CASO 2: Hay lotes pero no alcanza el stock total
-                if ($stockDisponible < $unidadesAfectadas) {
-
-                    $loteAfectado = $lotes->firstWhere('stock_actual', '>', 0);
-
-                    throw new \Exception(
-                        "STOCK|{$producto->id}|{$producto->nombre}|{$stockDisponible}|{$unidadesAfectadas}|"
-                        . ($loteAfectado->numero_lote ?? '')
-                    );
-                }
-
-                // 💰 Precio del primer lote FEFO
-                $lotePrecio = $lotes->first();
-
-                $precioPresentacion = match ($presentacion) {
-                    'unidad'  => (float)($lotePrecio->precio_unidad ?? 0),
-                    'paquete' => (float)($lotePrecio->precio_paquete ?? 0),
-                    'caja'    => (float)($lotePrecio->precio_caja ?? 0),
-                    default   => (float)($lotePrecio->precio_unidad ?? 0),
-                };
-
-                if ($precioPresentacion <= 0) {
-                    throw new \Exception("No hay precio definido para {$producto->nombre}");
-                }
-
-                // ✅ SUBTOTAL CORRECTO
-                $subtotal = round($precioPresentacion * $cantidadPresentaciones, 2);
+                $unidadesAfectadas = $calculation['required_units'];
+                $subtotal = $calculation['subtotal'];
                 $opGravadas += $subtotal;
-
-                // ✅ COSTO Y GANANCIA CORRECTOS
-                $costoUnit  = (float)($lotePrecio->precio_compra ?? 0);
-                $costoTotal = round($costoUnit * $unidadesAfectadas, 2);
-                $ganancia   = round($subtotal - $costoTotal, 2);
 
                 $detalle = DetalleVenta::create([
                     'venta_id'            => $venta->id,
@@ -205,43 +167,27 @@ public function registrarVenta(Request $request)
                     'presentacion'        => $presentacion,
                     'cantidad'            => $cantidadPresentaciones, // ✅ YA NO ES 1
                     'unidades_afectadas'  => $unidadesAfectadas,
-                    'precio_presentacion' => $precioPresentacion,
-                    'precio_unitario'     => round($precioPresentacion / max($unidadesAfectadas, 1), 4),
+                    'precio_presentacion' => $calculation['average_presentation_price'],
+                    'precio_unitario'     => $calculation['average_unit_price'],
                     'subtotal'            => $subtotal,
-                    'ganancia'            => $ganancia,
+                    'ganancia'            => $calculation['profit'],
                     'activo'              => 1
                 ]);
 
-                // 🔄 Descontar FEFO real
-                $restante = $unidadesAfectadas;
-
-                foreach ($lotes as $lote) {
-
-                    if ($restante <= 0) break;
-
-                    $usar = min($lote->stock_actual, $restante);
-
-                    $lote->stock_actual -= $usar;
+                foreach ($calculation['allocations'] as $allocation) {
+                    $lote = $allocation['lot'];
+                    $lote->stock_actual -= $allocation['units'];
                     $lote->save();
 
                     DB::table('detalle_lote_ventas')->insert([
                         'detalle_venta_id' => $detalle->id,
                         'lote_id'          => $lote->id,
-                        'cantidad'         => $usar,
-                        'precio_lote'      => $precioPresentacion,
+                        'cantidad'         => $allocation['units'],
+                        'precio_lote'      => $allocation['presentation_price'],
                         'fecha_vencimiento'=> $lote->fecha_vencimiento,
                         'created_at'       => now(),
                         'updated_at'       => now(),
                     ]);
-
-                    $restante -= $usar;
-                }
-
-                // 🚨 SI NO ALCANZÓ STOCK REAL
-                if ($restante > 0) {
-                    $vendido = $unidadesAfectadas - $restante;
-
-                    throw new \Exception("STOCK|{$producto->id}|{$producto->nombre}|{$vendido}|{$unidadesAfectadas}");
                 }
             }
 
@@ -737,7 +683,9 @@ public function show($id)
 
 public function stockFifo($productoId)
 {
-    $lotes = Lote::where('producto_id', $productoId)
+        $producto = Producto::findOrFail($productoId);
+        $lotes = Lote::where('producto_id', $productoId)
+        ->where('activo', 1)
         ->where('stock_actual', '>', 0)
         ->orderByRaw('fecha_vencimiento IS NULL') // null al final
         ->orderBy('fecha_vencimiento', 'asc')     // FEFO real
@@ -748,11 +696,12 @@ public function stockFifo($productoId)
     return response()->json(
         $lotes->map(fn($l) => [
             'id' => $l->id,
-            'numero' => $l->id, // o $l->codigo_lote si tienes
+            'numero' => $l->numero_lote,
+            'numero_lote' => $l->numero_lote,
             'stock' => (int) $l->stock_actual,     // 👈 OJO: stock en UNIDADES
-            'precio_unidad' => (float) $l->precio_unidad,
-            'precio_paquete' => (float) $l->precio_paquete,
-            'precio_caja' => (float) $l->precio_caja,
+            'precio_unidad' => (float) $producto->precio_venta,
+            'precio_paquete' => (float) $producto->precio_paquete,
+            'precio_caja' => (float) $producto->precio_caja,
             'fecha_vencimiento' => $l->fecha_vencimiento,
             'fecha_ingreso' => $l->fecha_ingreso,
         ])

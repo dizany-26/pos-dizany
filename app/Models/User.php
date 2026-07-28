@@ -62,4 +62,39 @@ public function esAdmin()
     return $this->rol_id == 1;
 }
 
+public function rutaInicio(): string
+{
+    if ($this->esAdmin()) {
+        return 'admin.dashboard';
+    }
+
+    $rutasPorPermiso = [
+        'dashboard.admin' => 'admin.dashboard',
+        'dashboard.empleado' => 'empleado.dashboard',
+        'ventas' => 'ventas.index',
+        'productos' => 'productos.index',
+        'productos.create' => 'productos.create',
+        'clientes' => 'clientes.index',
+        'proveedores' => 'proveedores.index',
+        'inventario.resumen' => 'inventario.resumen',
+        'inventario.lote' => 'inventario.lote',
+        'movimientos' => 'movimientos.index',
+        'gastos' => 'gastos.index',
+        'reportes' => 'reportes.index',
+        'configuracion' => 'configuracion.index',
+        'catalogo.ver' => 'catalogo.admin.index',
+        'catalogo.config' => 'catalogo.admin.config',
+        'usuarios' => 'usuarios.index',
+        'parametros.productos' => 'productos.parametros',
+    ];
+
+    foreach ($rutasPorPermiso as $permiso => $ruta) {
+        if ($this->tienePermiso($permiso)) {
+            return $ruta;
+        }
+    }
+
+    return 'sin-permisos';
+}
+
 }

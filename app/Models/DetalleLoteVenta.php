@@ -13,11 +13,15 @@ class DetalleLoteVenta extends Model
     protected $fillable = [
         'detalle_venta_id',
         'lote_id',
-        'unidades_descontadas',
+        'cantidad',
+        'fecha_vencimiento',
+        'precio_lote',
     ];
 
     protected $casts = [
-        'unidades_descontadas' => 'integer',
+        'cantidad' => 'integer',
+        'fecha_vencimiento' => 'date',
+        'precio_lote' => 'decimal:2',
     ];
 
     /* =========================

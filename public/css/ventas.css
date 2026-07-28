@@ -1,10 +1,9 @@
-/* ============================================================
+﻿/* ============================================================
    LAYOUT GENERAL / WRAPPER TIPO TREINTA
-============================================================ */
 
 /* Contenedor principal de la vista de ventas (debajo del header del layout) */
 .ventas-treinta {
-    height: calc(100vh - 80px); /* Ajusta este valor si tu header es más alto/bajo */
+    height: calc(100vh - 80px); /* Ajusta este valor si tu header es mÃ¡s alto/bajo */
     display: flex;
     flex-direction: column;
     padding: 10px 15px;
@@ -55,6 +54,11 @@
     padding-left: 4px;
 }
 
+.mobile-cart-header,
+.mobile-cart-launcher {
+    display: none;
+}
+
 /* Scroll interno columna derecha */
 .scroll-derecha {
     flex: 1;
@@ -62,7 +66,7 @@
     padding-right: 4px;
 }
 
-/* Fallback antiguo por si en algún lado sigue usándose */
+/* Fallback antiguo por si en algÃºn lado sigue usÃ¡ndose */
 .ventas-form {
     background: #f5f7fb;
     padding: 1rem 1.5rem 2rem;
@@ -74,8 +78,7 @@
 }
 
 /* ============================================================
-   BUSCADOR + CATEGORÍAS (IZQUIERDA)
-============================================================ */
+   BUSCADOR + CATEGORÃAS (IZQUIERDA)
 
 /* Card buscador estilo Treinta */
 .contenedor-buscador {
@@ -94,7 +97,7 @@
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
-/* Botones de categorías */
+/* Botones de categorÃ­as */
 .ventas-categorias {
     display: flex;
     flex-wrap: wrap;
@@ -123,7 +126,6 @@
 
 /* ============================================================
    GRID DE PRODUCTOS (SCROLL IZQUIERDO)
-============================================================ */
 
 .productos-scroll {
     flex: 1;
@@ -181,7 +183,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
-/* Información extra (Incl. IGV) puede ir como texto pequeño */
+/* InformaciÃ³n extra (Incl. IGV) puede ir como texto pequeÃ±o */
 .product-info {
     margin-top: 0.5rem;
 }
@@ -216,18 +218,17 @@
 
 /* ============================================================
    FORMULARIO CLIENTE + COMPROBANTE (DERECHA)
-============================================================ */
 
 .ventas-col-right .card {
     border-radius: 12px;
 }
 
-/* Texto más pequeño dentro de card-body.small */
+/* Texto mÃ¡s pequeÃ±o dentro de card-body.small */
 .card-body.small * {
     font-size: 0.82rem !important;
 }
 
-/* Ajustar tamaño de input-group */
+/* Ajustar tamaÃ±o de input-group */
 .input-group-text {
     padding: 4px 8px !important;
 }
@@ -258,7 +259,7 @@ select.form-select-sm,
     font-size: 1.2rem;
 }
 
-/* Animación de giro opcional */
+/* AnimaciÃ³n de giro opcional */
 .icono-animado {
     animation: giro 0.5s linear forwards;
 }
@@ -269,7 +270,6 @@ select.form-select-sm,
 
 /* ============================================================
    CARRITO - TABLA INDUSTRIAL
-============================================================ */
 
 .carrito-table {
     max-height: 260px;
@@ -298,7 +298,7 @@ select.form-select-sm,
     vertical-align: middle;
 }
 
-/* Última fila sin borde extra */
+/* Ãšltima fila sin borde extra */
 .carrito-table tbody tr:last-child td {
     border-bottom: none;
 }
@@ -350,14 +350,13 @@ select.form-select-sm,
     font-weight: 600;
 }
 
-/* Botón eliminar centrado */
+/* BotÃ³n eliminar centrado */
 .carrito-table td:last-child {
     text-align: center;
 }
 
 /* ============================================================
    RESUMEN INDUSTRIAL (Op. Gravadas / IGV / TOTAL)
-============================================================ */
 
 .resumen-box {
     width: 100%;
@@ -393,8 +392,7 @@ select.form-select-sm,
 }
 
 /* ============================================================
-   MÉTODO DE PAGO (iconitos + textos)
-============================================================ */
+   MÃ‰TODO DE PAGO (iconitos + textos)
 
 .metodo-pago-opciones {
     display: flex;
@@ -439,7 +437,6 @@ select.form-select-sm,
 
 /* ============================================================
    OTROS DETALLES / UTILIDADES
-============================================================ */
 
 /* Link "Ventas" en header (por si no tiene estilos en otro lado) */
 .nuevo-producto {
@@ -460,7 +457,7 @@ select.form-select-sm,
     color: #ffffff;
 }
 
-/* Responsive: cuando la pantalla es pequeña, columnas se apilan */
+/* Responsive: cuando la pantalla es pequeÃ±a, columnas se apilan */
 @media (max-width: 991.98px) {
 
     .ventas-treinta {
@@ -481,9 +478,229 @@ select.form-select-sm,
     }
 
     .treinta-col.derecha {
-        width: 100%;
+        position: fixed;
+        inset: 0;
+        z-index: 1040;
+        width: 100% !important;
         min-width: 0;
-        padding-left: 0;
+        max-width: none;
+        height: 100dvh;
+        padding: 0;
+        background: #f4f7fb;
+        border: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(102%);
+        transition:
+            transform .3s cubic-bezier(.22, 1, .36, 1),
+            opacity .2s ease,
+            visibility .3s;
+    }
+
+    .treinta-col.derecha.is-mobile-cart-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateX(0);
+    }
+
+    .mobile-cart-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 76px;
+        padding: max(14px, env(safe-area-inset-top)) 18px 14px;
+        color: #fff;
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .18);
+    }
+
+    .mobile-cart-header > div {
+        display: grid;
+        grid-template-columns: auto auto;
+        align-items: baseline;
+        column-gap: 9px;
+    }
+
+    .mobile-cart-header strong {
+        font-size: 1.1rem;
+    }
+
+    .mobile-cart-eyebrow {
+        grid-column: 1 / -1;
+        color: #93c5fd;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .mobile-cart-panel-count {
+        color: #cbd5e1;
+        font-size: .78rem;
+    }
+
+    .mobile-cart-close {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 42px;
+        padding: 0 14px;
+        color: #fff;
+        background: rgba(255, 255, 255, .1);
+        border: 1px solid rgba(255, 255, 255, .2);
+        border-radius: 999px;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    .mobile-cart-close:focus-visible {
+        outline: 3px solid rgba(147, 197, 253, .75);
+        outline-offset: 2px;
+    }
+
+    .treinta-col.derecha .venta-steps {
+        padding: 12px 12px max(12px, env(safe-area-inset-bottom));
+        overflow: hidden;
+    }
+
+    .treinta-col.derecha #carrito-lista,
+    .treinta-col.derecha .step2-scroll {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .mobile-cart-launcher {
+        position: fixed;
+        right: max(14px, env(safe-area-inset-right));
+        bottom: max(22px, calc(env(safe-area-inset-bottom) + 12px));
+        z-index: 1030;
+        display: grid;
+        grid-template-columns: 44px minmax(76px, auto) 16px;
+        align-items: center;
+        gap: 10px;
+        min-width: 168px;
+        min-height: 68px;
+        padding: 10px 13px;
+        color: #fff;
+        background: linear-gradient(135deg, #172033 0%, #0f172a 100%);
+        border: 1px solid rgba(255, 255, 255, .12);
+        border-radius: 18px;
+        box-shadow: 0 16px 38px rgba(15, 23, 42, .34);
+        transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    .mobile-cart-launcher:active {
+        transform: scale(.97);
+    }
+
+    .mobile-cart-launcher.has-items {
+        background: linear-gradient(135deg, #2f80ed 0%, #175cd3 55%, #123f9c 100%);
+        border-color: rgba(147, 197, 253, .72);
+        box-shadow:
+            0 16px 38px rgba(23, 92, 211, .38),
+            0 0 0 4px rgba(59, 130, 246, .12);
+    }
+
+    .mobile-cart-launcher.has-items .mobile-cart-launcher-icon {
+        color: #fff;
+        background: rgba(255, 255, 255, .2);
+    }
+
+    .mobile-cart-launcher.has-items .mobile-cart-launcher-copy small {
+        color: #fff !important;
+        font-weight: 700;
+        font-size: .72rem;
+        letter-spacing: .01em;
+        text-shadow: 0 1px 2px rgba(8, 47, 107, .5);
+    }
+
+    :root[data-theme='light'] #content .mobile-cart-launcher.has-items .mobile-cart-launcher-copy small,
+    :root[data-theme='dark'] #content .mobile-cart-launcher.has-items .mobile-cart-launcher-copy small {
+        color: #fff !important;
+    }
+
+    .mobile-cart-launcher.has-items .mobile-cart-launcher-arrow {
+        color: #eaf3ff;
+    }
+
+    .mobile-cart-launcher-icon {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        color: #dbeafe;
+        background: rgba(255, 255, 255, .12);
+        border-radius: 14px;
+        font-size: 1.1rem;
+    }
+
+    .mobile-cart-count {
+        position: absolute;
+        top: -7px;
+        right: -7px;
+        display: grid;
+        place-items: center;
+        min-width: 23px;
+        height: 23px;
+        padding: 0 5px;
+        color: #fff;
+        background: #ef4444;
+        border: 2px solid #fff;
+        border-radius: 999px;
+        font-size: .7rem;
+        font-weight: 800;
+    }
+
+    .mobile-cart-launcher-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        line-height: 1.15;
+    }
+
+    .mobile-cart-launcher-copy small {
+        color: #cbd5e1;
+        font-size: .68rem;
+    }
+
+    .mobile-cart-launcher-copy strong {
+        margin-top: 4px;
+        white-space: nowrap;
+        font-size: .9rem;
+    }
+
+    .mobile-cart-launcher-arrow {
+        color: #94a3b8;
+        font-size: .75rem;
+    }
+
+    body.mobile-cart-open {
+        overflow: hidden !important;
+        touch-action: none;
+    }
+
+    :root[data-theme='dark'] .treinta-col.derecha {
+        background: #07182e;
+    }
+
+    :root[data-theme='dark'] .mobile-cart-header {
+        background: linear-gradient(135deg, #071426 0%, #102b4e 100%);
+        border-bottom: 1px solid #294b76;
+    }
+
+    :root[data-theme='dark'] .mobile-cart-launcher {
+        border-color: #365477;
+        box-shadow: 0 16px 38px rgba(0, 0, 0, .5);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .treinta-col.derecha,
+        .mobile-cart-launcher {
+            transition: none;
+        }
     }
 
     .productos-scroll,
@@ -519,7 +736,7 @@ select.form-select-sm,
     padding-bottom: 0 !important;
 }
 
-/* FASE 1 – scroll solo en productos 
+/* FASE 1 â€“ scroll solo en productos 
 #carrito-lista {
     max-height: calc(100vh - 280px);
     overflow-y: auto;
@@ -609,7 +826,7 @@ select.form-select-sm,
 }
 /* --- SCROLL PREMIUM PARA LA GRILLA --- */
 .productos-scroll {
-    height: calc(100vh - 260px);   /* Ajusta el alto según tu diseño */
+    height: calc(100vh - 260px);   /* Ajusta el alto segÃºn tu diseÃ±o */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;            /* para que no corte sombras */
@@ -633,11 +850,11 @@ select.form-select-sm,
 .productos-scroll::-webkit-scrollbar-thumb:hover {
     background-color: #a8a8a8;
 }
-/* PANEL DE VENTA — AJUSTE PARA BOTÓN FIJO ABAJO */
+/* PANEL DE VENTA â€” AJUSTE PARA BOTÃ“N FIJO ABAJO */
 
 /* === SCROLL PREMIUM PARA FASE 2 === */
 .step2-scroll {
-    height: calc(100vh - 120px);  /* Ajusta si deseas más o menos alto */
+    height: calc(100vh - 120px);  /* Ajusta si deseas mÃ¡s o menos alto */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
@@ -693,7 +910,7 @@ select.form-select-sm,
     border: 2px dashed #c9c9c9 !important;
     background: #fff;
     height: 100%;
-    min-height: 270px; /* AJUSTAR AL TAMAÑO DE TUS TARJETAS */
+    min-height: 270px; /* AJUSTAR AL TAMAÃ‘O DE TUS TARJETAS */
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -738,7 +955,7 @@ select.form-select-sm,
     border-color: #555;
 }
 
-/* Animación Treinta */
+/* AnimaciÃ³n Treinta */
 .product-card {
     opacity: 0;
     transform: translateY(10px);
@@ -756,8 +973,7 @@ select.form-select-sm,
 
 /**/
 /* ============================================================
-   🟩 COLUMNA DERECHA – FLEX PARA PEGAR EL BOTÓN ABAJO
-============================================================ */
+   ðŸŸ© COLUMNA DERECHA â€“ FLEX PARA PEGAR EL BOTÃ“N ABAJO
 
 /* La columna derecha ya es .treinta-col, pero nos aseguramos */
 .treinta-col.derecha {
@@ -774,7 +990,7 @@ select.form-select-sm,
     min-height: 0;
 }
 
-/* Cada step-panel será una columna flex que ocupa todo el alto */
+/* Cada step-panel serÃ¡ una columna flex que ocupa todo el alto */
 .step-panel {
     display: none;
 }
@@ -791,7 +1007,7 @@ select.form-select-sm,
     flex: 1;                /* esto empuja el footer hacia abajo */
     overflow-y: auto;
     padding: 10px;
-    max-height: none;       /* anulamos el límite anterior */
+    max-height: none;       /* anulamos el lÃ­mite anterior */
 }
 
 /* Scroll finito */
@@ -803,7 +1019,7 @@ select.form-select-sm,
     border-radius: 4px;
 }
 
-/* FOOTER DEL STEP 1 – seguirá debajo de la lista */
+/* FOOTER DEL STEP 1 â€“ seguirÃ¡ debajo de la lista */
 #step-1 .card.p-2 {
     margin-top: 0;
 }
@@ -812,7 +1028,6 @@ select.form-select-sm,
 /*modal ordenar*/
 /* =========================================
    MODAL ORDENAR INVENTARIO (PREMIUM)
-========================================= */
 
 /* Modal contenedor */
 #modalOrdenar .modal-content {
@@ -822,7 +1037,7 @@ select.form-select-sm,
     animation: modalFadeUp 0.25s ease-out;
 }
 
-/* Animación */
+/* AnimaciÃ³n */
 @keyframes modalFadeUp {
     from {
         opacity: 0;
@@ -961,8 +1176,7 @@ select.form-select-sm,
 
 
 /* ============================================================
-   DARK MODE PREMIUM — VENTAS
-============================================================ */
+   DARK MODE PREMIUM â€” VENTAS
 :root[data-theme='dark'] .ventas-treinta {
     background: linear-gradient(180deg, #0b1d3a 0%, #0a1730 100%) !important;
 }
@@ -1120,7 +1334,6 @@ select.form-select-sm,
 
 /* ============================================================
    AJUSTES FINOS DARK MODE / CLIENTE-COMPROBANTE
-============================================================ */
 :root[data-theme='dark'] #step-2 .card,
 :root[data-theme='dark'] #step-3 .card,
 :root[data-theme='dark'] #step-1 .card {
@@ -1176,7 +1389,6 @@ select.form-select-sm,
 
 /* ============================================================
    BOTONES DE STEPS DEL CARRITO
-============================================================ */
 #step-2 .card-footer,
 #step-3 .card-footer {
     gap: 14px;
