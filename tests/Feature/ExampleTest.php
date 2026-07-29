@@ -10,10 +10,14 @@ class ExampleTest extends TestCase
     /**
      * A basic test example.
      */
-    public function test_guest_is_redirected_from_root_to_login(): void
+    public function test_guest_can_view_public_catalog_and_login_remains_available(): void
     {
-        $response = $this->get('/');
+        $catalog = $this->get('/');
+        $login = $this->get('/login');
 
-        $response->assertRedirect(route('login'));
+        $catalog->assertOk()
+            ->assertSee('Nuestro catálogo')
+            ->assertSee(route('login'));
+        $login->assertOk();
     }
 }

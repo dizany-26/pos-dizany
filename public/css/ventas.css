@@ -1,9 +1,10 @@
-﻿/* ============================================================
+/* ============================================================
    LAYOUT GENERAL / WRAPPER TIPO TREINTA
+============================================================ */
 
 /* Contenedor principal de la vista de ventas (debajo del header del layout) */
 .ventas-treinta {
-    height: calc(100vh - 80px); /* Ajusta este valor si tu header es mÃ¡s alto/bajo */
+    height: calc(100vh - 80px); /* Ajusta este valor si tu header es más alto/bajo */
     display: flex;
     flex-direction: column;
     padding: 10px 15px;
@@ -66,7 +67,7 @@
     padding-right: 4px;
 }
 
-/* Fallback antiguo por si en algÃºn lado sigue usÃ¡ndose */
+/* Fallback antiguo por si en algún lado sigue usándose */
 .ventas-form {
     background: #f5f7fb;
     padding: 1rem 1.5rem 2rem;
@@ -78,7 +79,8 @@
 }
 
 /* ============================================================
-   BUSCADOR + CATEGORÃAS (IZQUIERDA)
+   BUSCADOR + CATEGORÍAS (IZQUIERDA)
+============================================================ */
 
 /* Card buscador estilo Treinta */
 .contenedor-buscador {
@@ -97,7 +99,7 @@
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
-/* Botones de categorÃ­as */
+/* Botones de categorías */
 .ventas-categorias {
     display: flex;
     flex-wrap: wrap;
@@ -126,6 +128,7 @@
 
 /* ============================================================
    GRID DE PRODUCTOS (SCROLL IZQUIERDO)
+============================================================ */
 
 .productos-scroll {
     flex: 1;
@@ -183,7 +186,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
-/* InformaciÃ³n extra (Incl. IGV) puede ir como texto pequeÃ±o */
+/* Información extra (Incl. IGV) puede ir como texto pequeño */
 .product-info {
     margin-top: 0.5rem;
 }
@@ -218,17 +221,18 @@
 
 /* ============================================================
    FORMULARIO CLIENTE + COMPROBANTE (DERECHA)
+============================================================ */
 
 .ventas-col-right .card {
     border-radius: 12px;
 }
 
-/* Texto mÃ¡s pequeÃ±o dentro de card-body.small */
+/* Texto más pequeño dentro de card-body.small */
 .card-body.small * {
     font-size: 0.82rem !important;
 }
 
-/* Ajustar tamaÃ±o de input-group */
+/* Ajustar tamaño de input-group */
 .input-group-text {
     padding: 4px 8px !important;
 }
@@ -259,7 +263,7 @@ select.form-select-sm,
     font-size: 1.2rem;
 }
 
-/* AnimaciÃ³n de giro opcional */
+/* Animación de giro opcional */
 .icono-animado {
     animation: giro 0.5s linear forwards;
 }
@@ -270,6 +274,7 @@ select.form-select-sm,
 
 /* ============================================================
    CARRITO - TABLA INDUSTRIAL
+============================================================ */
 
 .carrito-table {
     max-height: 260px;
@@ -298,7 +303,7 @@ select.form-select-sm,
     vertical-align: middle;
 }
 
-/* Ãšltima fila sin borde extra */
+/* Última fila sin borde extra */
 .carrito-table tbody tr:last-child td {
     border-bottom: none;
 }
@@ -350,13 +355,14 @@ select.form-select-sm,
     font-weight: 600;
 }
 
-/* BotÃ³n eliminar centrado */
+/* Botón eliminar centrado */
 .carrito-table td:last-child {
     text-align: center;
 }
 
 /* ============================================================
    RESUMEN INDUSTRIAL (Op. Gravadas / IGV / TOTAL)
+============================================================ */
 
 .resumen-box {
     width: 100%;
@@ -392,7 +398,8 @@ select.form-select-sm,
 }
 
 /* ============================================================
-   MÃ‰TODO DE PAGO (iconitos + textos)
+   MÉTODO DE PAGO (iconitos + textos)
+============================================================ */
 
 .metodo-pago-opciones {
     display: flex;
@@ -437,6 +444,7 @@ select.form-select-sm,
 
 /* ============================================================
    OTROS DETALLES / UTILIDADES
+============================================================ */
 
 /* Link "Ventas" en header (por si no tiene estilos en otro lado) */
 .nuevo-producto {
@@ -457,7 +465,7 @@ select.form-select-sm,
     color: #ffffff;
 }
 
-/* Responsive: cuando la pantalla es pequeÃ±a, columnas se apilan */
+/* Responsive: cuando la pantalla es pequeña, columnas se apilan */
 @media (max-width: 991.98px) {
 
     .ventas-treinta {
@@ -736,7 +744,7 @@ select.form-select-sm,
     padding-bottom: 0 !important;
 }
 
-/* FASE 1 â€“ scroll solo en productos 
+/* FASE 1 – scroll solo en productos 
 #carrito-lista {
     max-height: calc(100vh - 280px);
     overflow-y: auto;
@@ -826,7 +834,7 @@ select.form-select-sm,
 }
 /* --- SCROLL PREMIUM PARA LA GRILLA --- */
 .productos-scroll {
-    height: calc(100vh - 260px);   /* Ajusta el alto segÃºn tu diseÃ±o */
+    height: calc(100vh - 260px);   /* Ajusta el alto según tu diseño */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;            /* para que no corte sombras */
@@ -850,11 +858,11 @@ select.form-select-sm,
 .productos-scroll::-webkit-scrollbar-thumb:hover {
     background-color: #a8a8a8;
 }
-/* PANEL DE VENTA â€” AJUSTE PARA BOTÃ“N FIJO ABAJO */
+/* PANEL DE VENTA — AJUSTE PARA BOTÓN FIJO ABAJO */
 
 /* === SCROLL PREMIUM PARA FASE 2 === */
 .step2-scroll {
-    height: calc(100vh - 120px);  /* Ajusta si deseas mÃ¡s o menos alto */
+    height: calc(100vh - 120px);  /* Ajusta si deseas más o menos alto */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
@@ -910,7 +918,7 @@ select.form-select-sm,
     border: 2px dashed #c9c9c9 !important;
     background: #fff;
     height: 100%;
-    min-height: 270px; /* AJUSTAR AL TAMAÃ‘O DE TUS TARJETAS */
+    min-height: 270px; /* AJUSTAR AL TAMAÑO DE TUS TARJETAS */
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -955,7 +963,7 @@ select.form-select-sm,
     border-color: #555;
 }
 
-/* AnimaciÃ³n Treinta */
+/* Animación Treinta */
 .product-card {
     opacity: 0;
     transform: translateY(10px);
@@ -973,7 +981,8 @@ select.form-select-sm,
 
 /**/
 /* ============================================================
-   ðŸŸ© COLUMNA DERECHA â€“ FLEX PARA PEGAR EL BOTÃ“N ABAJO
+   🟩 COLUMNA DERECHA – FLEX PARA PEGAR EL BOTÓN ABAJO
+============================================================ */
 
 /* La columna derecha ya es .treinta-col, pero nos aseguramos */
 .treinta-col.derecha {
@@ -990,7 +999,7 @@ select.form-select-sm,
     min-height: 0;
 }
 
-/* Cada step-panel serÃ¡ una columna flex que ocupa todo el alto */
+/* Cada step-panel será una columna flex que ocupa todo el alto */
 .step-panel {
     display: none;
 }
@@ -1007,7 +1016,7 @@ select.form-select-sm,
     flex: 1;                /* esto empuja el footer hacia abajo */
     overflow-y: auto;
     padding: 10px;
-    max-height: none;       /* anulamos el lÃ­mite anterior */
+    max-height: none;       /* anulamos el límite anterior */
 }
 
 /* Scroll finito */
@@ -1019,7 +1028,7 @@ select.form-select-sm,
     border-radius: 4px;
 }
 
-/* FOOTER DEL STEP 1 â€“ seguirÃ¡ debajo de la lista */
+/* FOOTER DEL STEP 1 – seguirá debajo de la lista */
 #step-1 .card.p-2 {
     margin-top: 0;
 }
@@ -1028,6 +1037,7 @@ select.form-select-sm,
 /*modal ordenar*/
 /* =========================================
    MODAL ORDENAR INVENTARIO (PREMIUM)
+========================================= */
 
 /* Modal contenedor */
 #modalOrdenar .modal-content {
@@ -1037,7 +1047,7 @@ select.form-select-sm,
     animation: modalFadeUp 0.25s ease-out;
 }
 
-/* AnimaciÃ³n */
+/* Animación */
 @keyframes modalFadeUp {
     from {
         opacity: 0;
@@ -1176,7 +1186,8 @@ select.form-select-sm,
 
 
 /* ============================================================
-   DARK MODE PREMIUM â€” VENTAS
+   DARK MODE PREMIUM — VENTAS
+============================================================ */
 :root[data-theme='dark'] .ventas-treinta {
     background: linear-gradient(180deg, #0b1d3a 0%, #0a1730 100%) !important;
 }
@@ -1334,6 +1345,7 @@ select.form-select-sm,
 
 /* ============================================================
    AJUSTES FINOS DARK MODE / CLIENTE-COMPROBANTE
+============================================================ */
 :root[data-theme='dark'] #step-2 .card,
 :root[data-theme='dark'] #step-3 .card,
 :root[data-theme='dark'] #step-1 .card {
@@ -1389,6 +1401,7 @@ select.form-select-sm,
 
 /* ============================================================
    BOTONES DE STEPS DEL CARRITO
+============================================================ */
 #step-2 .card-footer,
 #step-3 .card-footer {
     gap: 14px;
@@ -1587,4 +1600,3 @@ select.form-select-sm,
         max-height: 380px;
     }
 }
-

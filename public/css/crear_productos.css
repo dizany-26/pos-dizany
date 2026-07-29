@@ -44,6 +44,17 @@
     justify-content: center;
 }
 
+/* En PC ocultamos botón de cámara para usar pistola lectora */
+@media (hover: hover) and (pointer: fine) {
+    .codigo-barras-scan-btn {
+        display: none !important;
+    }
+
+    .codigo-barras-field {
+        gap: 0;
+    }
+}
+
 .codigo-barras-help {
     display: block;
     margin-top: 0.45rem;

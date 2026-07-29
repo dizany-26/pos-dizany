@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let scannerRunning = false;
     let torchEnabled = false;
     let zoomEnabled = false;
-    let beepAudioContext = null;
-    let isProcessingScan = false;
-    let lastAcceptedScanAt = 0;
-    let lastAcceptedCode = '';
-    const GLOBAL_SCAN_THROTTLE_MS = 250;
-    const SAME_CODE_COOLDOWN_MS = 1500;
+    let scanLock = false;
+    let lastScanValue = '';
+    let lastScanAt = 0;
+    const SCAN_COOLDOWN_MS = 1500;
+    let successAudio = null;
+    let currentDevices = [];
 
     const setStatus = (message, type = 'info') => {
         status.textContent = message;
@@ -44,35 +44,17 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/[^0-9A-Za-z]/g, '')
             .trim();
 
-    const playSuccessFeedback = async () => {
-        if ('vibrate' in navigator) {
-            navigator.vibrate(90);
-        }
-
+    const playCartSuccessFeedback = async () => {
         try {
-            const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContextCtor) return;
-
-            beepAudioContext = beepAudioContext || new AudioContextCtor();
-            if (beepAudioContext.state === 'suspended') {
-                await beepAudioContext.resume();
+            if (!successAudio) {
+                successAudio = new Audio('/sonidos/success.mp3');
+                successAudio.preload = 'auto';
             }
 
-            const oscillator = beepAudioContext.createOscillator();
-            const gainNode = beepAudioContext.createGain();
-
-            oscillator.type = 'triangle';
-            oscillator.frequency.value = 1174;
-            gainNode.gain.setValueAtTime(0.0001, beepAudioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.15, beepAudioContext.currentTime + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, beepAudioContext.currentTime + 0.12);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(beepAudioContext.destination);
-            oscillator.start();
-            oscillator.stop(beepAudioContext.currentTime + 0.12);
+            successAudio.currentTime = 0;
+            await successAudio.play();
         } catch (error) {
-            console.warn('No se pudo reproducir el beep de éxito en ventas:', error);
+            console.warn('No se pudo reproducir el sonido de éxito al agregar al carrito:', error);
         }
     };
 
@@ -86,6 +68,77 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.warn('No se pudieron obtener las capacidades de la cámara en ventas:', error);
             return {};
+        }
+    };
+
+    const getRunningTrackSettings = () => {
+        if (!html5QrCode || !scannerRunning || typeof html5QrCode.getRunningTrackSettings !== 'function') {
+            return {};
+        }
+
+        try {
+            return html5QrCode.getRunningTrackSettings() || {};
+        } catch (error) {
+            console.warn('No se pudieron obtener settings de cámara en ventas:', error);
+            return {};
+        }
+    };
+
+    const chooseRearCamera = (devices = []) => {
+        if (!devices.length) return null;
+
+        const ranked = devices
+            .map((device, index) => {
+                const label = String(device.label || '').toLowerCase();
+                let score = 0;
+                if (/back|rear|environment|tr[aá]s|posterior/.test(label)) score += 200;
+                if (/macro|close|closeup/.test(label)) score += 80;
+                if (/front|user|selfie|frontal/.test(label)) score -= 250;
+                if (/wide|ultra/.test(label)) score -= 30;
+                if (!label) score += index * 3;
+                return { device, score };
+            })
+            .sort((a, b) => b.score - a.score);
+
+        return ranked[0]?.device || null;
+    };
+
+    const primeRearCameraAccess = async () => {
+        if (!navigator.mediaDevices?.getUserMedia) return;
+
+        const probe = async (facingMode) => {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                },
+                audio: false,
+            });
+
+            const [track] = stream.getVideoTracks();
+            const settings = track?.getSettings?.() || {};
+            const deviceId = settings.deviceId || null;
+            const facing = String(settings.facingMode || '').toLowerCase();
+
+            stream.getTracks().forEach((t) => t.stop());
+
+            if (facing === 'user' || facing === 'front') {
+                throw new Error('La cámara seleccionada en probe fue frontal');
+            }
+
+            return deviceId;
+        };
+
+        try {
+            return await probe({ exact: 'environment' });
+        } catch (errorExact) {
+            try {
+                return await probe({ ideal: 'environment' });
+            } catch (errorIdeal) {
+                console.warn('No se pudo precalentar acceso a cámara trasera en ventas:', errorIdeal);
+                return null;
+            }
         }
     };
 
@@ -103,41 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const enhanceVideoQuality = async () => {
-        const capabilities = getTrackCapabilities();
-        const advancedConstraints = [];
-
-        if (Array.isArray(capabilities?.focusMode) && capabilities.focusMode.includes('continuous')) {
-            advancedConstraints.push({ focusMode: 'continuous' });
-        }
-
-        if (Array.isArray(capabilities?.exposureMode) && capabilities.exposureMode.includes('continuous')) {
-            advancedConstraints.push({ exposureMode: 'continuous' });
-        }
-
-        if (Array.isArray(capabilities?.whiteBalanceMode) && capabilities.whiteBalanceMode.includes('continuous')) {
-            advancedConstraints.push({ whiteBalanceMode: 'continuous' });
-        }
-
-        if (typeof capabilities?.sharpness !== 'undefined' && typeof capabilities.sharpness.max === 'number') {
-            advancedConstraints.push({ sharpness: capabilities.sharpness.max });
-        }
-
-        if (typeof capabilities?.contrast !== 'undefined' && typeof capabilities.contrast.max === 'number') {
-            const boostedContrast = Math.max(
-                capabilities.contrast.min ?? capabilities.contrast.max,
-                capabilities.contrast.max * 0.85
-            );
-            advancedConstraints.push({ contrast: boostedContrast });
-        }
-
-        if (!advancedConstraints.length) return;
-
-        for (const constraint of advancedConstraints) {
-            await applyVideoConstraints({ advanced: [constraint] });
-        }
-    };
-
     const syncTools = () => {
         const capabilities = getTrackCapabilities();
         const supportsTorch = capabilities?.torch === true || (Array.isArray(capabilities?.fillLightMode) && capabilities.fillLightMode.includes('flash'));
@@ -145,6 +163,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setToolVisibility(btnTorch, supportsTorch);
         setToolVisibility(btnZoom, supportsZoom);
+    };
+
+    const applyFocusEnhancements = async () => {
+        const capabilities = getTrackCapabilities();
+        const advanced = [];
+
+        if (Array.isArray(capabilities?.focusMode) && capabilities.focusMode.includes('continuous')) {
+            advanced.push({ focusMode: 'continuous' });
+        }
+
+        if (typeof capabilities?.focusDistance !== 'undefined') {
+            const min = typeof capabilities.focusDistance.min === 'number' ? capabilities.focusDistance.min : 0;
+            const max = typeof capabilities.focusDistance.max === 'number' ? capabilities.focusDistance.max : 1;
+            const closeFocus = Math.max(min, Math.min(max, min + (max - min) * 0.2));
+            advanced.push({ focusDistance: closeFocus });
+        }
+
+        for (const setting of advanced) {
+            await applyVideoConstraints({ advanced: [setting] });
+        }
+    };
+
+    const ensureRearCameraActive = async () => {
+        const settings = getRunningTrackSettings();
+        const facingMode = String(settings?.facingMode || '').toLowerCase();
+        const isFront = facingMode === 'user' || facingMode === 'front';
+
+        if (!isFront) return;
+
+        const preferredRear = chooseRearCamera(currentDevices);
+        if (!preferredRear?.id) return;
+
+        try {
+            await stopScanner();
+            const formatsToSupport = typeof Html5QrcodeSupportedFormats !== 'undefined'
+                ? [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.ITF,
+                ]
+                : undefined;
+
+            await html5QrCode.start(
+                preferredRear.id,
+                {
+                    fps: window.innerWidth < 768 ? 14 : 12,
+                    qrbox: (w, h) => {
+                        const width = Math.min(w * 0.9, 420);
+                        const height = Math.min(Math.max(width * 0.82, 210), h * 0.72);
+                        return { width: Math.round(width), height: Math.round(height) };
+                    },
+                    aspectRatio: 1.7778,
+                    rememberLastUsedCamera: true,
+                    videoConstraints: {
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        focusMode: 'continuous',
+                    },
+                    formatsToSupport,
+                },
+                async (decodedText) => {
+                    await procesarCodigoDetectado(decodedText);
+                },
+                () => {}
+            );
+            scannerRunning = true;
+            syncTools();
+            await applyFocusEnhancements();
+            setStatus('Cámara trasera activada para escaneo.', 'info');
+        } catch (error) {
+            console.warn('No se pudo forzar cámara trasera en ventas:', error);
+        }
     };
 
     const stopScanner = async () => {
@@ -177,30 +271,24 @@ document.addEventListener('DOMContentLoaded', () => {
         setToolVisibility(btnZoom, false);
     };
 
-    const shouldIgnoreScan = (codigoNormalizado) => {
-        const now = Date.now();
-        const isSameCode = codigoNormalizado && codigoNormalizado === lastAcceptedCode;
-
-        if ((now - lastAcceptedScanAt) < GLOBAL_SCAN_THROTTLE_MS) {
-            return true;
-        }
-
-        if (isSameCode && (now - lastAcceptedScanAt) < SAME_CODE_COOLDOWN_MS) {
-            return true;
-        }
-
-        return false;
-    };
-
     const procesarCodigoDetectado = async (decodedText) => {
-        const codigo = normalizarEscaneo(decodedText);
-        if (isProcessingScan || shouldIgnoreScan(codigo)) {
+        const now = Date.now();
+        const codigoNormalizado = normalizarEscaneo(decodedText);
+
+        if (
+            scanLock ||
+            (codigoNormalizado &&
+                codigoNormalizado === lastScanValue &&
+                now - lastScanAt < SCAN_COOLDOWN_MS)
+        ) {
             return;
         }
 
-        isProcessingScan = true;
-        lastAcceptedScanAt = Date.now();
-        lastAcceptedCode = codigo;
+        scanLock = true;
+        lastScanValue = codigoNormalizado;
+        lastScanAt = now;
+
+        const codigo = normalizarEscaneo(decodedText);
         input.value = codigo || decodedText.trim();
         input.dispatchEvent(new Event('input', { bubbles: true }));
 
@@ -209,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultado = await window.posResolverYAgregarProducto?.(termino, { render: true });
 
             if (resultado?.added) {
-                await playSuccessFeedback();
+                await playCartSuccessFeedback();
                 setStatus('Producto enviado al carrito.', 'success');
                 await stopScanner();
                 modal?.hide();
@@ -230,7 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(error);
             setStatus('No se pudo procesar el código escaneado.', 'error');
         } finally {
-            isProcessingScan = false;
+            window.setTimeout(() => {
+                scanLock = false;
+            }, SCAN_COOLDOWN_MS);
         }
     };
 
@@ -249,6 +339,8 @@ document.addEventListener('DOMContentLoaded', () => {
             html5QrCode = new Html5Qrcode(readerElementId);
         }
 
+        const probedRearDeviceId = await primeRearCameraAccess();
+
         const config = {
             fps: window.innerWidth < 768 ? 14 : 12,
             qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -257,12 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return { width: Math.round(width), height: Math.round(height) };
             },
             aspectRatio: 1.7778,
+            rememberLastUsedCamera: true,
             videoConstraints: {
-                facingMode: { ideal: 'environment' },
                 width: { ideal: 1920 },
                 height: { ideal: 1080 },
+                focusMode: 'continuous',
             },
-            rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
             },
@@ -280,19 +372,18 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
         }
 
-        let devices = [];
         try {
-            devices = await Html5Qrcode.getCameras();
+            currentDevices = await Html5Qrcode.getCameras();
         } catch (error) {
             console.warn('No se pudieron listar cámaras en ventas:', error);
+            currentDevices = [];
         }
 
-        const rearDeviceByLabel = devices.find((device) =>
-            /back|rear|environment|tr[aá]s|posterior/i.test(device.label || '')
-        );
-
+        const preferredRear = chooseRearCamera(currentDevices);
         const cameraCandidates = [
-            rearDeviceByLabel?.id,
+            probedRearDeviceId,
+            preferredRear?.id,
+            currentDevices.find((device) => /macro|close|closeup/i.test(device.label || ''))?.id,
             { facingMode: { exact: 'environment' } },
             { facingMode: 'environment' },
         ].filter(Boolean);
@@ -309,7 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 scannerRunning = true;
                 syncTools();
-                await enhanceVideoQuality();
+                await applyFocusEnhancements();
+                await ensureRearCameraActive();
                 setStatus('Apunta la cámara al código de barras.', 'info');
                 return;
             } catch (error) {
@@ -317,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        setStatus('No se pudo iniciar la cámara trasera. Verifica permisos de cámara.', 'error');
+        setStatus('No se pudo iniciar la cámara del buscador POS.', 'error');
     };
 
     btnEscanear.addEventListener('click', () => {
@@ -354,6 +446,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     modalElement.addEventListener('shown.bs.modal', () => {
+        scanLock = false;
+        lastScanValue = '';
+        lastScanAt = 0;
         startScanner();
     });
 

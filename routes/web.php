@@ -51,27 +51,28 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::get('/', function () {
-    if (! auth()->check()) {
-        return redirect()->route('login');
-    }
-
-    return redirect()->route(auth()->user()->rutaInicio());
-});
-
-Route::get('/catalogo', function () {
     $config = ConfiguracionCatalogo::first();
 
     $productos = Producto::with('categoria')
+        ->withSum(['lotes as stock_total' => function ($query) {
+            $query->where('activo', 1)
+                ->where('stock_actual', '>', 0);
+        }], 'stock_actual')
         ->where('visible_en_catalogo', 1)
         ->where('activo', 1)
+        ->orderBy('nombre')
         ->get();
 
     $categorias = Categoria::whereHas('productos', function ($query) {
         $query->where('visible_en_catalogo', 1)
             ->where('activo', 1);
-    })->get();
+    })->orderBy('nombre')->get();
 
     return view('catalogo.index', compact('productos', 'categorias', 'config'));
+})->name('inicio');
+
+Route::get('/catalogo', function () {
+    return redirect()->route('inicio');
 })->name('catalogo');
 
 /*

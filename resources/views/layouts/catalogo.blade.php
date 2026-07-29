@@ -3,41 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#071a35">
     <title>@yield('title', 'Catálogo DIZANY')</title>
-
-    @vite(['resources/css/app.css'])
-
-    @stack('styles') {{-- 👈 ESTA LÍNEA FALTABA --}}
-
-    <link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    <style>
-        body { background:#f5f6f8; }
-        .product-card:hover { transform: translateY(-5px); transition: .2s ease; }
-        .navbar-catalogo {
-            background:#111827;
-            color:white;
-        }
-        .cart-badge {
-            position:absolute;
-            top:-5px;
-            right:-8px;
-            font-size:12px;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    @stack('styles')
 </head>
-
 <body>
-
-<div class="container py-4">
     @yield('content')
-</div>
-
-<footer class="text-center py-4 text-muted small">
-    © {{ date('Y') }} DIZANY
-</footer>
-
-@stack('scripts')
-
+    @stack('scripts')
 </body>
 </html>

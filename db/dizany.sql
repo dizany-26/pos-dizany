@@ -140,7 +140,7 @@ CREATE TABLE `configuracion_catalogo` (
 --
 
 INSERT INTO `configuracion_catalogo` (`id`, `nombre_empresa`, `rubro`, `logo`, `telefono`, `correo`, `direccion`, `color_principal`, `mensaje_bienvenida`, `texto_boton_whatsapp`, `created_at`, `updated_at`) VALUES
-(1, 'DIZANY', 'LICORERIA', '1771376477.png', '958196510', 'admin@dizany.com', 'AV. MARGINAL KM105', NULL, 'Bienvenidos a su tienda DIZANY', 'Comprar por WhatsApp', NULL, '2026-02-18 01:01:17');
+(1, 'DIZANY', 'LICORERIA', '1771376477.png', '973451688', 'admin@dizany.com', 'AV. MARGINAL KM105', NULL, 'Bienvenidos a su tienda DIZANY', 'Comprar por WhatsApp', NULL, '2026-02-18 01:01:17');
 
 -- --------------------------------------------------------
 

@@ -1,149 +1,219 @@
 @extends('layouts.catalogo')
 
-@section('title', 'Catálogo DIZANY')
+@section('title', ($config->nombre_empresa ?? 'DIZANY') . ' | Catálogo')
 
 @push('styles')
-    <link href="{{ asset('css/catalago/catalago.css') }}" rel="stylesheet" />
+    <link href="{{ asset('css/catalago/catalago.css') }}?v={{ filemtime(public_path('css/catalago/catalago.css')) }}" rel="stylesheet">
 @endpush
 
 @section('content')
+@php
+    $empresa = $config->nombre_empresa ?? 'DIZANY';
+    $telefono = preg_replace('/\D+/', '', $config->telefono ?? '51973451688');
+    $mensaje = $config->mensaje_bienvenida ?? 'Todo lo que necesitas, cerca de ti y a precios que te encantarán.';
+@endphp
 
-<div class="catalog-header">
+<header class="site-header">
+    <a class="brand" href="{{ route('inicio') }}" aria-label="Ir al inicio">
+        @if(!empty($config->logo))
+            <img src="{{ asset('uploads/config/' . $config->logo) }}" alt="Logo de {{ $empresa }}">
+        @else
+            <span class="brand-mark">D</span>
+        @endif
+        <span><strong>{{ $empresa }}</strong><small>{{ $config->rubro ?? 'Tienda y licorería' }}</small></span>
+    </a>
 
-    <div class="container">
+    <label class="header-search" for="searchInput">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"/></svg>
+        <input id="searchInput" type="search" placeholder="¿Qué estás buscando?" autocomplete="off">
+    </label>
 
-        <div class="header-wrapper">
-
-            <!-- BLOQUE IZQUIERDO -->
-            <div class="store-block">
-
-                <div class="brand-row">
-                    @if(!empty($config->logo))
-                        <img src="{{ asset('uploads/config/' . $config->logo) }}"
-                             class="catalog-logo">
-                    @endif
-
-                    <div>
-                        <h2>{{ $config->nombre_empresa }}</h2>
-                        <div class="rubro">{{ $config->rubro }}</div>
-                    </div>
-                </div>
-
-                <div class="store-details">
-                    <div>📍 {{ $config->direccion }}</div>
-                    <div>🕒 Abierto 8:00 a.m. - 11:00 p.m.</div>
-                </div>
-
-            </div>
-
-            <!-- BUSCADOR -->
-            <div class="search-block">
-                <input type="text"
-                       id="searchInput"
-                       class="search-input"
-                       placeholder="Buscar producto...">
-            </div>
-
-            <!-- CARRITO -->
-            <div class="cart-block">
-                <div class="cart-button">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span id="contador-carrito" class="cart-badge">0</span>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<div class="container-fluid px-4 py-4">
-
-    <div class="text-center category-filter mb-4">
-        <button class="btn btn-outline-dark active" onclick="filterCategory('all')">Todos</button>
-        @foreach($categorias as $categoria)
-            <button class="btn btn-outline-dark"
-                    onclick="filterCategory('{{ $categoria->id }}')">
-                {{ $categoria->nombre }}
+    <nav class="header-actions">
+        <div class="header-menu">
+            <button type="button" class="menu-trigger" data-menu-trigger aria-label="Abrir menú" aria-expanded="false">
+                <span></span><span></span><span></span>
             </button>
-        @endforeach
-    </div>
-
-    <div class="row" id="productContainer">
-        @foreach($productos as $producto)
-
-        @php
-            $stock = $producto->stock_total ?? 0;
-        @endphp
-
-        <div class="col-md-3 col-sm-6 mb-4 product-item"
-             data-name="{{ strtolower($producto->nombre) }}"
-             data-category="{{ $producto->categoria_id }}">
-
-            <div class="card product-card h-100 text-center p-3">
-
-                <img src="{{ asset('uploads/productos/' . $producto->imagen) }}"
-                     class="product-img mb-3"
-                     alt="{{ $producto->nombre }}">
-
-                <h5>{{ $producto->nombre }}</h5>
-
-                <div class="price mb-2">
-                    S/ {{ number_format($producto->precio_venta ?? 0, 2) }}
-                </div>
-
-                @if($stock > 0)
-                    <span class="badge bg-success stock-badge">
-                        Disponible ({{ $stock }})
-                    </span>
-                @else
-                    <span class="badge bg-danger stock-badge">
-                        Sin stock
-                    </span>
+            <div class="menu-dropdown" data-menu-dropdown hidden>
+                <button type="button" data-open-cart>Ver mi pedido</button>
+                @if(!empty($config->telefono))
+                    <a href="https://wa.me/{{ $telefono }}" target="_blank" rel="noopener">Contactar por WhatsApp</a>
                 @endif
-
-                @if($stock > 0)
-                <a href="https://wa.me/{{ $config->telefono ?? '51958196510' }}?text=Hola,%20quiero%20comprar%20{{ urlencode($producto->nombre) }}"
-                    target="_blank"
-                    class="btn whatsapp-btn w-100 text-white">
-                    {{ $config->texto_boton_whatsapp ?? 'Comprar por WhatsApp' }}
-                </a>
-                @endif
-
             </div>
         </div>
+        @auth
+            <a class="access-link" href="{{ route(auth()->user()->rutaInicio()) }}">Ir al panel</a>
+        @else
+            <a class="access-link" href="{{ route('login') }}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4m-4-4 5-5-5-5m5 5H3"/></svg>
+                Acceso al sistema
+            </a>
+        @endauth
+        <button class="header-cart" type="button" data-open-cart aria-label="Abrir carrito">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 11.3a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L21 7H6m4 13h.01M18 20h.01"/></svg>
+            <span class="cart-label">Mi pedido</span>
+            <b data-cart-count>0</b>
+        </button>
+    </nav>
+</header>
 
-        @endforeach
+<main>
+    <section class="catalog-shell" id="productos">
+        <aside class="catalog-sidebar" data-catalog-sidebar>
+            <div class="sidebar-head">
+                <div><small>Explorar</small><strong>Categorías</strong></div>
+                <button type="button" data-toggle-categories aria-label="Ocultar categorías">‹</button>
+            </div>
+            <div class="category-filter" id="categoryFilter">
+                <button type="button" class="active" data-category="all"><span>Todos los productos</span></button>
+                @foreach($categorias as $categoria)
+                    <button type="button" data-category="{{ $categoria->id }}"><span>{{ $categoria->nombre }}</span></button>
+                @endforeach
+            </div>
+            <button type="button" class="clear-filters" data-clear-filters>Limpiar filtros</button>
+        </aside>
+
+        <div class="catalog-content">
+        <div class="section-heading">
+            <div><span class="section-kicker">Nuestro catálogo</span><h2>Encuentra lo que necesitas</h2></div>
+            <p><b id="visibleCount">{{ $productos->count() }}</b> productos disponibles</p>
+        </div>
+
+        <div class="product-grid" id="productContainer">
+            @forelse($productos as $producto)
+                @php
+                    $stock = (int) ($producto->stock_total ?? 0);
+                    $presentaciones = collect([
+                        ['key' => 'unidad', 'name' => 'Unidad', 'factor' => 1, 'price' => (float) $producto->precio_venta],
+                        ['key' => 'paquete', 'name' => 'Paquete', 'factor' => (int) $producto->unidades_por_paquete, 'price' => (float) $producto->precio_paquete],
+                        ['key' => 'caja', 'name' => 'Caja', 'factor' => $producto->paquetes_por_caja
+                            ? (int) $producto->unidades_por_paquete * (int) $producto->paquetes_por_caja
+                            : (int) $producto->unidades_por_caja, 'price' => (float) $producto->precio_caja],
+                    ])->filter(fn ($item) => $item['factor'] > 0 && $item['price'] > 0)->values();
+                    $principal = $presentaciones->first();
+                @endphp
+                <article class="product-card"
+                    data-product
+                    data-name="{{ Illuminate\Support\Str::lower($producto->nombre . ' ' . ($producto->descripcion ?? '')) }}"
+                    data-category="{{ $producto->categoria_id }}"
+                    data-id="{{ $producto->id }}"
+                    data-stock="{{ $stock }}"
+                    data-description="{{ $producto->descripcion ?: 'Disponible en nuestra tienda.' }}"
+                    data-category-name="{{ $producto->categoria->nombre ?? 'Producto' }}">
+                    <div class="product-visual">
+                        @if($producto->imagen)
+                            <img src="{{ asset('uploads/productos/' . $producto->imagen) }}" alt="{{ $producto->nombre }}" loading="lazy">
+                        @else
+                            <span class="image-placeholder">D</span>
+                        @endif
+                        @if($stock > 0)
+                            <span class="stock-pill">En stock</span>
+                        @else
+                            <span class="stock-pill sold-out">Agotado</span>
+                        @endif
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">{{ $producto->categoria->nombre ?? 'Producto' }}</span>
+                        <h3>{{ $producto->nombre }}</h3>
+                        <p>{{ $producto->descripcion ?: 'Disponible en nuestra tienda.' }}</p>
+
+                        @if($principal)
+                            <div class="product-buy">
+                                <div class="price-wrap"><small>Desde</small><strong>S/ {{ number_format($principal['price'], 2) }}</strong></div>
+                                <button type="button" class="add-button" {{ $stock <= 0 ? 'disabled' : '' }}
+                                    data-add-product
+                                    data-id="{{ $producto->id }}"
+                                    data-name="{{ $producto->nombre }}"
+                                    data-image="{{ $producto->imagen ? asset('uploads/productos/' . $producto->imagen) : '' }}"
+                                    data-stock="{{ $stock }}"
+                                    data-presentations='@json($presentaciones)'>
+                                    <span>+</span><b>Agregar</b>
+                                </button>
+                            </div>
+                        @else
+                            <div class="unavailable-price">Precio por consultar</div>
+                        @endif
+                    </div>
+                </article>
+            @empty
+                <div class="empty-products">Aún no hay productos publicados.</div>
+            @endforelse
+        </div>
+        <div class="no-results" id="noResults" hidden>
+            <span>⌕</span><h3>No encontramos coincidencias</h3><p>Prueba con otro nombre o categoría.</p>
+        </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div><strong>{{ $empresa }}</strong><span>{{ $config->direccion ?? 'Pacaipampa, Piura' }}</span></div>
+    <p>© {{ date('Y') }} {{ $empresa }}. Todos los derechos reservados.</p>
+</footer>
+
+<div class="cart-overlay" data-cart-overlay></div>
+<aside class="cart-drawer" data-cart-drawer aria-hidden="true">
+    <div class="cart-head">
+        <div><span>Tu selección</span><h2>Mi pedido <b data-cart-count>0</b></h2></div>
+        <button type="button" data-close-cart aria-label="Cerrar carrito">×</button>
     </div>
+    <div class="cart-items" data-cart-items></div>
+    <div class="cart-empty" data-cart-empty>
+        <span>🛒</span><h3>Tu carrito está vacío</h3><p>Agrega productos del catálogo para preparar tu pedido.</p>
+        <button type="button" data-close-cart>Explorar productos</button>
+    </div>
+    <div class="cart-summary" data-cart-summary hidden>
+        <details class="customer-details">
+            <summary>
+                <span class="customer-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-4 3.1-6.2 7-6.2s6.5 2.2 7 6.2"/></svg>
+                </span>
+                <span><b>Datos personales</b><small>Nombre, teléfono y dirección</small></span>
+                <i>⌄</i>
+            </summary>
+            <div class="customer-fields">
+                <label>Nombre completo<input type="text" data-customer-name placeholder="Tu nombre" autocomplete="name"></label>
+                <label>Teléfono<input type="tel" data-customer-phone placeholder="Ej. 958 196 510" autocomplete="tel"></label>
+                <label>Dirección o referencia<textarea data-customer-address rows="2" placeholder="Indica dónde entregar el pedido"></textarea></label>
+                <label>Nota del pedido<textarea data-customer-note rows="2" placeholder="Opcional"></textarea></label>
+                <p class="form-error" data-form-error hidden>Completa tu nombre, teléfono y dirección.</p>
+            </div>
+        </details>
+        <div><span>Productos</span><b data-cart-units>0</b></div>
+        <div class="cart-total"><span>Total estimado</span><strong>S/ <span data-cart-total>0.00</span></strong></div>
+        <button type="button" class="whatsapp-checkout" data-send-order>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.4l1.3-4.7a8.5 8.5 0 1 1 16.2-4Z"/><path d="M8.2 7.8c.2-.4.4-.4.7-.4h.4c.1 0 .3 0 .4.4l.8 1.9c.1.2.1.4 0 .6l-.6.8c-.2.2-.1.4 0 .6.7 1.2 1.7 2.1 2.9 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.2.6-.1l2 .9c.2.1.4.2.4.4 0 .2-.1 1.3-.7 1.8-.5.5-1.3.8-2.1.7-1.1-.2-2.5-.7-4.2-2.2-2-1.8-3.3-4.1-3.4-4.3-.1-.2-.8-1.1-.8-2.1 0-1 .5-1.5.7-1.8Z"/></svg>
+            Enviar pedido por WhatsApp
+        </button>
+        <small>Confirmaremos disponibilidad y entrega por WhatsApp.</small>
+    </div>
+</aside>
+
+<div class="product-modal" data-product-modal hidden>
+    <div class="product-modal-backdrop" data-close-product></div>
+    <section class="product-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalProductName">
+        <button type="button" class="modal-close" data-close-product aria-label="Cerrar">×</button>
+        <div class="modal-product-image" data-modal-image></div>
+        <div class="modal-product-copy">
+            <span data-modal-category></span>
+            <h2 id="modalProductName" data-modal-name></h2>
+            <p data-modal-description></p>
+            <label class="modal-presentation">Presentación<select data-modal-presentation></select></label>
+            <div class="modal-price">S/ <strong data-modal-price>0.00</strong></div>
+            <div class="modal-actions">
+                <div class="quantity-picker">
+                    <button type="button" data-modal-minus>−</button>
+                    <b data-modal-quantity>1</b>
+                    <button type="button" data-modal-plus>+</button>
+                </div>
+                <button type="button" class="modal-add" data-modal-add>Añadir al carrito</button>
+            </div>
+        </div>
+    </section>
 </div>
 
+<div id="catalogData" data-phone="{{ $telefono }}" data-business="{{ $empresa }}"></div>
 @endsection
 
 @push('scripts')
-<script>
-
-// 🔎 Buscador en vivo
-document.getElementById('searchInput').addEventListener('keyup', function() {
-    let value = this.value.toLowerCase();
-    document.querySelectorAll('.product-item').forEach(item => {
-        let name = item.dataset.name;
-        item.style.display = name.includes(value) ? 'block' : 'none';
-    });
-});
-
-// 🏷️ Filtro por categoría
-function filterCategory(categoryId) {
-    document.querySelectorAll('.product-item').forEach(item => {
-        if (categoryId === 'all') {
-            item.style.display = 'block';
-        } else {
-            item.style.display =
-                item.dataset.category == categoryId ? 'block' : 'none';
-        }
-    });
-}
-
-</script>
+    <script src="{{ asset('js/catalogo.js') }}?v={{ filemtime(public_path('js/catalogo.js')) }}" defer></script>
 @endpush

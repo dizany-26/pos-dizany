@@ -27,13 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let autoMacroApplied = false;
     let activeCameraConfig = null;
     let currentDevices = [];
-    let isProcessingScan = false;
-    let lastAcceptedScanAt = 0;
-    let lastAcceptedCode = '';
-    const GLOBAL_SCAN_THROTTLE_MS = 250;
-    const SAME_CODE_COOLDOWN_MS = 1500;
+    let scanLock = false;
+    let lastScanValue = '';
+    let lastScanAt = 0;
+    const SCAN_COOLDOWN_MS = 1500;
 
     const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+    const isDesktopLike = !isMobileDevice && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     const setStatus = (message, type = 'info') => {
         status.textContent = message;
@@ -61,6 +61,17 @@ document.addEventListener('DOMContentLoaded', () => {
             nextInput.focus();
             nextInput.select?.();
         }, 150);
+    };
+
+    const focusBarcodeInput = () => {
+        if (!input || !isDesktopLike) return;
+
+        window.setTimeout(() => {
+            const isVisible = input.offsetParent !== null;
+            if (!isVisible) return;
+            input.focus();
+            input.select?.();
+        }, 120);
     };
 
     const playSuccessFeedback = async () => {
@@ -102,32 +113,25 @@ document.addEventListener('DOMContentLoaded', () => {
         focusNextInput();
     };
 
-    const shouldIgnoreScan = (decodedText) => {
-        const now = Date.now();
-        const codigoNormalizado = String(decodedText || '').trim();
-        const isSameCode = codigoNormalizado && codigoNormalizado === lastAcceptedCode;
-
-        if ((now - lastAcceptedScanAt) < GLOBAL_SCAN_THROTTLE_MS) {
-            return true;
-        }
-
-        if (isSameCode && (now - lastAcceptedScanAt) < SAME_CODE_COOLDOWN_MS) {
-            return true;
-        }
-
-        return false;
-    };
+    const normalizarEscaneo = (value) =>
+        String(value || '')
+            .replace(/[^0-9A-Za-z]/g, '')
+            .trim();
 
     const handleBarcodeDetected = async (decodedText) => {
-        const codigoNormalizado = String(decodedText || '').trim();
+        const now = Date.now();
+        const codigo = normalizarEscaneo(decodedText);
 
-        if (isProcessingScan || shouldIgnoreScan(codigoNormalizado)) {
+        if (
+            scanLock ||
+            (codigo && codigo === lastScanValue && now - lastScanAt < SCAN_COOLDOWN_MS)
+        ) {
             return;
         }
 
-        isProcessingScan = true;
-        lastAcceptedScanAt = Date.now();
-        lastAcceptedCode = codigoNormalizado;
+        scanLock = true;
+        lastScanValue = codigo;
+        lastScanAt = now;
 
         try {
             fillBarcode(decodedText);
@@ -136,7 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
             await stopScanner();
             modal?.hide();
         } finally {
-            isProcessingScan = false;
+            window.setTimeout(() => {
+                scanLock = false;
+            }, SCAN_COOLDOWN_MS);
         }
     };
 
@@ -236,39 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const enhanceVideoQuality = async () => {
-        const capabilities = getTrackCapabilities();
-        const advancedConstraints = [];
-
-        if (Array.isArray(capabilities?.focusMode) && capabilities.focusMode.includes('continuous')) {
-            advancedConstraints.push({ focusMode: 'continuous' });
-        }
-
-        if (Array.isArray(capabilities?.exposureMode) && capabilities.exposureMode.includes('continuous')) {
-            advancedConstraints.push({ exposureMode: 'continuous' });
-        }
-
-        if (Array.isArray(capabilities?.whiteBalanceMode) && capabilities.whiteBalanceMode.includes('continuous')) {
-            advancedConstraints.push({ whiteBalanceMode: 'continuous' });
-        }
-
-        if (typeof capabilities?.sharpness !== 'undefined' && typeof capabilities.sharpness.max === 'number') {
-            advancedConstraints.push({ sharpness: capabilities.sharpness.max });
-        }
-
-        if (typeof capabilities?.contrast !== 'undefined' && typeof capabilities.contrast.max === 'number') {
-            const boostedContrast = Math.max(
-                capabilities.contrast.min ?? capabilities.contrast.max,
-                capabilities.contrast.max * 0.85
-            );
-            advancedConstraints.push({ contrast: boostedContrast });
-        }
-
-        for (const constraint of advancedConstraints) {
-            await applyVideoConstraints({ advanced: [constraint] });
-        }
-    };
-
     const verifyTorchState = (expectedState) => {
         const settings = getRunningTrackSettings();
         console.log('Settings actuales cámara:', settings);
@@ -294,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const rankedDevices = devices
-            .map((device) => {
+            .map((device, index) => {
                 const label = `${device.label || ''}`.toLowerCase();
                 let score = 0;
 
@@ -310,6 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (/macro/.test(label)) score += 20;
                     if (/front|user|selfie|frontal/.test(label)) score -= 150;
                     if (/wide|ultra/.test(label)) score -= 15;
+                }
+
+                if (!label) {
+                    score += index * 3;
                 }
 
                 return { device, score, label };
@@ -396,11 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
-            videoConstraints: {
-                facingMode: { ideal: 'environment' },
-                width: { ideal: 1920 },
-                height: { ideal: 1080 },
-            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -436,7 +408,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Settings detectados:', getRunningTrackSettings());
 
         syncCameraTools();
-        await enhanceVideoQuality();
 
         if (keepMacroMessage) {
             setStatus('Modo macro activado.', 'info');
@@ -466,11 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
-            videoConstraints: {
-                facingMode: { ideal: 'environment' },
-                width: { ideal: 1920 },
-                height: { ideal: 1080 },
-            },
             rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
@@ -507,7 +473,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Settings detectados:', getRunningTrackSettings());
 
             syncCameraTools();
-            await enhanceVideoQuality();
             return true;
         } catch (error) {
             console.warn('No se pudo reiniciar la cámara:', error);
@@ -726,6 +691,87 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const applyCloseFocusBoost = async () => {
+        if (!scannerRunning) return;
+
+        const capabilities = getTrackCapabilities();
+        const advanced = [];
+
+        if (Array.isArray(capabilities.focusMode) && capabilities.focusMode.includes('continuous')) {
+            advanced.push({ focusMode: 'continuous' });
+        }
+
+        if (typeof capabilities.focusDistance !== 'undefined') {
+            const min = typeof capabilities.focusDistance.min === 'number' ? capabilities.focusDistance.min : 0;
+            const max = typeof capabilities.focusDistance.max === 'number' ? capabilities.focusDistance.max : 1;
+            const closeFocus = Math.max(min, Math.min(max, min + (max - min) * 0.25));
+            advanced.push({ focusDistance: closeFocus });
+        }
+
+        for (const setting of advanced) {
+            await applyVideoConstraints({ advanced: [setting] });
+        }
+    };
+
+    const primeRearCameraAccess = async () => {
+        if (!navigator.mediaDevices?.getUserMedia) return;
+
+        const probe = async (facingMode) => {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                },
+                audio: false,
+            });
+
+            const [track] = stream.getVideoTracks();
+            const settings = track?.getSettings?.() || {};
+            const deviceId = settings.deviceId || null;
+            const facing = String(settings.facingMode || '').toLowerCase();
+
+            stream.getTracks().forEach((t) => t.stop());
+
+            if (facing === 'user' || facing === 'front') {
+                throw new Error('La cámara seleccionada en probe fue frontal');
+            }
+
+            return deviceId;
+        };
+
+        try {
+            return await probe({ exact: 'environment' });
+        } catch (errorExact) {
+            try {
+                return await probe({ ideal: 'environment' });
+            } catch (errorIdeal) {
+                console.warn('No se pudo precalentar acceso a cámara trasera en producto:', errorIdeal);
+                return null;
+            }
+        }
+    };
+
+    const ensureRearCameraActive = async () => {
+        const settings = getRunningTrackSettings();
+        const facingMode = String(settings?.facingMode || '').toLowerCase();
+        const isFront = facingMode === 'user' || facingMode === 'front';
+
+        if (!isFront) return;
+
+        const rearCamera = getPreferredCameraDevice(currentDevices, false);
+        if (!rearCamera?.id) return;
+
+        try {
+            await restartScannerWithCamera(rearCamera.id, false);
+            await applyAutoMacroPreset();
+            await applyCloseFocusBoost();
+            setStatus('Cámara trasera activada para escaneo.', 'info');
+        } catch (error) {
+            console.warn('No se pudo forzar cámara trasera en producto:', error);
+        }
+    };
+
     const startScanner = async () => {
         if (typeof Html5Qrcode === 'undefined') {
             setStatus('No se pudo cargar el escáner. Revisa tu conexión e inténtalo de nuevo.', 'error');
@@ -743,6 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
             html5QrCode = new Html5Qrcode(readerElementId);
         }
 
+        const probedRearDeviceId = await primeRearCameraAccess();
+
         toggleFallback(false);
         setStatus('Solicitando acceso a la cámara…', 'info');
 
@@ -757,12 +805,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             },
             aspectRatio: 1.7778,
+            rememberLastUsedCamera: true,
             videoConstraints: {
-                facingMode: { ideal: 'environment' },
                 width: { ideal: 1920 },
                 height: { ideal: 1080 },
+                focusMode: 'continuous',
             },
-            rememberLastUsedCamera: true,
             experimentalFeatures: {
                 useBarCodeDetectorIfSupported: true,
             },
@@ -801,8 +849,10 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         const cameraCandidates = [
+            probedRearDeviceId,
             preferredDevice?.id,
             rearDeviceByLabel?.id,
+            devices.find((device) => /macro|close|closeup/i.test(device.label || ''))?.id,
             { facingMode: { exact: 'environment' } },
             { facingMode: 'environment' },
         ].filter(Boolean);
@@ -821,8 +871,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Settings detectados:', getRunningTrackSettings());
 
                 syncCameraTools();
-                await enhanceVideoQuality();
                 await applyAutoMacroPreset();
+                await applyCloseFocusBoost();
+                await ensureRearCameraActive();
 
                 if (!autoMacroApplied) {
                     setStatus('Apunta la cámara al código de barras.', 'info');
@@ -834,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        setStatus('No se pudo iniciar la cámara trasera. Usa Escanear con app externa o revisa permisos.', 'error');
+        setStatus('No se pudo iniciar la cámara en vivo. Usa Escanear con app externa o una pistola lectora en PC.', 'error');
         toggleFallback(true);
     };
 
@@ -848,6 +899,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.location.href = scannerUrl.toString();
     };
+
+    if (isDesktopLike) {
+        btnEscanear.classList.add('d-none');
+        focusBarcodeInput();
+    }
 
     btnEscanear.addEventListener('click', () => {
         modal?.show();
@@ -873,6 +929,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     modalElement.addEventListener('shown.bs.modal', () => {
+        scanLock = false;
+        lastScanValue = '';
+        lastScanAt = 0;
         startScanner();
     });
 
@@ -888,4 +947,5 @@ document.addEventListener('DOMContentLoaded', () => {
             focusNextInput();
         }
     });
+
 });
