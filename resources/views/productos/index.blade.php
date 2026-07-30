@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
-    <link href="{{ asset('css/mostrar_detalles_productos.css') }}" rel="stylesheet" />    
+    <link href="{{ asset('css/mostrar_detalles_productos.css') }}?v={{ filemtime(public_path('css/mostrar_detalles_productos.css')) }}" rel="stylesheet" />
 @endpush
 
 {{-- Botón atrás (opcional) --}}
@@ -213,76 +213,95 @@ Productos
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body">
-                <div class="row g-3">
-
-                    <!-- 🟦 INFO GENERAL -->
-                    <div class="col-md-4">
-                        <h6 class="fw-bold border-bottom pb-1">Información General</h6>
-
-                        <label>ID</label>
-                        <input id="modalId" class="form-control ui-input" disabled>
-
-                        <label>Código de Barras</label>
-                        <input id="modalCodigo" class="form-control ui-input" disabled>
-
-                        <label>Nombre</label>
-                        <input id="modalNombre" class="form-control ui-input" disabled>
-
-                        <label>Descripción</label>
-                        <textarea id="modalDescripcion" class="form-control ui-input" rows="3" disabled></textarea>
-
-                        <label>Categoría</label>
-                        <input id="modalCategoria" class="form-control ui-input" disabled>
-
-                        <label>Marca</label>
-                        <input id="modalMarca" class="form-control ui-input" disabled>
-
-                        <label>Ubicación</label>
-                        <input id="modalUbicacion" class="form-control ui-input" disabled>
-
-                        <label>Activo</label>
-                        <input id="modalActivo" class="form-control ui-input" disabled>
-
-                        <label>Visible en catálogo</label>
-                        <input id="modalVisibleCatalogo" class="form-control ui-input" disabled>
+            <div class="modal-body product-detail-body">
+                <div class="product-detail-hero">
+                    <div class="product-detail-image-wrap">
+                        <img id="modalImagen" alt="Imagen del producto">
                     </div>
-
-                    <!-- 🟩 PRESENTACIONES -->
-                    <div class="col-md-4">
-                        <h6 class="fw-bold border-bottom pb-1">Presentaciones</h6>
-
-                        <label>Unidades por paquete</label>
-                        <input id="modalUnidadesPorPaquete" class="form-control ui-input" disabled>
-
-                        <label>Paquetes por caja</label>
-                        <input id="modalPaquetesPorCaja" class="form-control ui-input" disabled>
-
-                        <label>Unidades por caja</label>
-                        <input id="modalUnidadesPorCaja" class="form-control ui-input" disabled>
-
-                        <label>Maneja fecha de vencimiento</label>
-                        <input id="modalManejaVencimiento" class="form-control ui-input" disabled>
-                    </div>
-
-                    <!-- 🟧 RESUMEN INVENTARIO (DESDE LOTES) -->
-                    <div class="col-md-4">
-                        <h6 class="fw-bold border-bottom pb-1">Inventario (Resumen)</h6>
-
-                        <label>Stock total actual</label>
-                        <input id="modalStockTotal" class="form-control ui-input" disabled>
-
-                        <label>Lotes activos</label>
-                        <input id="modalCantidadLotes" class="form-control ui-input" disabled>
-
-                        <div class="text-center mt-3">
-                            <img id="modalImagen"
-                                 class="ui-product-image"
-                                 style="width:130px;height:130px;object-fit:contain;">
+                    <div class="product-detail-heading">
+                        <div class="product-detail-kicker" id="modalCategoria"></div>
+                        <h3 id="modalNombre"></h3>
+                        <p id="modalDescripcion"></p>
+                        <div class="product-detail-badges">
+                            <span id="modalActivo" class="detail-badge"></span>
+                            <span id="modalVisibleCatalogo" class="detail-badge"></span>
+                            <span id="modalVencimiento" class="detail-badge"></span>
                         </div>
                     </div>
-
+                    <div class="product-detail-code">
+                        <span>Código de barras</span>
+                        <strong id="modalCodigo"></strong>
+                        <small>ID <b id="modalId"></b></small>
+                    </div>
                 </div>
+
+                <div class="product-detail-grid">
+                    <section class="detail-panel">
+                        <div class="detail-panel-title">
+                            <i class="fas fa-circle-info"></i>
+                            <h6>Información general</h6>
+                        </div>
+                        <dl class="detail-data-list">
+                            <div><dt>Marca</dt><dd id="modalMarca"></dd></div>
+                            <div><dt>Ubicación</dt><dd id="modalUbicacion"></dd></div>
+                            <div><dt>Creado</dt><dd id="modalCreado"></dd></div>
+                            <div><dt>Última actualización</dt><dd id="modalActualizado"></dd></div>
+                        </dl>
+                    </section>
+
+                    <section class="detail-panel detail-panel-wide">
+                        <div class="detail-panel-title">
+                            <i class="fas fa-layer-group"></i>
+                            <h6>Presentaciones y precios de venta</h6>
+                        </div>
+                        <div id="modalPresentaciones" class="presentation-detail-grid"></div>
+                    </section>
+                </div>
+
+                <section class="detail-panel">
+                    <div class="detail-panel-title">
+                        <i class="fas fa-warehouse"></i>
+                        <h6>Resumen de inventario</h6>
+                    </div>
+                    <div class="inventory-summary-grid">
+                        <div><span>Stock disponible</span><strong id="modalStockTotal">0</strong><small>unidades</small></div>
+                        <div><span>Lotes con stock</span><strong id="modalCantidadLotes">0</strong><small id="modalLotesRegistrados"></small></div>
+                        <div><span>Valor de compra</span><strong id="modalValorInventario">S/ 0.00</strong><small>stock actual</small></div>
+                        <div><span>Próximo vencimiento</span><strong id="modalProximoVencimiento">—</strong><small>lote activo</small></div>
+                    </div>
+                </section>
+
+                <section class="detail-panel">
+                    <div class="detail-panel-title">
+                        <i class="fas fa-boxes-stacked"></i>
+                        <h6>Detalle de lotes</h6>
+                    </div>
+                    <div class="detail-scroll-hint">
+                        <i class="fas fa-arrows-left-right"></i>
+                        Desliza horizontalmente para ver todas las columnas
+                    </div>
+                    <div class="table-responsive detail-lots-scroll">
+                        <table class="table align-middle detail-lots-table">
+                            <thead>
+                                <tr>
+                                    <th>Lote</th>
+                                    <th>Proveedor</th>
+                                    <th>Comprobante</th>
+                                    <th>Ingreso</th>
+                                    <th>Vencimiento</th>
+                                    <th>Stock inicial</th>
+                                    <th>Stock actual</th>
+                                    <th>Costo</th>
+                                    <th>P. unidad</th>
+                                    <th>P. paquete</th>
+                                    <th>P. caja</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalLotesBody"></tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
 
             <div class="modal-footer">
@@ -336,7 +355,7 @@ Productos
         return new Intl.NumberFormat('es-PE').format(value);
     }
 
-    $(document).on('click', '.ver-detalles', function () {
+    $(document).on('click', '.ver-detalles-legacy', function () {
 
         const productoId = $(this).data('id');
 
@@ -397,6 +416,116 @@ Productos
             MOSTRAR MODAL
             ===================== */
             new bootstrap.Modal(document.getElementById('productoModal')).show();
+        });
+    });
+</script>
+<script>
+    const productDetailNumber = value =>
+        new Intl.NumberFormat('es-PE').format(Number(value || 0));
+
+    const productDetailMoney = value => {
+        if (value === null || value === undefined || value === '') return '—';
+        return new Intl.NumberFormat('es-PE', {
+            style: 'currency',
+            currency: 'PEN'
+        }).format(Number(value));
+    };
+
+    const productDetailDate = value => {
+        if (!value) return '—';
+        const parts = String(value).slice(0, 10).split('-');
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+    };
+
+    const productDetailEscape = value =>
+        $('<div>').text(value ?? '—').html();
+
+    $(document).on('click', '.ver-detalles', function () {
+        const productoId = $(this).data('id');
+
+        $.get(`/producto/detalles/${productoId}`, function (r) {
+            if (!r.success) return;
+
+            const p = r.producto;
+            const inventario = r.inventario;
+
+            $('#modalId').text(p.id);
+            $('#modalCodigo').text(p.codigo_barras || 'Sin código');
+            $('#modalNombre').text(p.nombre);
+            $('#modalDescripcion').text(p.descripcion || 'Sin descripción registrada.');
+            $('#modalCategoria').text(p.categoria || 'Sin categoría');
+            $('#modalMarca').text(p.marca || 'Sin marca');
+            $('#modalUbicacion').text(p.ubicacion || 'No registrada');
+            $('#modalCreado').text(p.creado_en || '—');
+            $('#modalActualizado').text(p.actualizado_en || '—');
+
+            $('#modalActivo')
+                .text(p.activo ? 'Producto activo' : 'Producto inactivo')
+                .toggleClass('is-success', p.activo)
+                .toggleClass('is-danger', !p.activo);
+            $('#modalVisibleCatalogo')
+                .text(p.visible_en_catalogo ? 'Visible en catálogo' : 'Oculto del catálogo')
+                .toggleClass('is-success', p.visible_en_catalogo)
+                .toggleClass('is-muted', !p.visible_en_catalogo);
+            $('#modalVencimiento')
+                .text(p.maneja_vencimiento ? 'Controla vencimiento' : 'Sin control de vencimiento')
+                .toggleClass('is-warning', p.maneja_vencimiento)
+                .toggleClass('is-muted', !p.maneja_vencimiento);
+
+            $('#modalImagen')
+                .attr('src', p.imagen ? `/uploads/productos/${p.imagen}` : '/img/sin-imagen.png')
+                .attr('alt', p.nombre);
+
+            const labels = {
+                unidad: ['Unidad', '1 unidad'],
+                paquete: ['Paquete', `${productDetailNumber(r.presentaciones.paquete.contenido)} unidades`],
+                caja: [
+                    'Caja',
+                    r.presentaciones.caja.paquetes
+                        ? `${productDetailNumber(r.presentaciones.caja.paquetes)} paquetes · ${productDetailNumber(r.presentaciones.caja.contenido)} unidades`
+                        : `${productDetailNumber(r.presentaciones.caja.contenido)} unidades`
+                ]
+            };
+            const presentaciones = Object.entries(r.presentaciones)
+                .filter(([, item]) => item.habilitada)
+                .map(([key, item]) => `
+                    <article class="presentation-detail-card">
+                        <span>${labels[key][0]}</span>
+                        <strong>${productDetailMoney(item.precio)}</strong>
+                        <small>${labels[key][1]}</small>
+                    </article>
+                `).join('');
+            $('#modalPresentaciones').html(presentaciones);
+
+            $('#modalStockTotal').text(productDetailNumber(inventario.stock_total));
+            $('#modalCantidadLotes').text(productDetailNumber(inventario.lotes_con_stock));
+            $('#modalLotesRegistrados').text(`${productDetailNumber(inventario.lotes_registrados)} registrados`);
+            $('#modalValorInventario').text(productDetailMoney(inventario.valor_compra));
+            $('#modalProximoVencimiento').text(productDetailDate(inventario.proximo_vencimiento));
+
+            const lotes = r.lotes.length
+                ? r.lotes.map(lote => `
+                    <tr>
+                        <td><strong>${productDetailEscape(lote.numero || `#${lote.id}`)}</strong></td>
+                        <td>${productDetailEscape(lote.proveedor || 'Sin proveedor')}</td>
+                        <td>${productDetailEscape(lote.comprobante || '—')}</td>
+                        <td>${productDetailDate(lote.fecha_ingreso)}</td>
+                        <td>${productDetailDate(lote.fecha_vencimiento)}</td>
+                        <td>${productDetailNumber(lote.stock_inicial)}</td>
+                        <td><strong>${productDetailNumber(lote.stock_actual)}</strong></td>
+                        <td>${productDetailMoney(lote.precio_compra)}</td>
+                        <td>${productDetailMoney(lote.precio_unidad)}</td>
+                        <td>${productDetailMoney(lote.precio_paquete)}</td>
+                        <td>${productDetailMoney(lote.precio_caja)}</td>
+                        <td><span class="detail-lot-status ${lote.activo ? 'is-active' : 'is-inactive'}">${lote.activo ? 'Activo' : 'Inactivo'}</span></td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="12" class="text-center text-muted py-4">Este producto todavía no tiene lotes registrados.</td></tr>';
+            $('#modalLotesBody').html(lotes);
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('productoModal')).show();
+        }).fail(() => {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron cargar los detalles del producto.' });
         });
     });
 </script>

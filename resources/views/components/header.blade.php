@@ -44,15 +44,37 @@
                     <i class="fas fa-bell fa-lg"></i>
 
                     @if($totalAlertas > 0)
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <span id="contadorTotal"
+                              data-alertas-inventario="{{ $alertaStockBajo + $alertaPorVencer }}"
+                              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                             {{ $totalAlertas }}
                         </span>
+                    @else
+                        <span id="contadorTotal"
+                              data-alertas-inventario="{{ $alertaStockBajo + $alertaPorVencer }}"
+                              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
                     @endif
                 </a>
 
                 <ul class="dropdown-menu dropdown-menu-end shadow"
                     aria-labelledby="notificacionesDropdown"
-                    style="min-width: 250px;">
+                    style="min-width: 320px;">
+                    @if($notificacionesCaja->isNotEmpty())
+                        <li><h6 class="dropdown-header">Alertas de caja</h6></li>
+                        @foreach($notificacionesCaja as $notificacion)
+                            <li>
+                                <a class="dropdown-item d-flex gap-3 align-items-start py-2"
+                                   href="{{ route('notificaciones.abrir', $notificacion->id) }}">
+                                    <i class="fas {{ $notificacion->data['icono'] ?? 'fa-cash-register' }} text-{{ $notificacion->data['color'] ?? 'primary' }} mt-1"></i>
+                                    <span class="text-wrap">
+                                        <strong class="d-block">{{ $notificacion->data['titulo'] ?? 'Alerta de caja' }}</strong>
+                                        <small class="text-muted">{{ $notificacion->data['mensaje'] ?? '' }}</small>
+                                    </span>
+                                </a>
+                            </li>
+                        @endforeach
+                        <li><hr class="dropdown-divider"></li>
+                    @endif
                     <li>
                         <a class="dropdown-item d-flex justify-content-between align-items-center"
                            href="{{ route('inventario.resumen') }}">
@@ -184,6 +206,47 @@ function cargarNotificaciones() {
 
 document.addEventListener("DOMContentLoaded", function () {
     cargarNotificaciones();
+
+    const revisarAlertasCaja = () => {
+        fetch("{{ route('notificaciones.caja') }}", {
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(res => res.ok ? res.json() : Promise.reject(res))
+            .then(data => {
+                const contador = document.getElementById('contadorTotal');
+                if (contador) {
+                    const inventario = Number(contador.dataset.alertasInventario || 0);
+                    const total = inventario + Number(data.total || 0);
+                    contador.textContent = total;
+                    contador.classList.toggle('d-none', total === 0);
+                }
+
+                const avisadas = JSON.parse(localStorage.getItem('dizany_alertas_caja') || '[]');
+                const nueva = data.notificaciones.find(item => !avisadas.includes(item.id));
+                if (!nueva || typeof Swal === 'undefined') return;
+
+                avisadas.push(nueva.id);
+                localStorage.setItem('dizany_alertas_caja', JSON.stringify(avisadas.slice(-50)));
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: nueva.tipo,
+                    title: nueva.titulo,
+                    text: nueva.mensaje,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Ver',
+                    timer: 9000,
+                    timerProgressBar: true
+                }).then(result => {
+                    if (result.isConfirmed) window.location.href = nueva.url;
+                });
+            })
+            .catch(err => console.error('Alertas de caja:', err));
+    };
+
+    revisarAlertasCaja();
+    window.setInterval(revisarAlertasCaja, 15000);
 
     const hash = window.location.hash;
     if (hash) {

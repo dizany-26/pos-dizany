@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProveedorController extends Controller
 {
@@ -31,12 +32,45 @@ public function edit($id)
     return response()->json($proveedor);
 }
 
+public function verificarDocumento(Request $request)
+{
+    $data = $request->validate([
+        'numero' => 'required|string|max:20',
+        'excepto' => 'nullable|integer',
+    ]);
+
+    $proveedor = Proveedor::query()
+        ->where('numero_documento', $data['numero'])
+        ->when($data['excepto'] ?? null, fn ($query, $id) => $query->whereKeyNot($id))
+        ->first(['id', 'nombre', 'tipo_documento', 'numero_documento']);
+
+    return response()->json([
+        'existe' => (bool) $proveedor,
+        'proveedor' => $proveedor,
+    ]);
+}
+
     public function store(Request $request)
     {
         $request->validate([
             'nombre' => 'required|string|max:150',
             'tipo_documento' => 'required|in:RUC,DNI,OTRO',
-            'numero_documento' => 'required|string|max:20|unique:proveedores,numero_documento',
+            'numero_documento' => [
+                'required',
+                'string',
+                'max:20',
+                'unique:proveedores,numero_documento',
+                function ($attribute, $value, $fail) use ($request) {
+                    $longitud = $request->tipo_documento === 'DNI' ? 8 : ($request->tipo_documento === 'RUC' ? 11 : null);
+                    if ($longitud && (! ctype_digit($value) || strlen($value) !== $longitud)) {
+                        $fail("El documento debe contener {$longitud} dígitos.");
+                    }
+                },
+            ],
+            'contacto' => 'nullable|string|max:255',
+            'telefono' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:255',
+            'direccion' => 'nullable|string|max:255',
         ]);
 
         Proveedor::create([
@@ -61,7 +95,18 @@ public function edit($id)
     $data = $request->validate([
         'nombre' => 'required|string|max:255',
         'tipo_documento' => 'required|string|max:10',
-        'numero_documento' => 'required|string|max:30',
+        'numero_documento' => [
+            'required',
+            'string',
+            'max:30',
+            Rule::unique('proveedores', 'numero_documento')->ignore($proveedor->id),
+            function ($attribute, $value, $fail) use ($request) {
+                $longitud = $request->tipo_documento === 'DNI' ? 8 : ($request->tipo_documento === 'RUC' ? 11 : null);
+                if ($longitud && (! ctype_digit($value) || strlen($value) !== $longitud)) {
+                    $fail("El documento debe contener {$longitud} dígitos.");
+                }
+            },
+        ],
         'contacto' => 'nullable|string|max:255',
         'telefono' => 'nullable|string|max:30',
         'email' => 'nullable|email|max:255',

@@ -374,43 +374,95 @@ public function toggleEstado($id)
 
     public function mostrarDetalles($id)
     {
-        // Obtener producto con relaciones
-        $producto = Producto::with('categoria', 'marca')->find($id);
+        $producto = Producto::with([
+            'categoria',
+            'marca',
+            'lotes' => fn ($query) => $query
+                ->with('proveedor')
+                ->orderByDesc('activo')
+                ->orderByRaw('fecha_vencimiento IS NULL')
+                ->orderBy('fecha_vencimiento')
+                ->orderByDesc('fecha_ingreso'),
+        ])->find($id);
 
-        if (!$producto) {
+        if (! $producto) {
             return response()->json([
                 'success' => false,
-                'message' => 'Producto no encontrado'
+                'message' => 'Producto no encontrado',
             ], 404);
         }
 
+        $lotesActivos = $producto->lotes
+            ->where('activo', true)
+            ->where('stock_actual', '>', 0);
+        $stockTotal = $lotesActivos->sum('stock_actual');
+        $valorInventario = $lotesActivos->sum(
+            fn ($lote) => (float) $lote->stock_actual * (float) $lote->precio_compra
+        );
+
         return response()->json([
             'success' => true,
-
-            'id'                    => $producto->id,
-            'codigo_barras'         => $producto->codigo_barras,
-            'nombre'                => $producto->nombre,
-            'slug'                  => $producto->slug,
-            'descripcion'           => $producto->descripcion,
-
-            'precio_compra'         => $producto->precio_compra,
-            'precio_venta'          => $producto->precio_venta,
-            'precio_paquete'        => $producto->precio_paquete,
-            'unidades_por_paquete'  => $producto->unidades_por_paquete,
-            'paquetes_por_caja'     => $producto->paquetes_por_caja,
-            'precio_caja'           => $producto->precio_caja,
-            'tipo_paquete'          => $producto->tipo_paquete,
-
-            'stock'                 => $producto->stock,
-            'ubicacion'             => $producto->ubicacion,
-            'imagen'                => $producto->imagen,
-            'fecha_vencimiento'     => $producto->fecha_vencimiento,
-
-            'categoria_nombre'      => $producto->categoria ? $producto->categoria->nombre : 'Sin categoría',
-            'marca_nombre'          => $producto->marca ? $producto->marca->nombre : 'Sin marca',
-
-            'activo'                => $producto->activo ? 'Sí' : 'No',
-            'visible_en_catalogo'   => $producto->visible_en_catalogo ? 'Sí' : 'No',
+            'producto' => [
+                'id' => $producto->id,
+                'codigo_barras' => $producto->codigo_barras,
+                'nombre' => $producto->nombre,
+                'slug' => $producto->slug,
+                'descripcion' => $producto->descripcion,
+                'ubicacion' => $producto->ubicacion,
+                'imagen' => $producto->imagen,
+                'categoria' => $producto->categoria?->nombre,
+                'marca' => $producto->marca?->nombre,
+                'activo' => (bool) $producto->activo,
+                'visible_en_catalogo' => (bool) $producto->visible_en_catalogo,
+                'maneja_vencimiento' => (bool) $producto->maneja_vencimiento,
+                'creado_en' => optional($producto->created_at)->format('d/m/Y H:i'),
+                'actualizado_en' => optional($producto->updated_at)->format('d/m/Y H:i'),
+            ],
+            'presentaciones' => [
+                'unidad' => [
+                    'habilitada' => true,
+                    'contenido' => 1,
+                    'precio' => $producto->precio_venta,
+                ],
+                'paquete' => [
+                    'habilitada' => ! empty($producto->unidades_por_paquete),
+                    'contenido' => $producto->unidades_por_paquete,
+                    'precio' => $producto->precio_paquete,
+                ],
+                'caja' => [
+                    'habilitada' => ! empty($producto->unidades_por_caja) || ! empty($producto->paquetes_por_caja),
+                    'paquetes' => $producto->paquetes_por_caja,
+                    'contenido' => $producto->unidades_por_caja
+                        ?: (($producto->paquetes_por_caja && $producto->unidades_por_paquete)
+                            ? $producto->paquetes_por_caja * $producto->unidades_por_paquete
+                            : null),
+                    'precio' => $producto->precio_caja,
+                ],
+            ],
+            'inventario' => [
+                'stock_total' => $stockTotal,
+                'lotes_con_stock' => $lotesActivos->count(),
+                'lotes_registrados' => $producto->lotes->count(),
+                'valor_compra' => round($valorInventario, 2),
+                'proximo_vencimiento' => optional(
+                    $lotesActivos->whereNotNull('fecha_vencimiento')->sortBy('fecha_vencimiento')->first()
+                )->fecha_vencimiento,
+            ],
+            'lotes' => $producto->lotes->map(fn ($lote) => [
+                'id' => $lote->id,
+                'numero' => $lote->numero_lote,
+                'comprobante' => $lote->codigo_comprobante,
+                'proveedor' => $lote->proveedor?->nombre,
+                'fecha_ingreso' => $lote->fecha_ingreso,
+                'fecha_vencimiento' => $lote->fecha_vencimiento,
+                'stock_inicial' => $lote->stock_inicial,
+                'stock_actual' => $lote->stock_actual,
+                'precio_compra' => $lote->precio_compra,
+                'precio_unidad' => $lote->precio_unidad,
+                'precio_paquete' => $lote->precio_paquete,
+                'precio_caja' => $lote->precio_caja,
+                'activo' => (bool) $lote->activo,
+            ])->values(),
         ]);
     }
 

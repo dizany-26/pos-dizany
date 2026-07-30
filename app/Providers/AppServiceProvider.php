@@ -36,11 +36,19 @@ class AppServiceProvider extends ServiceProvider
                 ->where('stock_actual', '>', 0)
                 ->count();
 
-            $totalAlertas = $alertaStockBajo + $alertaPorVencer;
+            $notificacionesCaja = auth()->check()
+                ? auth()->user()->unreadNotifications()->latest()->limit(5)->get()
+                : collect();
+            $notificacionesCajaTotal = auth()->check()
+                ? auth()->user()->unreadNotifications()->count()
+                : 0;
+            $totalAlertas = $alertaStockBajo + $alertaPorVencer + $notificacionesCajaTotal;
 
             $view->with(compact(
                 'alertaStockBajo',
                 'alertaPorVencer',
+                'notificacionesCaja',
+                'notificacionesCajaTotal',
                 'totalAlertas'
             ));
         });

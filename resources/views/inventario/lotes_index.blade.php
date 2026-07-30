@@ -23,6 +23,34 @@
         font-size: 15px;
     }
 
+    .lot-provider {
+        width: 150px;
+        max-width: 150px;
+        line-height: 1.35;
+    }
+
+    .lot-provider-name {
+        display: block;
+        overflow-wrap: anywhere;
+    }
+
+    .lot-provider-toggle {
+        display: inline-flex;
+        margin-top: 3px;
+        padding: 0;
+        border: 0;
+        color: #1677ff;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .lot-provider-toggle:hover {
+        color: #075bbb;
+    }
+
 </style>
 @endpush
 {{-- BOTÓN ATRÁS --}}
@@ -211,7 +239,8 @@
                                 data-movimientos="{{ $lote->movimientos_count > 0 ? '1' : '0' }}"
                                 data-texto="{{ strtolower(
                                     ($lote->codigo_comprobante ?? '') . ' ' .
-                                    ($lote->producto->nombre ?? '')
+                                    ($lote->producto->nombre ?? '') . ' ' .
+                                    ($lote->proveedor->nombre ?? '')
                                 ) }}"
                             >
                                 {{-- CODIGO COMPROBANTE --}}
@@ -266,8 +295,24 @@
                                 </td>
 
                                 {{-- PROVEEDOR --}}
-                                <td data-label="Proveedor">
-                                    {{ $lote->proveedor->nombre ?? '—' }}
+                                <td data-label="Proveedor" class="lot-provider">
+                                    @php
+                                        $nombreProveedor = $lote->proveedor->nombre ?? '—';
+                                        $proveedorEsLargo = mb_strlen($nombreProveedor) > 28;
+                                    @endphp
+                                    <span class="lot-provider-name lot-provider-short">
+                                        {{ $proveedorEsLargo ? \Illuminate\Support\Str::limit($nombreProveedor, 28) : $nombreProveedor }}
+                                    </span>
+                                    @if ($proveedorEsLargo)
+                                        <span class="lot-provider-name lot-provider-full d-none">
+                                            {{ $nombreProveedor }}
+                                        </span>
+                                        <button type="button"
+                                            class="lot-provider-toggle"
+                                            aria-expanded="false">
+                                            Ver más
+                                        </button>
+                                    @endif
                                 </td>
 
                                 {{-- STOCK --}}
@@ -342,6 +387,23 @@
 
 {{-- ===================== SCRIPTS ===================== --}}
 @push('scripts')
+
+<script>
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('.lot-provider-toggle');
+        if (!button) return;
+
+        const cell = button.closest('.lot-provider');
+        const shortName = cell.querySelector('.lot-provider-short');
+        const fullName = cell.querySelector('.lot-provider-full');
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+
+        shortName.classList.toggle('d-none', !expanded);
+        fullName.classList.toggle('d-none', expanded);
+        button.setAttribute('aria-expanded', String(!expanded));
+        button.textContent = expanded ? 'Ver más' : 'Ver menos';
+    });
+</script>
 
 <script>
     document.getElementById('btnLimpiarFiltros')

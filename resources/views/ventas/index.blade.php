@@ -489,6 +489,17 @@ Nueva venta
             <div id="venta-barcode-reader" class="barcode-reader"></div>
           </div>
 
+          <div class="barcode-camera-controls">
+            <label class="barcode-camera-select-wrap d-none" id="ventaBarcodeCameraSelectWrap">
+              <span><i class="fas fa-camera-rotate"></i> Cámara</span>
+              <select id="ventaBarcodeCameraSelect" class="form-select"></select>
+            </label>
+            <label class="barcode-zoom-control d-none" id="ventaBarcodeZoomControl">
+              <span><i class="fas fa-search-plus"></i> Zoom <b id="ventaBarcodeZoomValue">1.0×</b></span>
+              <input type="range" id="ventaBarcodeZoomRange" min="1" max="3" step="0.1" value="1">
+            </label>
+          </div>
+
           <div class="barcode-reader-toolbar">
             <button type="button"
                 class="btn-soft btn-soft-info barcode-tool-btn d-none"
@@ -502,16 +513,29 @@ Nueva venta
             <button type="button"
                 class="btn-soft btn-soft-info barcode-tool-btn d-none"
                 id="btnVentaBarcodeZoom"
-                title="Acercar vista"
-                aria-label="Acercar vista">
+                title="Optimizar para códigos pequeños"
+                aria-label="Optimizar para códigos pequeños">
                 <i class="fas fa-search-plus"></i>
-                <span>Zoom</span>
+                <span>Código pequeño</span>
             </button>
+
+            <button type="button"
+                class="btn-soft btn-soft-info barcode-tool-btn"
+                id="btnVentaBarcodePhoto"
+                title="Tomar una foto o elegir una imagen"
+                aria-label="Escanear código desde una fotografía">
+                <i class="fas fa-camera"></i>
+                <span>Usar foto</span>
+            </button>
+            <input type="file" id="ventaBarcodePhotoInput" accept="image/*" capture="environment" hidden>
           </div>
 
           <p id="ventaBarcodeScannerStatus" class="barcode-scanner-status barcode-scanner-status-info">
             Escanea un código para enviarlo directo al carrito.
           </p>
+          <small class="barcode-scanner-tip">
+            Para códigos pequeños usa <b>Código pequeño</b>, ajusta el zoom o toma una foto nítida.
+          </small>
         </div>
       </div>
 
@@ -548,7 +572,7 @@ Nueva venta
 
 
 
-<script src="{{ asset('js/ventas_dniruc.js') }}"></script>
+<script src="{{ asset('js/ventas_dniruc.js') }}?v={{ filemtime(public_path('js/ventas_dniruc.js')) }}"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 @php
 $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'cantidad')
@@ -566,7 +590,7 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 
 <script src="js/ventas_productos.js"></script>
 <script src="js/ventas_carrito.js"></script>
-<script src="js/ventas_scanner.js"></script>
+<script src="{{ asset('js/ventas_scanner.js') }}?v={{ filemtime(public_path('js/ventas_scanner.js')) }}"></script>
 
 <script src="js/ventas_ui.js"></script>
 <script src="js/ventas_mobile_cart.js"></script>

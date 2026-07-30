@@ -6,8 +6,6 @@ window.estadoCliente = "ninguno";
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    const token = "65380308035e6817f4baf2770fd241dfde303c06eec3376cc7694c53bcc8e83d";
-
     // ===============================
     // ELEMENTOS DOM
     // ===============================
@@ -84,15 +82,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function consultarDNI(dni) {
-        return fetch(`https://apiperu.dev/api/dni/${dni}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        }).then(r => r.json());
+        return fetch(`/consulta-documento/dni/${dni}`).then(async response => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'DNI no encontrado');
+            return data;
+        });
     }
 
     function consultarRUC(ruc) {
-        return fetch(`https://apiperu.dev/api/ruc/${ruc}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        }).then(r => r.json());
+        return fetch(`/consulta-documento/ruc/${ruc}`).then(async response => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'RUC no encontrado');
+            return data;
+        });
     }
 
     // ===============================
@@ -147,10 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (valor.length === 8) {
                 consultarDNI(valor)
                     .then(data => {
-                        if (!data.success) throw new Error();
-
-                        const razon =
-                            `${data.data.nombres} ${data.data.apellido_paterno} ${data.data.apellido_materno}`.trim();
+                        const razon = data.nombre || "";
 
                         inputRazon.value = razon;
                         inputDireccion.value = "No disponible";
@@ -177,14 +176,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (valor.length === 11) {
                 consultarRUC(valor)
                     .then(data => {
-                        if (!data.success) throw new Error();
-
-                        const razon = data.data.nombre_o_razon_social || "";
-                        const direccion = data.data.direccion || "Sin dirección";
+                        const razon = data.nombre || "";
+                        const direccion = data.direccion || "Sin dirección";
 
                         inputRazon.value = razon;
                         inputDireccion.value = direccion;
-                        estadoRUC.textContent = `✔️ ${data.data.estado || ""}`;
+                        estadoRUC.textContent = `✔️ ${data.estado || ""}`;
 
                         window.estadoCliente = "nuevo_no_guardado";
                         mostrarIconoGuardar();

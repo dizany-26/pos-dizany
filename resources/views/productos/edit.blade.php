@@ -2,7 +2,7 @@
 
 @push('styles')
 <link href="{{ asset('css/edit_productos.css') }}" rel="stylesheet" />
-<link href="{{ asset('css/crear_productos.css') }}" rel="stylesheet" />
+<link href="{{ asset('css/crear_productos.css') }}?v={{ filemtime(public_path('css/crear_productos.css')) }}" rel="stylesheet" />
 @endpush
 
 {{-- BOTÓN ATRÁS --}}
@@ -303,6 +303,17 @@ Editar Producto
                         <div id="barcode-reader" class="barcode-reader"></div>
                     </div>
 
+                    <div class="barcode-camera-controls">
+                        <label class="barcode-camera-select-wrap d-none" id="barcodeCameraSelectWrap">
+                            <span><i class="fas fa-camera-rotate"></i> Cámara</span>
+                            <select id="barcodeCameraSelect" class="form-select"></select>
+                        </label>
+                        <label class="barcode-zoom-control d-none" id="barcodeZoomControl">
+                            <span><i class="fas fa-search-plus"></i> Zoom <b id="barcodeZoomValue">1.0×</b></span>
+                            <input type="range" id="barcodeZoomRange" min="1" max="3" step="0.1" value="1">
+                        </label>
+                    </div>
+
                     <div class="barcode-reader-toolbar">
                         <button type="button"
                             class="btn-soft btn-soft-info barcode-tool-btn d-none"
@@ -318,9 +329,19 @@ Editar Producto
                             id="btnBarcodeZoom"
                             title="Activar modo macro"
                             aria-label="Activar modo macro">
-                            <i class="fas fa-seedling"></i>
-                            <span>Macro</span>
+                            <i class="fas fa-search-plus"></i>
+                            <span>Código pequeño</span>
                         </button>
+
+                        <button type="button"
+                            class="btn-soft btn-soft-info barcode-tool-btn"
+                            id="btnBarcodePhoto"
+                            title="Tomar una foto o elegir una imagen"
+                            aria-label="Escanear código desde una fotografía">
+                            <i class="fas fa-camera"></i>
+                            <span>Usar foto</span>
+                        </button>
+                        <input type="file" id="barcodePhotoInput" accept="image/*" capture="environment" hidden>
                     </div>
 
                     <div class="barcode-fallback-actions d-none" id="barcodeFallbackActions">
@@ -335,7 +356,7 @@ Editar Producto
                     </p>
 
                     <small class="barcode-scanner-tip">
-                        Si el código es pequeño, usa el botón de enfoque <i class="fas fa-search-plus"></i> o acerca la cámara lentamente.
+                        Para códigos pequeños usa <b>Código pequeño</b>, ajusta el zoom o toma una foto nítida.
                     </small>
                 </div>
             </div>
@@ -431,7 +452,7 @@ Editar Producto
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="{{ asset('js/productoScanner.js') }}"></script>
+<script src="{{ asset('js/productoScanner.js') }}?v={{ filemtime(public_path('js/productoScanner.js')) }}"></script>
 
 <script>
     /* ==========================

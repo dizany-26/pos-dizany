@@ -9,6 +9,8 @@ class Movimiento extends Model
     protected $table = 'movimientos';
 
     protected $fillable = [
+        'caja_id',
+        'usuario_id',
         'fecha',
         'hora',
         'tipo',
@@ -64,5 +66,29 @@ class Movimiento extends Model
     public function venta()
     {
         return $this->belongsTo(\App\Models\Venta::class, 'referencia_id');
+    }
+
+    public function caja()
+    {
+        return $this->belongsTo(Caja::class, 'caja_id');
+    }
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'usuario_id');
+    }
+
+    protected static function booted()
+    {
+        static::creating(function (Movimiento $movimiento) {
+            if (! auth()->check()) {
+                return;
+            }
+
+            $movimiento->usuario_id ??= auth()->id();
+            $movimiento->caja_id ??= Caja::where('usuario_id', auth()->id())
+                ->where('estado', 'abierta')
+                ->value('id');
+        });
     }
 }

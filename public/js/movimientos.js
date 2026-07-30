@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const panel = document.getElementById('offcanvasDetalle');
     const contenido = document.getElementById('detalleContenido');
+    const panelTitle = document.getElementById('detalleMovimientoTitulo');
     if (!panel || !contenido) return;
 
     const offcanvas = bootstrap.Offcanvas.getOrCreateInstance(panel);
@@ -76,9 +77,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ventaId = row.dataset.refId;
         const tipoRef = row.dataset.refTipo;
+
+        if (tipoRef === 'gasto') {
+            offcanvas.show();
+            if (panelTitle) panelTitle.textContent = 'Detalle del gasto';
+            contenido.innerHTML = `<div class="text-muted">Cargando...</div>`;
+
+            try {
+                const res = await fetch(`/movimientos/gastos/${ventaId}/detalle`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const gasto = await res.json();
+                if (!res.ok) throw new Error(gasto.message || 'No se pudo cargar el gasto');
+
+                contenido.innerHTML = `
+                    <div class="card ui-card rounded-4 detalle-card mt-2 p-3">
+                        <div class="text-muted small">Concepto</div>
+                        <h5 class="fw-bold mt-1 mb-3">${gasto.descripcion ?? '—'}</h5>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <span class="text-muted">Monto pagado</span>
+                            <strong class="text-danger fs-4">S/ ${Number(gasto.monto || 0).toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    <div class="card ui-card rounded-4 mt-3 p-3">
+                        <div class="detalle-item">
+                            <i class="far fa-user-circle"></i>
+                            <span>Responsable</span>
+                            <strong>${gasto.responsable ?? '—'}</strong>
+                        </div>
+                        <div class="detalle-item">
+                            <i class="far fa-calendar"></i>
+                            <span>Fecha y hora</span>
+                            <strong>${gasto.fecha ?? '—'}</strong>
+                        </div>
+                        <div class="detalle-item">
+                            <i class="far fa-credit-card"></i>
+                            <span>Método de pago</span>
+                            <strong>${gasto.metodo_pago ?? '—'}</strong>
+                        </div>
+                        <div class="detalle-item">
+                            <i class="fas fa-circle-check"></i>
+                            <span>Estado</span>
+                            <strong>${gasto.estado === 'activo' ? 'Registrado' : gasto.estado}</strong>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0 small">
+                        Este egreso fue descontado de la caja según su método de pago.
+                    </div>
+                `;
+            } catch (error) {
+                console.error(error);
+                contenido.innerHTML = `<div class="text-danger">No se pudo cargar el detalle del gasto.</div>`;
+            }
+            return;
+        }
+
         if (tipoRef !== 'venta') return;
 
         offcanvas.show();
+        if (panelTitle) panelTitle.textContent = 'Detalle de la venta';
         contenido.innerHTML = `<div class="text-muted">Cargando...</div>`;
 
         try {

@@ -96,6 +96,43 @@
     margin-top: 0.35rem;
 }
 
+.barcode-camera-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.barcode-camera-select-wrap,
+.barcode-zoom-control {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #dbe5f0;
+    border-radius: 12px;
+    background: #f8fbff;
+}
+
+.barcode-camera-select-wrap > span,
+.barcode-zoom-control > span {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    margin-bottom: 0.45rem;
+    color: #334155;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.barcode-camera-select-wrap .form-select {
+    min-height: 38px;
+    border-color: #cbd5e1;
+    font-size: 0.78rem;
+}
+
+.barcode-zoom-control input[type="range"] {
+    width: 100%;
+    accent-color: #2563eb;
+}
+
 .barcode-tool-btn {
     min-width: 124px;
     min-height: 42px;
@@ -190,7 +227,12 @@
     }
 
     .barcode-tool-btn {
-        min-width: 112px;
+        min-width: 104px;
+        flex: 1 1 104px;
+    }
+
+    .barcode-camera-controls {
+        grid-template-columns: 1fr;
     }
 }
 

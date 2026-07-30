@@ -62,6 +62,11 @@ public function esAdmin()
     return $this->rol_id == 1;
 }
 
+public function cajas(): HasMany
+{
+    return $this->hasMany(Caja::class, 'usuario_id');
+}
+
 public function rutaInicio(): string
 {
     if ($this->esAdmin()) {

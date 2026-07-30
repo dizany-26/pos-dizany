@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Gasto;
 use App\Models\User; // <- tu modelo que usa la tabla 'usuarios'
 use App\Models\Movimiento;
+use App\Models\Caja;
 use Carbon\Carbon;
 
 
@@ -76,6 +77,12 @@ class GastoController extends Controller
         'fecha' => 'required|date',
         'metodo_pago' => 'required|string|max:50',
     ]);
+
+    if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
+        return back()->withErrors([
+            'caja' => 'Debes abrir tu caja antes de registrar un gasto.',
+        ])->withInput();
+    }
 
     // 1️⃣ Guardar gasto
     $gasto = Gasto::create([

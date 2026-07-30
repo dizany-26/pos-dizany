@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnEscanerExterno = document.getElementById('btnEscanerExterno');
     const btnTorch = document.getElementById('btnBarcodeTorch');
     const btnZoom = document.getElementById('btnBarcodeZoom');
+    const cameraSelectWrap = document.getElementById('barcodeCameraSelectWrap');
+    const cameraSelect = document.getElementById('barcodeCameraSelect');
+    const zoomControl = document.getElementById('barcodeZoomControl');
+    const zoomRange = document.getElementById('barcodeZoomRange');
+    const zoomValue = document.getElementById('barcodeZoomValue');
+    const btnPhoto = document.getElementById('btnBarcodePhoto');
+    const photoInput = document.getElementById('barcodePhotoInput');
     const nextInput = document.getElementById('nombre');
 
     if (!input || !btnEscanear || !modalElement || !status || !btnCerrar || !fallbackActions || !btnEscanerExterno) {
@@ -31,9 +38,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastScanValue = '';
     let lastScanAt = 0;
     const SCAN_COOLDOWN_MS = 1500;
+    const PREFERRED_CAMERA_STORAGE_KEY = 'dizany_barcode_preferred_camera_v1';
 
     const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
     const isDesktopLike = !isMobileDevice && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    const getStoredCameraId = () => {
+        try {
+            return localStorage.getItem(PREFERRED_CAMERA_STORAGE_KEY) || '';
+        } catch (_) {
+            return '';
+        }
+    };
+
+    const rememberCameraId = (cameraId) => {
+        if (!cameraId) return;
+        try {
+            localStorage.setItem(PREFERRED_CAMERA_STORAGE_KEY, cameraId);
+        } catch (_) {
+            // El escáner sigue funcionando aunque no haya almacenamiento.
+        }
+    };
 
     const setStatus = (message, type = 'info') => {
         status.textContent = message;
@@ -165,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setToolActive(btnTorch, false);
             setToolActive(btnZoom, false);
+            zoomControl?.classList.add('d-none');
             return;
         }
 
@@ -191,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setToolActive(btnZoom, false);
         setToolVisibility(btnTorch, false);
         setToolVisibility(btnZoom, false);
+        zoomControl?.classList.add('d-none');
 
         scannerRunning = false;
     };
@@ -283,6 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (/macro/.test(label)) score += 20;
                     if (/front|user|selfie|frontal/.test(label)) score -= 150;
                     if (/wide|ultra/.test(label)) score -= 15;
+                    const genericCameraIndex = label.match(/camera\s*(\d+)/)?.[1];
+                    if (genericCameraIndex !== undefined && /back|rear|environment/.test(label)) {
+                        score += Math.max(0, 70 - Number(genericCameraIndex) * 15);
+                    }
                 }
 
                 if (!label) {
@@ -296,6 +327,20 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Ranking cámaras:', rankedDevices);
 
         return rankedDevices[0]?.device || null;
+    };
+
+    const populateCameraSelect = (devices = [], selectedId = null) => {
+        if (!cameraSelect || !cameraSelectWrap) return;
+
+        cameraSelect.innerHTML = '';
+        devices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.id;
+            option.textContent = device.label || `Cámara ${index + 1}`;
+            option.selected = Boolean(selectedId && device.id === selectedId);
+            cameraSelect.appendChild(option);
+        });
+        cameraSelectWrap.classList.toggle('d-none', devices.length < 2);
     };
 
     const syncCameraTools = () => {
@@ -321,6 +366,22 @@ document.addEventListener('DOMContentLoaded', () => {
             hasMacroCamera || supportsFocusMode || supportsFocusDistance || supportsZoom
         );
 
+        if (zoomControl && zoomRange && zoomValue) {
+            zoomControl.classList.toggle('d-none', !supportsZoom);
+            if (supportsZoom) {
+                const settings = getRunningTrackSettings();
+                const min = Number(capabilities.zoom?.min ?? 1);
+                const max = Number(capabilities.zoom?.max ?? 3);
+                const step = Number(capabilities.zoom?.step ?? 0.1);
+                const current = Number(settings.zoom ?? min);
+                zoomRange.min = String(min);
+                zoomRange.max = String(max);
+                zoomRange.step = String(step || 0.1);
+                zoomRange.value = String(Math.max(min, Math.min(max, current)));
+                zoomValue.textContent = `${Number(zoomRange.value).toFixed(1)}×`;
+            }
+        }
+
         if (btnTorch) {
             const span = btnTorch.querySelector('span');
             const icon = btnTorch.querySelector('i');
@@ -343,13 +404,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnZoom) {
             btnZoom.disabled = false;
             btnZoom.classList.remove('btn-disabled');
-            btnZoom.title = 'Activar modo macro';
+            btnZoom.title = 'Optimizar enfoque y zoom para códigos pequeños';
 
             const span = btnZoom.querySelector('span');
             const icon = btnZoom.querySelector('i');
 
-            if (span) span.textContent = 'Macro';
-            if (icon) icon.className = 'fas fa-seedling';
+            if (span) span.textContent = 'Código pequeño';
+            if (icon) icon.className = 'fas fa-search-plus';
         }
     };
 
@@ -619,17 +680,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof capabilities.focusDistance !== 'undefined') {
             const min = typeof capabilities.focusDistance.min === 'number' ? capabilities.focusDistance.min : 0;
             const max = typeof capabilities.focusDistance.max === 'number' ? capabilities.focusDistance.max : 1;
-            const closeFocus = Math.max(min, Math.min(max, min + (max - min) * 0.15));
+            const closeFocus = Math.max(min, Math.min(max, max - (max - min) * 0.12));
 
             appliedAny = await applyVideoConstraints({
                 advanced: [{ focusDistance: closeFocus }]
             }) || appliedAny;
         }
 
-        if (!appliedAny && typeof capabilities.zoom !== 'undefined') {
+        if (typeof capabilities.zoom !== 'undefined') {
             const minZoom = typeof capabilities.zoom.min === 'number' ? capabilities.zoom.min : 1;
             const maxZoom = typeof capabilities.zoom.max === 'number' ? capabilities.zoom.max : 3;
-            const softZoom = Math.min(maxZoom, Math.max(minZoom, 1.4));
+            const softZoom = Math.min(maxZoom, Math.max(minZoom, 2));
 
             appliedAny = await applyVideoConstraints({
                 advanced: [{ zoom: softZoom }]
@@ -664,14 +725,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof capabilities.focusDistance !== 'undefined') {
             const min = typeof capabilities.focusDistance.min === 'number' ? capabilities.focusDistance.min : 0;
             const max = typeof capabilities.focusDistance.max === 'number' ? capabilities.focusDistance.max : 1;
-            const closeFocus = Math.max(min, Math.min(max, min + (max - min) * 0.15));
+            const closeFocus = Math.max(min, Math.min(max, max - (max - min) * 0.12));
             advanced.push({ focusDistance: closeFocus });
         }
 
-        if (!advanced.length && typeof capabilities.zoom !== 'undefined') {
+        if (typeof capabilities.zoom !== 'undefined') {
             const minZoom = typeof capabilities.zoom.min === 'number' ? capabilities.zoom.min : 1;
             const maxZoom = typeof capabilities.zoom.max === 'number' ? capabilities.zoom.max : 3;
-            const autoMacroZoom = Math.min(maxZoom, Math.max(minZoom, isMobileDevice ? 1.4 : 1.25));
+            const autoMacroZoom = Math.min(maxZoom, Math.max(minZoom, isMobileDevice ? 1.7 : 1.3));
             advanced.push({ zoom: autoMacroZoom });
         }
 
@@ -704,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof capabilities.focusDistance !== 'undefined') {
             const min = typeof capabilities.focusDistance.min === 'number' ? capabilities.focusDistance.min : 0;
             const max = typeof capabilities.focusDistance.max === 'number' ? capabilities.focusDistance.max : 1;
-            const closeFocus = Math.max(min, Math.min(max, min + (max - min) * 0.25));
+            const closeFocus = Math.max(min, Math.min(max, max - (max - min) * 0.2));
             advanced.push({ focusDistance: closeFocus });
         }
 
@@ -844,13 +905,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const preferredDevice = getPreferredCameraDevice(devices, false);
+        const storedCameraId = getStoredCameraId();
+        const storedCamera = devices.find((device) => device.id === storedCameraId);
+        populateCameraSelect(devices, storedCamera?.id || preferredDevice?.id || probedRearDeviceId);
         const rearDeviceByLabel = devices.find((device) =>
             /back|rear|environment|tr[aá]s|posterior/i.test(device.label || '')
         );
 
         const cameraCandidates = [
-            probedRearDeviceId,
+            storedCamera?.id,
             preferredDevice?.id,
+            probedRearDeviceId,
             rearDeviceByLabel?.id,
             devices.find((device) => /macro|close|closeup/i.test(device.label || ''))?.id,
             { facingMode: { exact: 'environment' } },
@@ -865,6 +930,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 scannerRunning = true;
                 activeCameraConfig = cameraConfig;
+                if (cameraSelect && typeof cameraConfig === 'string') {
+                    cameraSelect.value = cameraConfig;
+                    rememberCameraId(cameraConfig);
+                }
 
                 console.log('Cámara iniciada');
                 console.log('Capacidades detectadas:', getTrackCapabilities());
@@ -900,6 +969,40 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = scannerUrl.toString();
     };
 
+    const scanBarcodePhoto = async (file) => {
+        if (!file || typeof Html5Qrcode === 'undefined') return;
+
+        setStatus('Analizando fotografía en alta resolución…', 'info');
+        await stopScanner();
+
+        try {
+            html5QrCode = new Html5Qrcode(readerElementId);
+            const decodedText = await html5QrCode.scanFile(file, true);
+            fillBarcode(decodedText);
+            await playSuccessFeedback();
+            setStatus('Código detectado correctamente en la fotografía.', 'success');
+            await html5QrCode.clear();
+            modal?.hide();
+        } catch (error) {
+            console.warn('No se detectó un código en la fotografía:', error);
+            setStatus('No se detectó el código. Toma la foto con buena luz, enfoque y sin reflejos.', 'error');
+
+            try {
+                await html5QrCode?.clear();
+            } catch (_) {
+                // El lector puede no haber creado todavía una superficie para limpiar.
+            }
+
+            html5QrCode = new Html5Qrcode(readerElementId);
+            const selectedCamera = cameraSelect?.value || getPreferredCameraDevice(currentDevices, false)?.id;
+            if (selectedCamera) {
+                await restartScannerWithCamera(selectedCamera, false);
+            }
+        } finally {
+            if (photoInput) photoInput.value = '';
+        }
+    };
+
     if (isDesktopLike) {
         btnEscanear.classList.add('d-none');
         focusBarcodeInput();
@@ -921,6 +1024,41 @@ document.addEventListener('DOMContentLoaded', () => {
     btnZoom?.addEventListener('click', async () => {
         if (btnZoom.disabled) return;
         await toggleZoom();
+    });
+
+    cameraSelect?.addEventListener('change', async () => {
+        if (!cameraSelect.value) return;
+        rememberCameraId(cameraSelect.value);
+        setStatus('Cambiando cámara…', 'info');
+        try {
+            await restartScannerWithCamera(cameraSelect.value, false);
+            await applyCloseFocusBoost();
+            setStatus('Cámara cambiada. Apunta al código de barras.', 'info');
+        } catch (error) {
+            console.warn('No se pudo cambiar de cámara:', error);
+            setStatus('No se pudo activar esa cámara.', 'error');
+        }
+    });
+
+    let zoomApplyTimer = null;
+    zoomRange?.addEventListener('input', () => {
+        const value = Number(zoomRange.value);
+        if (zoomValue) zoomValue.textContent = `${value.toFixed(1)}×`;
+        window.clearTimeout(zoomApplyTimer);
+        zoomApplyTimer = window.setTimeout(async () => {
+            const applied = await applyVideoConstraints({ advanced: [{ zoom: value }] });
+            if (!applied) {
+                setStatus('Este nivel de zoom no está disponible en la cámara seleccionada.', 'error');
+            }
+        }, 80);
+    });
+
+    btnPhoto?.addEventListener('click', () => {
+        photoInput?.click();
+    });
+
+    photoInput?.addEventListener('change', async () => {
+        await scanBarcodePhoto(photoInput.files?.[0]);
     });
 
     btnCerrar.addEventListener('click', async () => {

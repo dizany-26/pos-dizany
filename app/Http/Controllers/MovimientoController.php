@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\Venta;
 use App\Models\DetalleVenta;
+use App\Models\Caja;
+use App\Models\Gasto;
+use App\Models\User;
 use Carbon\Carbon;
 use PDF;
 
@@ -17,6 +20,7 @@ class MovimientoController extends Controller
         PARÁMETROS
         ========================== */
         $tab   = $request->get('tab', 'ingresos');
+        $tipo  = $request->get('tipo', 'transacciones');
         $rango = $request->get('rango', 'diario');
         $fecha = $request->get('fecha', now()->format('Y-m-d'));
 
@@ -26,7 +30,7 @@ class MovimientoController extends Controller
         /* ==========================
         QUERY BASE
         ========================== */
-        $query = Movimiento::query();
+        $query = Movimiento::query()->with('usuario');
 
         // ---- FILTRO POR TAB ----
         switch ($tab) {
@@ -107,6 +111,25 @@ class MovimientoController extends Controller
             ->orderByDesc('fecha')
             ->paginate(15);
 
+        $cajas = Caja::with('usuario')
+            ->when(! auth()->user()->esAdmin(), fn ($q) => $q->where('usuario_id', auth()->id()))
+            ->when($inicio && $fin, fn ($q) => $q->whereBetween('abierta_en', [$inicio, $fin]))
+            ->when($request->filled('buscar'), fn ($q) => $q->whereHas(
+                'usuario',
+                fn ($usuario) => $usuario->where('nombre', 'like', '%' . $request->buscar . '%')
+            ))
+            ->orderByDesc('abierta_en')
+            ->paginate(15, ['*'], 'cajas_page');
+
+        $cajaAbierta = Caja::where('usuario_id', auth()->id())
+            ->whereIn('estado', ['abierta', 'pendiente_cierre'])
+            ->latest('abierta_en')
+            ->first();
+        $resumenCaja = $cajaAbierta?->calcularEfectivo();
+        $usuariosCaja = auth()->user()->esAdmin()
+            ? User::orderBy('nombre')->get(['id', 'nombre'])
+            : collect();
+
         /* ==========================
         KPIs (MISMO RANGO)
         ========================== */
@@ -160,6 +183,11 @@ class MovimientoController extends Controller
             'tab',
             'rango',
             'fecha'
+            , 'tipo'
+            , 'cajas'
+            , 'cajaAbierta'
+            , 'resumenCaja'
+            , 'usuariosCaja'
         ));
     }
 
@@ -194,5 +222,21 @@ class MovimientoController extends Controller
             ->findOrFail($id);
 
         return response()->json($venta);
+    }
+
+    public function detalleGasto($id)
+    {
+        $gasto = Gasto::with('usuario')->findOrFail($id);
+
+        return response()->json([
+            'id' => $gasto->id,
+            'descripcion' => $gasto->descripcion,
+            'monto' => (float) $gasto->monto,
+            'fecha' => Carbon::parse($gasto->fecha)->format('d/m/Y H:i'),
+            'metodo_pago' => ucfirst($gasto->metodo_pago ?? '—'),
+            'estado' => $gasto->estado,
+            'responsable' => $gasto->usuario->nombre ?? '—',
+            'creado_en' => optional($gasto->created_at)->format('d/m/Y H:i'),
+        ]);
     }
 }

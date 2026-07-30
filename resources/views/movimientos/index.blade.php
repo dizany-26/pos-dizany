@@ -13,10 +13,36 @@ Movimientos
 
 @section('header-buttons')
 
-<button class="btn-gasto" onclick="abrirCaja()">
-    <i class="fas fa-cash-register"></i>
-    <span class="btn-text">Abrir caja</span>
-</button>
+@if(auth()->user()->esAdmin())
+    <button class="btn-gasto" data-bs-toggle="modal" data-bs-target="#modalAbrirCaja">
+        <i class="fas fa-cash-register"></i>
+        <span class="btn-text">Asignar caja</span>
+    </button>
+@endif
+
+@if($cajaAbierta?->estado === 'abierta')
+    <button class="btn-gasto" data-bs-toggle="modal" data-bs-target="#modalCerrarCaja">
+        <i class="fas fa-lock"></i>
+        <span class="btn-text">Solicitar cierre</span>
+    </button>
+@elseif($cajaAbierta?->estado === 'pendiente_cierre')
+    @if(auth()->user()->esAdmin())
+        <a class="btn-gasto" href="{{ route('movimientos.index', ['tipo' => 'cierres', 'rango' => request('rango', 'diario'), 'fecha' => request('fecha', now()->format('Y-m-d'))]) }}">
+            <i class="fas fa-clipboard-check"></i>
+            <span class="btn-text">Revisar cierre</span>
+        </a>
+    @else
+        <button class="btn-gasto" type="button" disabled title="Esperando revisión del administrador">
+            <i class="fas fa-hourglass-half"></i>
+            <span class="btn-text">Cierre pendiente</span>
+        </button>
+    @endif
+@elseif(!auth()->user()->esAdmin())
+    <button class="btn-gasto" type="button" disabled title="El administrador debe asignarte una caja">
+        <i class="fas fa-lock"></i>
+        <span class="btn-text">Sin caja</span>
+    </button>
+@endif
 
 <a href="{{ route('movimientos.reporte') }}"
    class="btn-gasto">
@@ -43,6 +69,29 @@ Movimientos
                 Cierres de caja
             </a>
         </div>
+
+        @if($cajaAbierta && $tipo === 'transacciones')
+            <div class="cash-session-banner mb-4">
+                <div>
+                    <span class="cash-session-dot"></span>
+                    <div>
+                        <strong>{{ $cajaAbierta->estado === 'abierta' ? 'Caja abierta' : 'Cierre pendiente de aprobación' }}</strong>
+                        <small>Desde {{ $cajaAbierta->abierta_en->format('d/m/Y H:i') }} · Fondo S/ {{ number_format($cajaAbierta->monto_inicial, 2) }}</small>
+                    </div>
+                </div>
+                @if(auth()->user()->esAdmin())
+                    <div>
+                        <span>Efectivo esperado</span>
+                        <strong>S/ {{ number_format($resumenCaja['esperado'], 2) }}</strong>
+                    </div>
+                @else
+                    <div>
+                        <span>Control de caja</span>
+                        <strong>Conteo ciego habilitado</strong>
+                    </div>
+                @endif
+            </div>
+        @endif
 
         {{-- ================= FILTROS ================= --}}
         <form method="GET"
@@ -109,12 +158,13 @@ Movimientos
                        name="buscar"
                        value="{{ request('buscar') }}"
                        class="form-control ui-input"
-                       placeholder="Buscar concepto..."
+                       placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : 'Buscar concepto...' }}"
                        onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
             </div>
 
         </form>
 
+        @if($tipo === 'transacciones')
         {{-- ================= KPIs ================= --}}
         <div class="row mb-4 g-3">
 
@@ -183,7 +233,9 @@ Movimientos
             </div>
 
         </div>
+        @endif
 
+        @if($tipo === 'transacciones')
         {{-- ================= SUBTABS ================= --}}
         @php
             $tabs = [
@@ -202,9 +254,11 @@ Movimientos
                 </a>
             @endforeach
         </div>
+        @endif
 
         {{-- ================= TABLA ================= --}}
         <div class="card ui-card rounded-4">
+            @if($tipo === 'transacciones')
             <div class="table-responsive ui-scroll">
                 <table class="table ui-table align-middle mb-0">
                     <thead>
@@ -270,10 +324,234 @@ Movimientos
                     {{ $movimientos->appends(request()->query())->links() }}
                 </div>
             @endif
+            @else
+            <div class="cash-table-scroll-hint">
+                <i class="fas fa-arrows-left-right"></i>
+                Desliza para ver todos los datos del cierre
+            </div>
+            <div class="table-responsive caja-cierres-scroll" id="cajaCierresScroll">
+                <table class="table ui-table align-middle mb-0 caja-cierres-table">
+                    <thead>
+                        <tr>
+                            <th>Cajero</th>
+                            <th>Apertura</th>
+                            <th>Cierre</th>
+                            <th class="text-end">Inicial</th>
+                            <th class="text-end">Ingresos efectivo</th>
+                            <th class="text-end">Egresos efectivo</th>
+                            <th class="text-end">Refuerzos</th>
+                            <th class="text-end">Retiros</th>
+                            <th class="text-end">Esperado</th>
+                            <th class="text-end">Contado</th>
+                            <th class="text-end">Diferencia</th>
+                            <th>Estado</th>
+                            @if(auth()->user()->esAdmin())<th>Acciones</th>@endif
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($cajas as $caja)
+                            @php
+                                $totalesCajaFila = $caja->estado !== 'cerrada'
+                                    ? $caja->calcularEfectivo()
+                                    : [
+                                        'ingresos' => $caja->ingresos_efectivo ?? 0,
+                                        'egresos' => $caja->egresos_efectivo ?? 0,
+                                        'refuerzos' => $caja->operaciones()->where('tipo', 'refuerzo')->sum('monto'),
+                                        'retiros' => $caja->operaciones()->where('tipo', 'retiro')->sum('monto'),
+                                        'esperado' => $caja->monto_esperado ?? 0,
+                                    ];
+                                $puedeVerArqueo = auth()->user()->esAdmin() || $caja->estado === 'cerrada';
+                                $contadoCajaFila = $caja->estado === 'pendiente_cierre'
+                                    ? $caja->monto_declarado
+                                    : $caja->monto_contado;
+                                $diferenciaCajaFila = $contadoCajaFila !== null
+                                    ? (float) $contadoCajaFila - (float) $totalesCajaFila['esperado']
+                                    : null;
+                            @endphp
+                            <tr>
+                                <td data-label="Cajero">{{ $caja->usuario->nombre ?? '—' }}</td>
+                                <td data-label="Apertura">{{ $caja->abierta_en->format('d/m/Y H:i') }}</td>
+                                <td data-label="Cierre">{{ $caja->cerrada_en?->format('d/m/Y H:i') ?? '—' }}</td>
+                                <td data-label="Inicial" class="text-end">S/ {{ number_format($caja->monto_inicial, 2) }}</td>
+                                <td data-label="Ingresos" class="text-end text-success">S/ {{ number_format($totalesCajaFila['ingresos'], 2) }}</td>
+                                <td data-label="Egresos" class="text-end text-danger">S/ {{ number_format($totalesCajaFila['egresos'], 2) }}</td>
+                                <td data-label="Refuerzos" class="text-end text-success">S/ {{ number_format($totalesCajaFila['refuerzos'], 2) }}</td>
+                                <td data-label="Retiros" class="text-end text-danger">S/ {{ number_format($totalesCajaFila['retiros'], 2) }}</td>
+                                <td data-label="Esperado" class="text-end fw-bold">{{ $puedeVerArqueo ? 'S/ '.number_format($totalesCajaFila['esperado'], 2) : 'Oculto' }}</td>
+                                <td data-label="Contado" class="text-end">{{ $puedeVerArqueo && $contadoCajaFila !== null ? 'S/ '.number_format($contadoCajaFila, 2) : '—' }}</td>
+                                <td data-label="Diferencia" class="text-end fw-bold {{ ($diferenciaCajaFila ?? 0) < 0 ? 'text-danger' : 'text-success' }}">
+                                    {{ $puedeVerArqueo && $diferenciaCajaFila !== null ? 'S/ '.number_format($diferenciaCajaFila, 2) : '—' }}
+                                </td>
+                                <td data-label="Estado">
+                                    <span class="ui-badge {{ $caja->estado === 'cerrada' ? 'ui-badge-success' : 'ui-badge-warning' }}">
+                                        {{ $caja->estado === 'pendiente_cierre' ? 'Por aprobar' : ucfirst($caja->estado) }}
+                                    </span>
+                                </td>
+                                @if(auth()->user()->esAdmin())
+                                <td data-label="Acciones">
+                                    <div class="d-flex gap-1">
+                                        @if($caja->estado === 'abierta')
+                                            <button type="button" class="btn-soft btn-soft-success btn-sm caja-operacion-btn"
+                                                data-caja="{{ $caja->id }}" data-tipo="refuerzo" data-bs-toggle="modal" data-bs-target="#modalOperacionCaja">
+                                                <i class="fas fa-plus"></i> Refuerzo
+                                            </button>
+                                            <button type="button" class="btn-soft btn-soft-warning btn-sm caja-operacion-btn"
+                                                data-caja="{{ $caja->id }}" data-tipo="retiro" data-bs-toggle="modal" data-bs-target="#modalOperacionCaja">
+                                                <i class="fas fa-minus"></i> Retiro
+                                            </button>
+                                        @elseif($caja->estado === 'pendiente_cierre')
+                                            <form method="POST" action="{{ route('cajas.aprobar', $caja) }}">
+                                                @csrf
+                                                <button class="btn-soft btn-soft-success btn-sm" type="submit">
+                                                    <i class="fas fa-check"></i> Aprobar
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('cajas.reabrir', $caja) }}">
+                                                @csrf
+                                                <button class="btn-soft btn-soft-warning btn-sm" type="submit">
+                                                    <i class="fas fa-rotate-left"></i> Devolver
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr><td colspan="{{ auth()->user()->esAdmin() ? 13 : 12 }}" class="text-center text-muted py-4">No hay sesiones de caja en este periodo.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            @if($cajas->hasPages())
+                <div class="card-footer d-flex justify-content-end">
+                    {{ $cajas->appends(request()->query())->links() }}
+                </div>
+            @endif
+            @endif
         </div>
 
     </div>
 </div>
+
+@if(auth()->user()->esAdmin())
+<div class="modal fade" id="modalAbrirCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ route('cajas.abrir') }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cash-register"></i> Abrir caja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="cash-explanation">
+                    Asigna el responsable y registra el efectivo físico entregado al iniciar el turno.
+                </div>
+                <label class="form-label">Empleado responsable</label>
+                <select name="usuario_id" class="form-select ui-input mb-3" required>
+                    <option value="">Selecciona un empleado</option>
+                    @foreach($usuariosCaja as $usuarioCaja)
+                        <option value="{{ $usuarioCaja->id }}">{{ $usuarioCaja->nombre }}</option>
+                    @endforeach
+                </select>
+                <label class="form-label">Fondo inicial</label>
+                <div class="input-group">
+                    <span class="input-group-text">S/</span>
+                    <input type="number" name="monto_inicial" class="form-control ui-input"
+                        min="0" step="0.01" value="0.00" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn-soft btn-soft-success">
+                    <i class="fas fa-lock-open"></i> Abrir caja
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+@if($cajaAbierta?->estado === 'abierta')
+<div class="modal fade" id="modalCerrarCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ route('cajas.solicitar-cierre', $cajaAbierta) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-lock"></i> Solicitar cierre de caja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @if(auth()->user()->esAdmin())
+                <div class="cash-closing-summary">
+                    <div><span>Fondo inicial</span><strong>S/ {{ number_format($cajaAbierta->monto_inicial, 2) }}</strong></div>
+                    <div><span>Ingresos en efectivo</span><strong class="text-success">+ S/ {{ number_format($resumenCaja['ingresos'], 2) }}</strong></div>
+                    <div><span>Egresos en efectivo</span><strong class="text-danger">− S/ {{ number_format($resumenCaja['egresos'], 2) }}</strong></div>
+                    <div class="cash-expected"><span>Efectivo esperado</span><strong>S/ {{ number_format($resumenCaja['esperado'], 2) }}</strong></div>
+                </div>
+                @else
+                <div class="cash-explanation">
+                    Realiza el conteo físico sin consultar el total esperado. Después de enviarlo no podrás registrar más ventas hasta que un administrador revise el cierre.
+                </div>
+                @endif
+                <label class="form-label mt-3">Efectivo contado físicamente</label>
+                <div class="input-group">
+                    <span class="input-group-text">S/</span>
+                    <input type="number" name="monto_contado" id="montoContadoCaja"
+                        class="form-control ui-input" min="0" step="0.01" required>
+                </div>
+                @if(auth()->user()->esAdmin())
+                    <div id="diferenciaCaja" class="cash-difference mt-2"></div>
+                @endif
+                <label class="form-label mt-3">Observaciones</label>
+                <textarea name="observaciones" class="form-control ui-input" rows="2"
+                    placeholder="Opcional: explica sobrantes, faltantes u otra incidencia"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn-soft btn-soft-warning">
+                    <i class="fas fa-paper-plane"></i> Enviar conteo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+@if(auth()->user()->esAdmin())
+<div class="modal fade" id="modalOperacionCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" id="formOperacionCaja" class="modal-content">
+            @csrf
+            <input type="hidden" name="tipo" id="operacionCajaTipo">
+            <div class="modal-header">
+                <h5 class="modal-title" id="operacionCajaTitulo">
+                    <i class="fas fa-money-bill-transfer"></i> Movimiento de caja
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="cash-explanation" id="operacionCajaAyuda"></div>
+                <label class="form-label">Monto</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">S/</span>
+                    <input type="number" name="monto" class="form-control ui-input" min="0.01" step="0.01" required>
+                </div>
+                <label class="form-label" id="operacionCajaOrigenLabel">Origen o destino</label>
+                <input type="text" name="origen_destino" class="form-control ui-input mb-3"
+                    placeholder="Ej. Caja general" required>
+                <label class="form-label">Motivo</label>
+                <textarea name="motivo" class="form-control ui-input" rows="2"
+                    placeholder="Explica por qué se realiza esta operación" required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn-soft btn-soft-primary">Registrar operación</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 
 {{-- ================= OFFCANVAS DETALLE ================= --}}
 <div class="offcanvas offcanvas-end detalle-venta-panel"
@@ -281,7 +559,7 @@ Movimientos
      id="offcanvasDetalle">
 
     <div class="offcanvas-header pb-2">
-        <h5 class="offcanvas-title mb-0">
+        <h5 class="offcanvas-title mb-0" id="detalleMovimientoTitulo">
             Detalle de la venta
         </h5>
         <button type="button"
@@ -299,7 +577,7 @@ Movimientos
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/movimientos.css') }}">
+<link rel="stylesheet" href="{{ asset('css/movimientos.css') }}?v={{ filemtime(public_path('css/movimientos.css')) }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
 <style>
@@ -313,7 +591,55 @@ Movimientos
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/movimientos.js') }}"></script>
+<script src="{{ asset('js/movimientos.js') }}?v={{ filemtime(public_path('js/movimientos.js')) }}"></script>
+@if($cajaAbierta)
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('montoContadoCaja');
+    const output = document.getElementById('diferenciaCaja');
+    const esperado = @json((float) $resumenCaja['esperado']);
+    if (!input || !output) return;
+
+    const actualizar = () => {
+        if (input.value === '') {
+            output.textContent = 'Ingresa el efectivo contado para calcular la diferencia.';
+            output.className = 'cash-difference mt-2';
+            return;
+        }
+        const diferencia = Number(input.value) - esperado;
+        const etiqueta = diferencia === 0 ? 'Caja exacta' : (diferencia > 0 ? 'Sobrante' : 'Faltante');
+        output.textContent = `${etiqueta}: S/ ${Math.abs(diferencia).toFixed(2)}`;
+        output.className = `cash-difference mt-2 ${diferencia === 0 ? 'is-exact' : (diferencia > 0 ? 'is-surplus' : 'is-shortage')}`;
+    };
+    input.addEventListener('input', actualizar);
+    actualizar();
+});
+</script>
+@endif
+@if(auth()->user()->esAdmin())
+<script>
+document.addEventListener('click', event => {
+    const button = event.target.closest('.caja-operacion-btn');
+    if (!button) return;
+
+    const tipo = button.dataset.tipo;
+    const cajaId = button.dataset.caja;
+    const form = document.getElementById('formOperacionCaja');
+    document.getElementById('operacionCajaTipo').value = tipo;
+    form.action = `/cajas/${cajaId}/operaciones`;
+
+    document.getElementById('operacionCajaTitulo').innerHTML = tipo === 'refuerzo'
+        ? '<i class="fas fa-plus-circle"></i> Reforzar caja'
+        : '<i class="fas fa-minus-circle"></i> Retirar efectivo';
+    document.getElementById('operacionCajaAyuda').textContent = tipo === 'refuerzo'
+        ? 'El dinero agregado aumentará el efectivo esperado. Registra su procedencia.'
+        : 'El dinero retirado disminuirá el efectivo esperado. Registra su destino.';
+    document.getElementById('operacionCajaOrigenLabel').textContent = tipo === 'refuerzo'
+        ? 'Procedencia del dinero'
+        : 'Destino del dinero';
+});
+</script>
+@endif
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>

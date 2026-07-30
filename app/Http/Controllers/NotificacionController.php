@@ -2,10 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class NotificacionController extends Controller
 {
+    public function abrir(string $id): RedirectResponse
+    {
+        $notificacion = auth()->user()->notifications()->findOrFail($id);
+        $notificacion->markAsRead();
+
+        $url = $notificacion->data['url'] ?? route('movimientos.index');
+
+        return redirect()->to($url);
+    }
+
+    public function caja(): JsonResponse
+    {
+        $notificaciones = auth()->user()
+            ->unreadNotifications()
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn ($notificacion) => [
+                'id' => $notificacion->id,
+                'titulo' => $notificacion->data['titulo'] ?? 'Alerta de caja',
+                'mensaje' => $notificacion->data['mensaje'] ?? '',
+                'tipo' => $notificacion->data['color'] ?? 'info',
+                'url' => route('notificaciones.abrir', $notificacion->id),
+            ]);
+
+        return response()->json([
+            'total' => auth()->user()->unreadNotifications()->count(),
+            'notificaciones' => $notificaciones,
+        ]);
+    }
+
     public function inventario()
 {
     $productos_bajos = DB::table('productos')

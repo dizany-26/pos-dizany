@@ -4,8 +4,10 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CajaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\ConsultaDocumentoController;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\EmpleadoController;
 use App\Http\Controllers\GastoController;
@@ -85,6 +87,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::post('/perfil/cambiar-clave', [UsuarioController::class, 'cambiarMiClave'])
         ->name('perfil.cambiar-clave');
+    Route::get('/notificaciones/{id}/abrir', [NotificacionController::class, 'abrir'])
+        ->whereUuid('id')
+        ->name('notificaciones.abrir');
+    Route::get('/notificaciones/caja/pendientes', [NotificacionController::class, 'caja'])
+        ->name('notificaciones.caja');
     Route::get('/sin-permisos', function () {
         abort(403, 'Tu usuario no tiene módulos asignados. Contacta al administrador.');
     })->name('sin-permisos');
@@ -129,8 +136,18 @@ Route::middleware('auth')->group(function () {
     /*
     | Proveedores
     */
+    Route::get('/proveedores/verificar-documento', [ProveedorController::class, 'verificarDocumento'])
+        ->middleware(['permission:proveedores', 'throttle:60,1'])
+        ->name('proveedores.verificar-documento');
+
     Route::resource('proveedores', ProveedorController::class)
         ->middleware('permission:proveedores');
+
+    Route::get('/consulta-documento/{tipo}/{numero}', [ConsultaDocumentoController::class, 'show'])
+        ->whereIn('tipo', ['dni', 'ruc'])
+        ->whereNumber('numero')
+        ->middleware(['permission:proveedores,ventas', 'throttle:30,1'])
+        ->name('documentos.consultar');
 
     /*
     | Productos
@@ -275,8 +292,22 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:movimientos')->group(function () {
         Route::get('/movimientos', [MovimientoController::class, 'index'])
             ->name('movimientos.index');
+        Route::post('/cajas/{caja}/solicitar-cierre', [CajaController::class, 'solicitarCierre'])
+            ->name('cajas.solicitar-cierre');
+        Route::middleware('role:Administrador')->group(function () {
+            Route::post('/cajas/abrir', [CajaController::class, 'abrir'])
+                ->name('cajas.abrir');
+            Route::post('/cajas/{caja}/aprobar', [CajaController::class, 'aprobar'])
+                ->name('cajas.aprobar');
+            Route::post('/cajas/{caja}/reabrir', [CajaController::class, 'reabrir'])
+                ->name('cajas.reabrir');
+            Route::post('/cajas/{caja}/operaciones', [CajaController::class, 'registrarOperacion'])
+                ->name('cajas.operaciones');
+        });
         Route::get('/movimientos/reporte', [MovimientoController::class, 'reporte'])
             ->name('movimientos.reporte');
+        Route::get('/movimientos/gastos/{id}/detalle', [MovimientoController::class, 'detalleGasto'])
+            ->name('movimientos.gastos.detalle');
     });
 
     Route::middleware('permission:reportes')->group(function () {

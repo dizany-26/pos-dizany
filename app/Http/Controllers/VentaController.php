@@ -22,6 +22,7 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Movimiento;
 use App\Models\PagoVenta;
 use App\Models\Lote;
+use App\Models\Caja;
 use App\Services\SaleLineCalculator;
 use App\Services\DocumentNumberService;
 
@@ -74,6 +75,13 @@ public function registrarVenta(Request $request)
             'metodo_pago'      => 'nullable|string',
             'formato'          => 'nullable|string',
         ]);
+
+        if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debes abrir tu caja antes de registrar una venta.',
+            ], 422);
+        }
 
         DB::beginTransaction();
 
@@ -471,6 +479,13 @@ public function pagarCredito(Request $request, Venta $venta)
         'metodo_pago'  => 'required|string',
     ]);
 
+    if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Debes abrir tu caja antes de registrar el cobro.',
+        ], 422);
+    }
+
     if ($venta->estado !== 'credito') {
         return response()->json([
             'success' => false,
@@ -542,7 +557,7 @@ public function pagarCredito(Request $request, Venta $venta)
         DB::rollBack();
 
         return response()->json([
-            'successzsuccess' => false,
+            'success' => false,
             'message' => $e->getMessage()
         ], 500);
     }
@@ -554,6 +569,13 @@ public function cerrarPendiente(Request $request, Venta $venta)
         'monto_pagado' => 'required|numeric|min:0.01',
         'metodo_pago'  => 'required|string',
     ]);
+
+    if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Debes abrir tu caja antes de cobrar esta venta fiada.',
+        ], 422);
+    }
 
     // 🔴 USAR ESTADO REAL
     if ($venta->estado !== 'pendiente') {
@@ -590,13 +612,27 @@ public function cerrarPendiente(Request $request, Venta $venta)
             'metodo_pago' => $request->metodo_pago,
         ]);
 
-        // 3️⃣ ACTUALIZAR MOVIMIENTO (ESTO FALTABA)
+        // El pendiente pertenece al momento en que se originó la deuda.
+        // Se anula y el pago genera un ingreso nuevo en la caja actualmente abierta.
         Movimiento::where('referencia_tipo', 'venta')
             ->where('referencia_id', $venta->id)
+            ->where('estado', 'pendiente')
             ->update([
-                'estado'      => 'pagado',
-                'metodo_pago' => $request->metodo_pago,
+                'estado' => 'anulado',
             ]);
+
+        Movimiento::create([
+            'fecha' => now()->toDateString(),
+            'hora' => now()->toTimeString(),
+            'tipo' => 'ingreso',
+            'subtipo' => 'cobro_fiado',
+            'concepto' => "Cobro fiado venta {$venta->serie}-" . str_pad($venta->correlativo, 6, '0', STR_PAD_LEFT),
+            'monto' => $total,
+            'metodo_pago' => $request->metodo_pago,
+            'estado' => 'pagado',
+            'referencia_id' => $venta->id,
+            'referencia_tipo' => 'venta',
+        ]);
     });
 
     return response()->json([
