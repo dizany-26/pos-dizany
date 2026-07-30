@@ -72,7 +72,7 @@
         const select = modal.querySelector('[data-modal-presentation]');
         select.innerHTML = modalProduct.presentations
             .filter(p => p.factor <= modalProduct.stock)
-            .map(p => `<option value="${p.key}">${p.name}</option>`).join('');
+            .map(p => `<option value="${p.key}">${p.name} · ${p.factor} un.</option>`).join('');
         updateModal();
         modal.hidden = false;
         document.body.classList.add('modal-open');
@@ -147,7 +147,7 @@
                     <h4>${escapeHtml(item.name)}</h4>
                     <select data-presentation="${index}">
                         ${item.presentations.filter(p => p.factor <= item.stock).map(p =>
-                            `<option value="${p.key}" ${p.key === selected.key ? 'selected' : ''}>${p.name} · S/ ${money(p.price)}</option>`
+                            `<option value="${p.key}" ${p.key === selected.key ? 'selected' : ''}>${p.name} · ${p.factor} un. · S/ ${money(p.price)}</option>`
                         ).join('')}
                     </select>
                     <div class="cart-row-controls">
@@ -158,7 +158,12 @@
                 </div>
                 <div class="cart-row-price">
                     <strong>S/ ${money(selected.price * item.quantity)}</strong>
-                    <button type="button" data-remove="${index}" aria-label="Quitar">×</button>
+                    <button type="button" class="remove-product" data-remove="${index}"
+                        aria-label="Eliminar producto" title="Eliminar producto">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/>
+                        </svg>
+                    </button>
                 </div>`;
             itemsBox.appendChild(row);
         });
@@ -263,6 +268,15 @@
     });
 
     document.addEventListener('change', event => {
+        if (event.target.matches('[data-delivery-type]')) {
+            const homeDelivery = event.target.value === 'domicilio';
+            const addressField = document.querySelector('[data-address-field]');
+            const addressInput = document.querySelector('[data-customer-address]');
+            addressField.hidden = !homeDelivery;
+            addressInput.required = homeDelivery;
+            if (!homeDelivery) addressInput.value = '';
+            return;
+        }
         if (event.target.matches('[data-modal-presentation]')) {
             modalQuantity = 1;
             updateModal();
@@ -280,35 +294,69 @@
             name: document.querySelector('[data-customer-name]').value.trim(),
             phone: document.querySelector('[data-customer-phone]').value.trim(),
             address: document.querySelector('[data-customer-address]').value.trim(),
-            note: document.querySelector('[data-customer-note]').value.trim()
+            delivery: document.querySelector('[data-delivery-type]:checked').value
         };
         const error = document.querySelector('[data-form-error]');
-        if (!customer.name || !customer.phone || !customer.address) {
+        const needsAddress = customer.delivery === 'domicilio';
+        if (!customer.name || !customer.phone || (needsAddress && !customer.address)) {
             error.hidden = false;
             document.querySelector('.customer-details').open = true;
             return;
         }
         error.hidden = true;
+        const now = new Date();
+        const orderCode = `DIZ-${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+        const orderDate = now.toLocaleString('es-PE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         const lines = cart.map(item => {
             const selected = presentation(item);
-            return `• ${item.quantity} ${selected.name}${item.quantity > 1 ? 's' : ''} de ${item.name} — S/ ${money(selected.price * item.quantity)}`;
+            const subtotal = selected.price * item.quantity;
+            return [
+                `🔹 *${item.name}*`,
+                `   ${item.quantity} × ${selected.name} (${selected.factor} un.)`,
+                `   *Total: S/ ${money(subtotal)}*`
+            ].join('\n');
         });
         const total = cart.reduce((sum, item) => sum + presentation(item).price * item.quantity, 0);
+        const totalPresentations = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const totalUnits = cart.reduce((sum, item) => sum + presentation(item).factor * item.quantity, 0);
         const message = [
-            `Hola ${data.dataset.business}, deseo realizar este pedido:`,
+            `🛒 *NUEVO PEDIDO | ${data.dataset.business.toUpperCase()}*`,
+            '━━━━━━━━━━━━━━━━━━',
+            `🧾 *Pedido:* ${orderCode}`,
+            `🗓️ *Fecha:* ${orderDate}`,
             '',
-            `*Cliente:* ${customer.name}`,
-            `*Teléfono:* ${customer.phone}`,
-            `*Dirección:* ${customer.address}`,
-            customer.note ? `*Nota:* ${customer.note}` : '',
+            '👤 *DATOS DEL CLIENTE*',
+            `• *Nombre:* ${customer.name}`,
+            `• *Teléfono:* ${customer.phone}`,
+            `• *Entrega:* ${needsAddress ? 'Entrega a domicilio' : 'Recoger en tienda'}`,
+            needsAddress ? `• *Dirección:* ${customer.address}` : null,
             '',
+            '📦 *DETALLE DEL PEDIDO*',
+            '──────────────────',
             ...lines,
             '',
-            `*Total estimado: S/ ${money(total)}*`,
+            '💰 *RESUMEN*',
+            `• Productos diferentes: ${cart.length}`,
+            `• Presentaciones solicitadas: ${totalPresentations}`,
+            `• Equivalencia total: ${totalUnits} unidades`,
             '',
-            '¿Podrían confirmarme la disponibilidad y el método de entrega?'
-        ].join('\n');
+            `💵 *TOTAL ESTIMADO: S/ ${money(total)}*`,
+            '━━━━━━━━━━━━━━━━━━',
+            '',
+            '✅ Por favor, confirmar disponibilidad, forma de pago y método de entrega.',
+            '',
+            `_Pedido generado desde el catálogo de ${data.dataset.business}._`
+        ].filter(line => line !== null).join('\n');
         window.open(`https://wa.me/${data.dataset.phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+        cart = [];
+        renderCart();
+        closeCart();
     });
 
     function filterProducts() {
@@ -320,7 +368,6 @@
             product.hidden = !show;
             if (show) visible++;
         });
-        document.getElementById('visibleCount').textContent = visible;
         document.getElementById('noResults').hidden = visible > 0;
     }
 
@@ -338,5 +385,6 @@
             closeProduct();
         }
     });
+    document.querySelector('[data-customer-address]').required = true;
     renderCart();
 })();

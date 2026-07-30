@@ -9,7 +9,12 @@
 @section('content')
 @php
     $empresa = $config->nombre_empresa ?? 'DIZANY';
-    $telefono = preg_replace('/\D+/', '', $config->telefono ?? '51973451688');
+    $telefono = preg_replace('/\D+/', '', $config->telefono ?? '973451688');
+    $telefono = strlen($telefono) === 9 ? '51' . $telefono : $telefono;
+    $telefonoVisible = strlen($telefono) === 11 && str_starts_with($telefono, '51')
+        ? '+51 ' . substr($telefono, 2, 3) . ' ' . substr($telefono, 5, 3) . ' ' . substr($telefono, 8, 3)
+        : '+' . $telefono;
+    $direccionTienda = $config->direccion ?? 'Pacaipampa, Piura';
     $mensaje = $config->mensaje_bienvenida ?? 'Todo lo que necesitas, cerca de ti y a precios que te encantarán.';
 @endphp
 
@@ -23,10 +28,16 @@
         <span><strong>{{ $empresa }}</strong><small>{{ $config->rubro ?? 'Tienda y licorería' }}</small></span>
     </a>
 
-    <label class="header-search" for="searchInput">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"/></svg>
-        <input id="searchInput" type="search" placeholder="¿Qué estás buscando?" autocomplete="off">
-    </label>
+    <div class="header-store-details" aria-label="Información de la tienda">
+        <span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            <span><small>Tienda física</small><strong>{{ $direccionTienda }}</strong></span>
+        </span>
+        <span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.4l1.3-4.7a8.5 8.5 0 1 1 16.2-4Z"/><path d="M8.2 7.8c.2-.4.4-.4.7-.4h.4c.1 0 .3 0 .4.4l.8 1.9c.1.2.1.4 0 .6l-.6.8c-.2.2-.1.4 0 .6.7 1.2 1.7 2.1 2.9 2.7"/></svg>
+            <span><small>WhatsApp</small><strong>{{ $telefonoVisible }}</strong></span>
+        </span>
+    </div>
 
     <nav class="header-actions">
         <div class="header-menu">
@@ -74,9 +85,16 @@
 
         <div class="catalog-content">
         <div class="section-heading">
-            <div><span class="section-kicker">Nuestro catálogo</span><h2>Encuentra lo que necesitas</h2></div>
-            <p><b id="visibleCount">{{ $productos->count() }}</b> productos disponibles</p>
+            <div>
+                <span class="section-kicker">Nuestro catálogo</span>
+                <span class="section-subtitle">Elige un producto para consultar sus presentaciones y preparar tu pedido.</span>
+            </div>
         </div>
+
+        <label class="header-search catalog-search" for="searchInput">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"/></svg>
+            <input id="searchInput" type="search" placeholder="Buscar productos en el catálogo..." autocomplete="off">
+        </label>
 
         <div class="product-grid" id="productContainer">
             @forelse($productos as $producto)
@@ -98,7 +116,13 @@
                     data-id="{{ $producto->id }}"
                     data-stock="{{ $stock }}"
                     data-description="{{ $producto->descripcion ?: 'Disponible en nuestra tienda.' }}"
-                    data-category-name="{{ $producto->categoria->nombre ?? 'Producto' }}">
+                    data-category-name="{{ $producto->categoria->nombre ?? 'Producto' }}"
+                    aria-disabled="{{ $stock <= 0 ? 'true' : 'false' }}">
+                    @if($stock <= 0)
+                        <div class="sold-out-cover" aria-label="Producto agotado">
+                            <span>Agotado</span>
+                        </div>
+                    @endif
                     <div class="product-visual">
                         @if($producto->imagen)
                             <img src="{{ asset('uploads/productos/' . $producto->imagen) }}" alt="{{ $producto->nombre }}" loading="lazy">
@@ -115,19 +139,34 @@
                         <span class="product-category">{{ $producto->categoria->nombre ?? 'Producto' }}</span>
                         <h3>{{ $producto->nombre }}</h3>
                         <p>{{ $producto->descripcion ?: 'Disponible en nuestra tienda.' }}</p>
+                        @if($presentaciones->isNotEmpty())
+                            <div class="product-presentations" aria-label="Presentaciones disponibles">
+                                @foreach($presentaciones as $presentacion)
+                                    <span>
+                                        {{ $presentacion['name'] }}
+                                        <b>{{ $presentacion['factor'] }} un.</b>
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
 
                         @if($principal)
                             <div class="product-buy">
                                 <div class="price-wrap"><small>Desde</small><strong>S/ {{ number_format($principal['price'], 2) }}</strong></div>
-                                <button type="button" class="add-button" {{ $stock <= 0 ? 'disabled' : '' }}
-                                    data-add-product
-                                    data-id="{{ $producto->id }}"
-                                    data-name="{{ $producto->nombre }}"
-                                    data-image="{{ $producto->imagen ? asset('uploads/productos/' . $producto->imagen) : '' }}"
-                                    data-stock="{{ $stock }}"
-                                    data-presentations='@json($presentaciones)'>
-                                    <span>+</span><b>Agregar</b>
-                                </button>
+                                <div class="product-actions">
+                                    <button type="button" class="options-button" data-view-product {{ $stock <= 0 ? 'disabled' : '' }}>
+                                        Ver opciones
+                                    </button>
+                                    <button type="button" class="add-button" {{ $stock <= 0 ? 'disabled' : '' }}
+                                        data-add-product
+                                        data-id="{{ $producto->id }}"
+                                        data-name="{{ $producto->nombre }}"
+                                        data-image="{{ $producto->imagen ? asset('uploads/productos/' . $producto->imagen) : '' }}"
+                                        data-stock="{{ $stock }}"
+                                        data-presentations='@json($presentaciones)'>
+                                        <span>+</span><b>Agregar</b>
+                                    </button>
+                                </div>
                             </div>
                         @else
                             <div class="unavailable-price">Precio por consultar</div>
@@ -146,7 +185,7 @@
 </main>
 
 <footer class="site-footer">
-    <div><strong>{{ $empresa }}</strong><span>{{ $config->direccion ?? 'Pacaipampa, Piura' }}</span></div>
+    <div><strong>{{ $empresa }}</strong><span>{{ $direccionTienda }}</span></div>
     <p>© {{ date('Y') }} {{ $empresa }}. Todos los derechos reservados.</p>
 </footer>
 
@@ -167,15 +206,25 @@
                 <span class="customer-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-4 3.1-6.2 7-6.2s6.5 2.2 7 6.2"/></svg>
                 </span>
-                <span><b>Datos personales</b><small>Nombre, teléfono y dirección</small></span>
+                <span><b>Datos del pedido</b><small>Cliente y forma de entrega</small></span>
                 <i>⌄</i>
             </summary>
             <div class="customer-fields">
                 <label>Nombre completo<input type="text" data-customer-name placeholder="Tu nombre" autocomplete="name"></label>
                 <label>Teléfono<input type="tel" data-customer-phone placeholder="Ej. 958 196 510" autocomplete="tel"></label>
-                <label>Dirección o referencia<textarea data-customer-address rows="2" placeholder="Indica dónde entregar el pedido"></textarea></label>
-                <label>Nota del pedido<textarea data-customer-note rows="2" placeholder="Opcional"></textarea></label>
-                <p class="form-error" data-form-error hidden>Completa tu nombre, teléfono y dirección.</p>
+                <fieldset class="delivery-options">
+                    <legend>Forma de entrega</legend>
+                    <label>
+                        <input type="radio" name="delivery_type" value="domicilio" data-delivery-type checked>
+                        <span><b>Entrega a domicilio</b><small>Enviaremos el pedido a tu dirección</small></span>
+                    </label>
+                    <label>
+                        <input type="radio" name="delivery_type" value="tienda" data-delivery-type>
+                        <span><b>Recoger en tienda</b><small>Recoge el pedido en nuestro local</small></span>
+                    </label>
+                </fieldset>
+                <label data-address-field>Dirección o referencia<textarea data-customer-address rows="2" placeholder="Indica dónde entregar el pedido"></textarea></label>
+                <p class="form-error" data-form-error hidden>Completa los datos requeridos para continuar.</p>
             </div>
         </details>
         <div><span>Productos</span><b data-cart-units>0</b></div>
