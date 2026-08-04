@@ -10,6 +10,7 @@
     let cart = [];
     let modalProduct = null;
     let modalQuantity = 1;
+    const igvPercent = Math.max(0, Number(data?.dataset.igv || 0));
 
     try {
         cart = JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -33,6 +34,7 @@
     }).filter(Boolean);
 
     const money = value => Number(value || 0).toFixed(2);
+    const finalPrice = basePrice => Number(basePrice || 0) * (1 + igvPercent / 100);
     const save = () => localStorage.setItem(storageKey, JSON.stringify(cart));
     const presentation = item => item.presentations.find(p => p.key === item.presentation) || item.presentations[0];
     const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
@@ -122,7 +124,7 @@
         const max = Math.max(1, Math.floor(modalProduct.stock / selected.factor));
         modalQuantity = Math.min(modalQuantity, max);
         document.querySelector('[data-modal-quantity]').textContent = modalQuantity;
-        document.querySelector('[data-modal-price]').textContent = money(selected.price * modalQuantity);
+        document.querySelector('[data-modal-price]').textContent = money(finalPrice(selected.price) * modalQuantity);
         document.querySelector('[data-modal-plus]').disabled = modalQuantity >= max;
     }
 
@@ -135,7 +137,7 @@
             const selected = presentation(item);
             const max = Math.floor(item.stock / selected.factor);
             item.quantity = Math.max(1, Math.min(item.quantity, max || 1));
-            total += selected.price * item.quantity;
+            total += finalPrice(selected.price) * item.quantity;
 
             const row = document.createElement('div');
             row.className = 'cart-row';
@@ -147,7 +149,7 @@
                     <h4>${escapeHtml(item.name)}</h4>
                     <select data-presentation="${index}">
                         ${item.presentations.filter(p => p.factor <= item.stock).map(p =>
-                            `<option value="${p.key}" ${p.key === selected.key ? 'selected' : ''}>${p.name} · ${p.factor} un. · S/ ${money(p.price)}</option>`
+                            `<option value="${p.key}" ${p.key === selected.key ? 'selected' : ''}>${p.name} · ${p.factor} un. · S/ ${money(finalPrice(p.price))}${igvPercent > 0 ? ' incl. IGV' : ''}</option>`
                         ).join('')}
                     </select>
                     <div class="cart-row-controls">
@@ -157,7 +159,7 @@
                     </div>
                 </div>
                 <div class="cart-row-price">
-                    <strong>S/ ${money(selected.price * item.quantity)}</strong>
+                    <strong>S/ ${money(finalPrice(selected.price) * item.quantity)}</strong>
                     <button type="button" class="remove-product" data-remove="${index}"
                         aria-label="Eliminar producto" title="Eliminar producto">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -315,14 +317,14 @@
         });
         const lines = cart.map(item => {
             const selected = presentation(item);
-            const subtotal = selected.price * item.quantity;
+            const subtotal = finalPrice(selected.price) * item.quantity;
             return [
                 `🔹 *${item.name}*`,
                 `   ${item.quantity} × ${selected.name} (${selected.factor} un.)`,
                 `   *Total: S/ ${money(subtotal)}*`
             ].join('\n');
         });
-        const total = cart.reduce((sum, item) => sum + presentation(item).price * item.quantity, 0);
+        const total = cart.reduce((sum, item) => sum + finalPrice(presentation(item).price) * item.quantity, 0);
         const totalPresentations = cart.reduce((sum, item) => sum + item.quantity, 0);
         const totalUnits = cart.reduce((sum, item) => sum + presentation(item).factor * item.quantity, 0);
         const message = [
@@ -347,6 +349,7 @@
             `• Equivalencia total: ${totalUnits} unidades`,
             '',
             `💵 *TOTAL ESTIMADO: S/ ${money(total)}*`,
+            igvPercent > 0 ? `• Precios incluyen IGV (${money(igvPercent)}%)` : null,
             '━━━━━━━━━━━━━━━━━━',
             '',
             '✅ Por favor, confirmar disponibilidad, forma de pago y método de entrega.',

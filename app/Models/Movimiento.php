@@ -78,6 +78,11 @@ class Movimiento extends Model
         return $this->belongsTo(User::class, 'usuario_id');
     }
 
+    public function pagosCompra()
+    {
+        return $this->hasMany(CompraPago::class, 'movimiento_id');
+    }
+
     protected static function booted()
     {
         static::creating(function (Movimiento $movimiento) {
@@ -86,9 +91,11 @@ class Movimiento extends Model
             }
 
             $movimiento->usuario_id ??= auth()->id();
-            $movimiento->caja_id ??= Caja::where('usuario_id', auth()->id())
-                ->where('estado', 'abierta')
-                ->value('id');
+            if ($movimiento->subtipo !== 'compra_mercaderia') {
+                $movimiento->caja_id ??= Caja::where('usuario_id', auth()->id())
+                    ->where('estado', 'abierta')
+                    ->value('id');
+            }
         });
     }
 }

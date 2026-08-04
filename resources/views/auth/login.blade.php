@@ -75,6 +75,39 @@ body {
     margin-bottom: 26px;
 }
 
+.authorized-access-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: -10px 0 22px;
+    padding: 12px 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 11px;
+    background: #eff6ff;
+    color: #1e4f91;
+    text-align: left;
+}
+
+.authorized-access-notice i {
+    margin-top: 2px;
+    color: #2563eb;
+}
+
+.authorized-access-notice span {
+    display: grid;
+    gap: 2px;
+}
+
+.authorized-access-notice strong {
+    font-size: .84rem;
+}
+
+.authorized-access-notice small {
+    color: #55739d;
+    font-size: .72rem;
+    line-height: 1.4;
+}
+
 .footer-text {
     font-size: 0.85rem;
     color: #9ca3af;
@@ -162,6 +195,179 @@ a.text-primary:hover {
     }
 }
 
+/* Diseño compacto y fondo profesional */
+body {
+    position: relative;
+    min-height: 100dvh;
+    height: auto;
+    padding: 22px;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 14% 18%, rgba(37, 99, 235, .34), transparent 27%),
+        radial-gradient(circle at 86% 82%, rgba(14, 165, 233, .22), transparent 30%),
+        linear-gradient(135deg, #071426 0%, #0c2140 48%, #102d57 100%);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .22;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, .055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .055) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom right, #000, transparent 72%);
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    right: -110px;
+    top: -130px;
+    width: 380px;
+    height: 380px;
+    border: 70px solid rgba(96, 165, 250, .09);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.login-card {
+    position: relative;
+    z-index: 1;
+    max-width: 410px;
+    padding: 24px 30px 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .75);
+    border-radius: 22px;
+    box-shadow: 0 30px 80px rgba(0, 9, 28, .45), 0 8px 24px rgba(0, 16, 48, .18);
+}
+
+.login-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #1677e8, #38bdf8, #22c55e);
+}
+
+.login-logo {
+    height: 72px;
+    max-width: 190px;
+    margin-bottom: 3px;
+    filter: drop-shadow(0 5px 10px rgba(15, 35, 65, .14));
+}
+
+.logo-divider {
+    width: 42px;
+    height: 3px;
+    margin: 3px auto 10px;
+    background: linear-gradient(90deg, #1677e8, #22c55e);
+}
+
+.login-title {
+    margin-bottom: 3px;
+    font-size: 1.6rem;
+    letter-spacing: .01em;
+}
+
+.login-subtitle {
+    margin-bottom: 15px;
+    font-size: .86rem;
+}
+
+.authorized-access-notice {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border-color: #c9ddf8;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f1f7ff, #eaf4ff);
+}
+
+.authorized-access-notice strong {
+    font-size: .78rem;
+}
+
+.authorized-access-notice small {
+    font-size: .67rem;
+}
+
+.login-card .mb-3 {
+    margin-bottom: 12px !important;
+}
+
+.form-control,
+.input-group-text {
+    height: 42px;
+}
+
+.form-control {
+    border-color: #d7e1ee;
+    background: #f8fbff;
+}
+
+.input-group-text {
+    color: #31506f;
+    border-color: #d7e1ee;
+    background: #eef4fb;
+}
+
+.btn-login {
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1677e8, #2463db);
+    box-shadow: 0 9px 20px rgba(37, 99, 235, .22);
+}
+
+.btn-login:hover {
+    background: linear-gradient(135deg, #0c67d2, #1d4ed8);
+}
+
+.login-card form .mt-3 {
+    margin-top: 10px !important;
+}
+
+.footer-text {
+    margin: 12px 0 0;
+    font-size: .72rem;
+}
+
+@media (max-height: 640px) and (min-width: 481px) {
+    body {
+        align-items: flex-start;
+        padding-block: 12px;
+    }
+
+    .login-logo {
+        height: 58px;
+    }
+
+    .login-card {
+        padding-top: 17px;
+        padding-bottom: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 14px;
+    }
+
+    .login-card {
+        padding: 22px 20px 18px;
+        border-radius: 19px;
+    }
+
+    .login-logo {
+        height: 66px;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -182,8 +388,16 @@ a.text-primary:hover {
         </h1>
 
         <p class="login-subtitle">
-            Bienvenido, por favor inicia sesión
+            Inicia sesión con tus credenciales
         </p>
+
+        <div class="authorized-access-notice" role="note">
+            <i class="fas fa-shield-halved" aria-hidden="true"></i>
+            <span>
+                <strong>Acceso exclusivo para personal autorizado</strong>
+                <small>Esta área está destinada únicamente a administradores y empleados de {{ $config->nombre_empresa ?? 'Dizany' }}.</small>
+            </span>
+        </div>
 
 
         <div id="error-message" class="error-message"></div>

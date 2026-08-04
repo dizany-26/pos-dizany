@@ -419,7 +419,8 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
             const imgSrc = p.imagen ? `/uploads/productos/${p.imagen}` : "/img/sin-imagen.png";
 
             const precioUnitario = parseFloat(p.precio_unitario || 0); // FIJO
-            const subtotal = precioUnitario * (parseInt(p.cantidad) || 0);
+            const precioUnitarioFinal = calcularPrecioFinal(precioUnitario);
+            const subtotal = precioUnitarioFinal * (parseInt(p.cantidad) || 0);
 
 
             const unidades = unidadesRealesDeItem(p);
@@ -500,7 +501,8 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
 
                         <div class="text-end" style="width:90px;">
                             <div class="fw-semibold small">
-                                S/ ${formatPrecioDinamico(precioUnitario)}
+                                S/ ${formatPrecioDinamico(precioUnitarioFinal)}
+                                ${obtenerIGVPercent() > 0 ? '<span class="d-block text-success extra-small">Incl. IGV</span>' : ''}
                             </div>
                         </div>
                     </div>

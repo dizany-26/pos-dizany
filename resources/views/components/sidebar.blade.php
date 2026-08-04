@@ -83,7 +83,19 @@
                         <a href="{{ route('inventario.lote') }}"
                         class="{{ request()->routeIs('inventario.lote') ? 'active' : '' }}">
                             <i class="fas fa-truck-loading me-1"></i>
-                            <span class="menu-text">Ingreso de Lotes</span>
+                            <span class="menu-text">Ingreso de inventario</span>
+                        </a>
+
+                        <a href="{{ route('inventario.lotes') }}"
+                        class="{{ request()->routeIs('inventario.lotes') ? 'active' : '' }}">
+                            <i class="fas fa-layer-group me-1"></i>
+                            <span class="menu-text">Lotes registrados</span>
+                        </a>
+
+                        <a href="{{ route('inventario.compras') }}"
+                        class="{{ request()->routeIs('inventario.compras*') ? 'active' : '' }}">
+                            <i class="fas fa-history me-1"></i>
+                            <span class="menu-text">Historial de compras</span>
                         </a>
                     </div>
                 </div>
@@ -235,6 +247,16 @@
                     class="{{ request()->routeIs('inventario.lote') ? 'active' : '' }}">
                         <i class="fas fa-truck-loading"></i>
                         <span class="menu-text">Ingreso de lotes</span>
+                    </a>
+                    <a href="{{ route('inventario.lotes') }}"
+                    class="{{ request()->routeIs('inventario.lotes') ? 'active' : '' }}">
+                        <i class="fas fa-layer-group"></i>
+                        <span class="menu-text">Lotes registrados</span>
+                    </a>
+                    <a href="{{ route('inventario.compras') }}"
+                    class="{{ request()->routeIs('inventario.compras*') ? 'active' : '' }}">
+                        <i class="fas fa-history"></i>
+                        <span class="menu-text">Historial de compras</span>
                     </a>
                 @endif
 

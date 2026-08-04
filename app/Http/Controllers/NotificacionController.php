@@ -43,9 +43,10 @@ class NotificacionController extends Controller
 {
     $productos_bajos = DB::table('productos')
         ->join('lotes', 'productos.id', '=', 'lotes.producto_id')
+        ->where('productos.activo', 1)
         ->where('lotes.activo', 1)
         ->groupBy('productos.id')
-        ->havingRaw('SUM(lotes.stock_actual) <= 10')
+        ->havingRaw('SUM(lotes.stock_actual) <= MAX(COALESCE(productos.stock_minimo, 10))')
         ->pluck('productos.id'); // 👈 SOLO trae los IDs
 
     $stock_bajo = $productos_bajos->count();

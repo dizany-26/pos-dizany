@@ -22,6 +22,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VentaController;
 use App\Models\Categoria;
+use App\Models\Configuracion;
 use App\Models\ConfiguracionCatalogo;
 use App\Models\Producto;
 use Illuminate\Http\Request;
@@ -54,6 +55,7 @@ Route::middleware('guest')->group(function () {
 
 Route::get('/', function () {
     $config = ConfiguracionCatalogo::first();
+    $igv = max(0, (float) (Configuracion::first()?->igv ?? 0));
 
     $productos = Producto::with('categoria')
         ->withSum(['lotes as stock_total' => function ($query) {
@@ -70,7 +72,7 @@ Route::get('/', function () {
             ->where('activo', 1);
     })->orderBy('nombre')->get();
 
-    return view('catalogo.index', compact('productos', 'categorias', 'config'));
+    return view('catalogo.index', compact('productos', 'categorias', 'config', 'igv'));
 })->name('inicio');
 
 Route::get('/catalogo', function () {
@@ -122,6 +124,9 @@ Route::middleware('auth')->group(function () {
     */
     Route::middleware('permission:clientes')->group(function () {
         Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
+        Route::get('/clientes/verificar-documento', [ClienteController::class, 'verificarDocumento'])
+            ->middleware('throttle:120,1')
+            ->name('clientes.verificar-documento');
         Route::get('/clientes/{id}/edit', [ClienteController::class, 'edit'])->name('clientes.edit');
         Route::put('/clientes/{id}', [ClienteController::class, 'update'])->name('clientes.update');
         Route::get('/clientes/{id}', [ClienteController::class, 'show'])->name('clientes.show');
@@ -227,8 +232,17 @@ Route::middleware('auth')->group(function () {
             ->name('inventario.lote');
         Route::post('/inventario/lote', [InventarioController::class, 'storeLote'])
             ->name('inventario.lote.store');
+        Route::post('/inventario/compra-en-curso/limpiar', [InventarioController::class, 'limpiarCompraEnCurso'])
+            ->name('inventario.compra-en-curso.limpiar');
         Route::get('/inventario/lotes', [InventarioController::class, 'lotes'])
             ->name('inventario.lotes');
+        Route::get('/inventario/compras', [InventarioController::class, 'historialCompras'])
+            ->name('inventario.compras');
+        Route::get('/inventario/compras/lotes/{lote}/detalle', [InventarioController::class, 'detalleCompraLote'])
+            ->name('inventario.compras.detalle');
+        Route::post('/inventario/compras/lotes/{lote}/pagos', [InventarioController::class, 'registrarPagoCompra'])
+            ->middleware('role:Administrador')
+            ->name('inventario.compras.pagos');
         Route::get('/lotes/{lote}/edit', [InventarioController::class, 'edit'])
             ->name('lotes.edit');
         Route::put('/lotes/{lote}', [InventarioController::class, 'update'])
@@ -308,6 +322,11 @@ Route::middleware('auth')->group(function () {
             ->name('movimientos.reporte');
         Route::get('/movimientos/gastos/{id}/detalle', [MovimientoController::class, 'detalleGasto'])
             ->name('movimientos.gastos.detalle');
+        Route::get('/movimientos/compras/{movimiento}/detalle', [MovimientoController::class, 'detalleCompra'])
+            ->name('movimientos.compras.detalle');
+        Route::post('/movimientos/compras/{movimiento}/pagos', [MovimientoController::class, 'registrarPagoCompra'])
+            ->middleware('role:Administrador')
+            ->name('movimientos.compras.pagos');
     });
 
     Route::middleware('permission:reportes')->group(function () {

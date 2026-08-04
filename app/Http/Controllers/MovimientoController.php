@@ -9,7 +9,10 @@ use App\Models\DetalleVenta;
 use App\Models\Caja;
 use App\Models\Gasto;
 use App\Models\User;
+use App\Models\Lote;
+use App\Models\CompraPago;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use PDF;
 
 class MovimientoController extends Controller
@@ -20,6 +23,9 @@ class MovimientoController extends Controller
         PARÁMETROS
         ========================== */
         $tab   = $request->get('tab', 'ingresos');
+        if (! in_array($tab, ['ingresos', 'egresos', 'por_cobrar'], true)) {
+            $tab = 'ingresos';
+        }
         $tipo  = $request->get('tipo', 'transacciones');
         $rango = $request->get('rango', 'diario');
         $fecha = $request->get('fecha', now()->format('Y-m-d'));
@@ -39,16 +45,27 @@ class MovimientoController extends Controller
                 break;
 
             case 'egresos':
-                $query->egresos(); // 👈 SIN pagados()
+                // Gastos operativos pequeños ya pagados; no incluye mercadería.
+                $query->egresos()
+                      ->pagados()
+                      ->where('subtipo', 'gasto')
+                      ->where('referencia_tipo', 'gasto');
                 break;
 
             case 'por_cobrar':
-                $query->pendientes()
+                // Deudas de clientes: únicamente ingresos de ventas pendientes.
+                $query->ingresos()
+                      ->pendientes()
+                      ->where('referencia_tipo', 'venta')
                       ->whereIn('metodo_pago', ['fiado', 'credito']);
                 break;
 
             case 'por_pagar':
-                $query->egresos()->pendientes();
+                // Deudas de mercadería con proveedores.
+                $query->egresos()
+                      ->pendientes()
+                      ->where('subtipo', 'compra_mercaderia')
+                      ->where('referencia_tipo', 'lote');
                 break;
         }
 
@@ -155,6 +172,8 @@ class MovimientoController extends Controller
         $egresos = Movimiento::egresos()
             ->pagados()
             ->activos()
+            ->where('subtipo', 'gasto')
+            ->where('referencia_tipo', 'gasto')
             ->when($inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
             )
@@ -199,7 +218,12 @@ class MovimientoController extends Controller
         $movimientos = Movimiento::activos()->orderByDesc('fecha')->get();
 
         $ventas = Movimiento::ingresos()->pagados()->activos()->sum('monto');
-        $egresos = Movimiento::egresos()->pagados()->activos()->sum('monto');
+        $egresos = Movimiento::egresos()
+            ->pagados()
+            ->activos()
+            ->where('subtipo', 'gasto')
+            ->where('referencia_tipo', 'gasto')
+            ->sum('monto');
 
         $balance = $ventas - $egresos;
 
@@ -238,5 +262,79 @@ class MovimientoController extends Controller
             'responsable' => $gasto->usuario->nombre ?? '—',
             'creado_en' => optional($gasto->created_at)->format('d/m/Y H:i'),
         ]);
+    }
+
+    public function detalleCompra(Movimiento $movimiento)
+    {
+        abort_unless(
+            $movimiento->tipo === 'egreso'
+            && $movimiento->subtipo === 'compra_mercaderia'
+            && $movimiento->referencia_tipo === 'lote',
+            404
+        );
+
+        $lote = Lote::with(['producto', 'proveedor'])->findOrFail($movimiento->referencia_id);
+        $pagos = $movimiento->pagosCompra()->with('usuario')->orderByDesc('fecha')->orderByDesc('id')->get();
+        $pagado = (float) $pagos->sum('monto');
+        $total = (float) $movimiento->monto;
+
+        return response()->json([
+            'movimiento_id' => $movimiento->id,
+            'lote_id' => $lote->id,
+            'producto' => $lote->producto->nombre ?? '—',
+            'proveedor' => $lote->proveedor->nombre ?? 'Sin proveedor',
+            'comprobante' => trim(ucfirst($lote->tipo_comprobante ?? 'Comprobante').' '.($lote->codigo_comprobante ?? '')),
+            'numero_lote' => $lote->numero_lote ?: '—',
+            'fecha_compra' => optional($lote->fecha_ingreso)->format('d/m/Y'),
+            'fecha_vencimiento' => optional($lote->fecha_vencimiento_pago)->format('d/m/Y'),
+            'total' => $total,
+            'pagado' => $pagado,
+            'saldo' => max(0, $total - $pagado),
+            'estado' => $movimiento->estado,
+            'puede_pagar' => auth()->user()->esAdmin() && $movimiento->estado === 'pendiente' && $pagado < $total,
+            'pagos' => $pagos->map(fn ($p) => [
+                'fecha' => $p->fecha->format('d/m/Y'),
+                'monto' => (float) $p->monto,
+                'metodo' => ucfirst($p->metodo_pago),
+                'operacion' => $p->numero_operacion,
+                'responsable' => $p->usuario->nombre ?? '—',
+            ]),
+        ]);
+    }
+
+    public function registrarPagoCompra(Request $request, Movimiento $movimiento)
+    {
+        abort_unless(auth()->user()->esAdmin(), 403);
+
+        $datos = $request->validate([
+            'monto' => ['required', 'numeric', 'gt:0'],
+            'fecha' => ['required', 'date'],
+            'metodo_pago' => ['required', 'in:efectivo_externo,transferencia,yape,plin,tarjeta,otro'],
+            'numero_operacion' => ['nullable', 'string', 'max:80'],
+            'observacion' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($movimiento, $datos) {
+            $deuda = Movimiento::lockForUpdate()->findOrFail($movimiento->id);
+            abort_unless($deuda->subtipo === 'compra_mercaderia' && $deuda->referencia_tipo === 'lote', 404);
+
+            $pagado = (float) CompraPago::where('movimiento_id', $deuda->id)->sum('monto');
+            $saldo = round((float) $deuda->monto - $pagado, 2);
+            abort_if($deuda->estado !== 'pendiente' || $saldo <= 0, 422, 'Esta deuda ya fue cancelada.');
+            abort_if((float) $datos['monto'] > $saldo, 422, 'El pago no puede superar el saldo pendiente.');
+
+            CompraPago::create([
+                ...$datos,
+                'movimiento_id' => $deuda->id,
+                'lote_id' => $deuda->referencia_id,
+                'usuario_id' => auth()->id(),
+            ]);
+
+            if (round($saldo - (float) $datos['monto'], 2) <= 0) {
+                $deuda->update(['estado' => 'pagado']);
+            }
+        });
+
+        return response()->json(['message' => 'Pago de proveedor registrado correctamente.']);
     }
 }

@@ -52,9 +52,14 @@
             </div>
         </div>
         @auth
-            <a class="access-link" href="{{ route(auth()->user()->rutaInicio()) }}">Ir al panel</a>
+            <a class="access-link" href="{{ route(auth()->user()->rutaInicio()) }}"
+               target="_blank" rel="noopener" aria-label="Ir al panel del sistema" title="Ir al panel">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 13h7v7H4z"/></svg>
+                Ir al panel
+            </a>
         @else
-            <a class="access-link" href="{{ route('login') }}">
+            <a class="access-link" href="{{ route('login') }}"
+               target="_blank" rel="noopener" aria-label="Acceso al sistema" title="Acceso al sistema">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4m-4-4 5-5-5-5m5 5H3"/></svg>
                 Acceso al sistema
             </a>
@@ -108,6 +113,9 @@
                             : (int) $producto->unidades_por_caja, 'price' => (float) $producto->precio_caja],
                     ])->filter(fn ($item) => $item['factor'] > 0 && $item['price'] > 0)->values();
                     $principal = $presentaciones->first();
+                    $precioPrincipalFinal = $principal
+                        ? round($principal['price'] * (1 + ((float) $igv / 100)), 2)
+                        : null;
                 @endphp
                 <article class="product-card"
                     data-product
@@ -152,7 +160,11 @@
 
                         @if($principal)
                             <div class="product-buy">
-                                <div class="price-wrap"><small>Desde</small><strong>S/ {{ number_format($principal['price'], 2) }}</strong></div>
+                                <div class="price-wrap">
+                                    <small>Desde</small>
+                                    <strong>S/ {{ number_format($precioPrincipalFinal, 2) }}</strong>
+                                    @if($igv > 0)<span class="tax-included">Incl. IGV</span>@endif
+                                </div>
                                 <div class="product-actions">
                                     <button type="button" class="options-button" data-view-product {{ $stock <= 0 ? 'disabled' : '' }}>
                                         Ver opciones
@@ -228,7 +240,10 @@
             </div>
         </details>
         <div><span>Productos</span><b data-cart-units>0</b></div>
-        <div class="cart-total"><span>Total estimado</span><strong>S/ <span data-cart-total>0.00</span></strong></div>
+        <div class="cart-total">
+            <span>Total estimado @if($igv > 0)<small class="tax-included">Incl. IGV</small>@endif</span>
+            <strong>S/ <span data-cart-total>0.00</span></strong>
+        </div>
         <button type="button" class="whatsapp-checkout" data-send-order>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.4l1.3-4.7a8.5 8.5 0 1 1 16.2-4Z"/><path d="M8.2 7.8c.2-.4.4-.4.7-.4h.4c.1 0 .3 0 .4.4l.8 1.9c.1.2.1.4 0 .6l-.6.8c-.2.2-.1.4 0 .6.7 1.2 1.7 2.1 2.9 2.7.2.1.4.1.6-.1l.8-1c.2-.2.4-.2.6-.1l2 .9c.2.1.4.2.4.4 0 .2-.1 1.3-.7 1.8-.5.5-1.3.8-2.1.7-1.1-.2-2.5-.7-4.2-2.2-2-1.8-3.3-4.1-3.4-4.3-.1-.2-.8-1.1-.8-2.1 0-1 .5-1.5.7-1.8Z"/></svg>
             Enviar pedido por WhatsApp
@@ -243,11 +258,20 @@
         <button type="button" class="modal-close" data-close-product aria-label="Cerrar">×</button>
         <div class="modal-product-image" data-modal-image></div>
         <div class="modal-product-copy">
-            <span data-modal-category></span>
+            <div class="modal-product-meta">
+                <span class="modal-field-title">Categoría</span>
+                <strong data-modal-category></strong>
+            </div>
             <h2 id="modalProductName" data-modal-name></h2>
-            <p data-modal-description></p>
+            <div class="modal-product-description">
+                <span class="modal-field-title">Descripción</span>
+                <p data-modal-description></p>
+            </div>
             <label class="modal-presentation">Presentación<select data-modal-presentation></select></label>
-            <div class="modal-price">S/ <strong data-modal-price>0.00</strong></div>
+            <div class="modal-price">
+                S/ <strong data-modal-price>0.00</strong>
+                @if($igv > 0)<span class="tax-included">Incl. IGV</span>@endif
+            </div>
             <div class="modal-actions">
                 <div class="quantity-picker">
                     <button type="button" data-modal-minus>−</button>
@@ -260,7 +284,7 @@
     </section>
 </div>
 
-<div id="catalogData" data-phone="{{ $telefono }}" data-business="{{ $empresa }}"></div>
+<div id="catalogData" data-phone="{{ $telefono }}" data-business="{{ $empresa }}" data-igv="{{ (float) $igv }}"></div>
 @endsection
 
 @push('scripts')

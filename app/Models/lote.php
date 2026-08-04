@@ -17,6 +17,11 @@ class Lote extends Model
         'proveedor_id',
         'numero_lote',
         'codigo_comprobante',
+        'tipo_comprobante',
+        'condicion_pago',
+        'metodo_pago',
+        'fecha_vencimiento_pago',
+        'observaciones_compra',
         'fecha_ingreso',
         'fecha_vencimiento',
         'stock_inicial',
@@ -26,6 +31,12 @@ class Lote extends Model
         'precio_paquete',
         'precio_caja',
         'activo',
+    ];
+
+    protected $casts = [
+        'fecha_ingreso' => 'date',
+        'fecha_vencimiento' => 'date',
+        'fecha_vencimiento_pago' => 'date',
     ];
 
     public function producto()
@@ -46,6 +57,18 @@ public function movimientos()
     {
         return $this->hasMany(LoteMovimiento::class, 'lote_id')
                     ->orderBy('creado_en', 'desc');
+    }
+
+    public function pagosCompra()
+    {
+        return $this->hasMany(CompraPago::class, 'lote_id');
+    }
+
+    public function compraMovimiento()
+    {
+        return $this->hasOne(Movimiento::class, 'referencia_id')
+            ->where('referencia_tipo', 'lote')
+            ->where('subtipo', 'compra_mercaderia');
     }
 
 }

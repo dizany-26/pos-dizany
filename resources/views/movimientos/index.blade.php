@@ -23,7 +23,7 @@ Movimientos
 @if($cajaAbierta?->estado === 'abierta')
     <button class="btn-gasto" data-bs-toggle="modal" data-bs-target="#modalCerrarCaja">
         <i class="fas fa-lock"></i>
-        <span class="btn-text">Solicitar cierre</span>
+        <span class="btn-text">{{ auth()->user()->esAdmin() ? 'Cerrar caja' : 'Solicitar cierre' }}</span>
     </button>
 @elseif($cajaAbierta?->estado === 'pendiente_cierre')
     @if(auth()->user()->esAdmin())
@@ -242,7 +242,6 @@ Movimientos
                 'ingresos'   => 'Ingresos',
                 'egresos'    => 'Egresos',
                 'por_cobrar' => 'Por cobrar',
-                'por_pagar'  => 'Por pagar',
             ];
         @endphp
 
@@ -391,6 +390,12 @@ Movimientos
                                 <td data-label="Acciones">
                                     <div class="d-flex gap-1">
                                         @if($caja->estado === 'abierta')
+                                            @if($caja->usuario_id === auth()->id())
+                                            <button type="button" class="btn-soft btn-soft-danger btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#modalCerrarCaja">
+                                                <i class="fas fa-lock"></i> Cerrar
+                                            </button>
+                                            @endif
                                             <button type="button" class="btn-soft btn-soft-success btn-sm caja-operacion-btn"
                                                 data-caja="{{ $caja->id }}" data-tipo="refuerzo" data-bs-toggle="modal" data-bs-target="#modalOperacionCaja">
                                                 <i class="fas fa-plus"></i> Refuerzo
@@ -478,7 +483,7 @@ Movimientos
         <form method="POST" action="{{ route('cajas.solicitar-cierre', $cajaAbierta) }}" class="modal-content">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-lock"></i> Solicitar cierre de caja</h5>
+                <h5 class="modal-title"><i class="fas fa-lock"></i> {{ auth()->user()->esAdmin() ? 'Cerrar caja' : 'Solicitar cierre de caja' }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -510,7 +515,8 @@ Movimientos
             <div class="modal-footer">
                 <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn-soft btn-soft-warning">
-                    <i class="fas fa-paper-plane"></i> Enviar conteo
+                    <i class="fas {{ auth()->user()->esAdmin() ? 'fa-lock' : 'fa-paper-plane' }}"></i>
+                    {{ auth()->user()->esAdmin() ? 'Confirmar cierre' : 'Enviar conteo' }}
                 </button>
             </div>
         </form>

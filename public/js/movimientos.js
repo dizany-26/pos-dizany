@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ventaId = row.dataset.refId;
         const tipoRef = row.dataset.refTipo;
+        const movimientoId = row.dataset.movId;
 
         if (tipoRef === 'gasto') {
             offcanvas.show();
@@ -128,6 +129,72 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error(error);
                 contenido.innerHTML = `<div class="text-danger">No se pudo cargar el detalle del gasto.</div>`;
+            }
+            return;
+        }
+
+        if (tipoRef === 'lote') {
+            offcanvas.show();
+            if (panelTitle) panelTitle.textContent = 'Detalle de la compra';
+            contenido.innerHTML = `<div class="text-muted">Cargando...</div>`;
+
+            try {
+                const detailUrl = row.dataset.detailUrl || `/movimientos/compras/${movimientoId}/detalle`;
+                const res = await fetch(detailUrl, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const compra = await res.json();
+                if (!res.ok) throw new Error(compra.message || 'No se pudo cargar la compra');
+                window.__compra = compra;
+                const estaPagada = compra.estado === 'pagado';
+
+                const historial = compra.pagos?.length
+                    ? compra.pagos.map(p => `
+                        <div class="detalle-item align-items-start">
+                            <i class="fas fa-receipt mt-1"></i>
+                            <span>${p.fecha}<small class="d-block text-muted">${p.metodo}${p.operacion ? ` · ${p.operacion}` : ''}</small></span>
+                            <strong>${money(p.monto)}<small class="d-block text-muted fw-normal">${p.responsable}</small></strong>
+                        </div>`).join('')
+                    : `<div class="text-muted small">Todavía no se registraron abonos.</div>`;
+
+                contenido.innerHTML = `
+                    <div id="panel-compra-detalle">
+                        <div class="card ui-card rounded-4 detalle-card mt-2 p-3">
+                            <div class="text-muted small">Compra de mercadería</div>
+                            <div class="d-flex justify-content-between align-items-center mt-1 mb-3"><h5 class="fw-bold mb-0">${compra.comprobante}</h5>${estaPagada ? '<span class="ui-badge ui-badge-success">Pagado</span>' : (compra.estado === 'parcial' ? '<span class="ui-badge ui-badge-warning">Pago parcial</span>' : '<span class="ui-badge ui-badge-danger">Pendiente</span>')}</div>
+                            <div class="d-flex justify-content-between"><span>Total</span><strong>${money(compra.total)}</strong></div>
+                            ${!estaPagada ? `<div class="d-flex justify-content-between mt-2"><span>Pagado</span><strong class="text-success">${money(compra.pagado)}</strong></div><div class="d-flex justify-content-between border-top mt-2 pt-2"><span class="fw-bold">Saldo pendiente</span><strong class="text-danger fs-5">${money(compra.saldo)}</strong></div>` : ''}
+                        </div>
+                        <div class="card ui-card rounded-4 mt-3 p-3">
+                            <div class="detalle-item"><i class="far fa-building"></i><span>Proveedor</span><strong>${compra.proveedor}</strong></div>
+                            <div class="detalle-item"><i class="far fa-file-alt"></i><span>Comprobante</span><strong>${compra.comprobante}</strong></div>
+                            <div class="detalle-item"><i class="fas fa-layer-group"></i><span>Lote</span><strong>${compra.numero_lote}</strong></div>
+                            <div class="detalle-item"><i class="far fa-calendar"></i><span>Fecha de compra</span><strong>${compra.fecha_compra ?? '—'}</strong></div>
+                            ${!estaPagada ? `<div class="detalle-item"><i class="far fa-calendar-check"></i><span>Vencimiento del pago</span><strong>${compra.fecha_vencimiento ?? 'Sin fecha'}</strong></div>` : ''}
+                        </div>
+                        <h6 class="mt-4 fw-semibold text-muted small text-uppercase">Productos del lote</h6>
+                        <div class="card ui-card rounded-4 p-3 listado-productos">${(compra.productos || []).map(p => `<div class="producto-item-pro"><div class="producto-info"><div class="producto-nombre">${p.nombre}</div>${p.descripcion ? `<div class="producto-desc">${p.descripcion}</div>` : ''}<div class="producto-cantidad">${p.cantidad} unidades × S/ ${Number(p.costo || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</div></div><div class="producto-precio">${money(p.subtotal)}</div></div>`).join('')}</div>
+                        ${compra.pagos?.length ? `<h6 class="mt-4 fw-semibold text-muted small text-uppercase">Historial de pagos</h6><div class="card ui-card rounded-4 p-3">${historial}</div>` : ''}
+                        ${compra.puede_pagar ? `<button type="button" class="btn-soft btn-soft-warning w-100 mt-3" onclick="mostrarPagoCompra()"><i class="fas fa-cash-register"></i><span>Registrar pago</span></button>` : ''}
+                    </div>
+                    <div id="panel-compra-pago" style="display:none">
+                        <h6 class="fw-semibold text-muted text-uppercase small mt-3">Pagar deuda al proveedor</h6>
+                        <div class="alert alert-info small">Este pago es de tesorería y no modifica el efectivo de la caja operativa.</div>
+                        <label class="form-label">Monto (saldo ${money(compra.saldo)})</label>
+                        <input id="cp_monto" type="number" class="form-control ui-input mb-3" min="0.01" max="${compra.saldo}" step="0.01" value="${Number(compra.saldo).toFixed(2)}">
+                        <label class="form-label">Fecha</label>
+                        <input id="cp_fecha" type="date" class="form-control ui-input mb-3" value="${new Date().toISOString().slice(0, 10)}">
+                        <label class="form-label">Medio utilizado</label>
+                        <select id="cp_metodo" class="form-select ui-input mb-3"><option value="">Seleccionar...</option><option value="efectivo_externo">Efectivo externo</option><option value="transferencia">Transferencia</option><option value="yape">Yape</option><option value="plin">Plin</option><option value="tarjeta">Tarjeta</option><option value="otro">Otro</option></select>
+                        <label class="form-label">N.º de operación (opcional)</label>
+                        <input id="cp_operacion" class="form-control ui-input mb-3" maxlength="80">
+                        <label class="form-label">Observación (opcional)</label>
+                        <textarea id="cp_observacion" class="form-control ui-input mb-3" maxlength="500"></textarea>
+                        <div class="d-flex gap-2"><button type="button" class="btn-soft btn-soft-info flex-fill" onclick="volverCompraDetalle()">Volver</button><button type="button" class="btn-soft btn-soft-success flex-fill" onclick="confirmarPagoCompra()">Confirmar pago</button></div>
+                    </div>`;
+            } catch (error) {
+                console.error(error);
+                contenido.innerHTML = `<div class="text-danger">No se pudo cargar el detalle de la compra.</div>`;
             }
             return;
         }
@@ -437,6 +504,50 @@ function mostrarCobro() {
     const vueltoEl = document.getElementById('cc_vuelto');
     if (inputMonto) inputMonto.value = '0';
     if (vueltoEl) vueltoEl.innerText = '0.00';
+}
+
+function mostrarPagoCompra() {
+    document.getElementById('panel-compra-detalle').style.display = 'none';
+    document.getElementById('panel-compra-pago').style.display = 'block';
+}
+
+function volverCompraDetalle() {
+    document.getElementById('panel-compra-pago').style.display = 'none';
+    document.getElementById('panel-compra-detalle').style.display = 'block';
+}
+
+async function confirmarPagoCompra() {
+    const compra = window.__compra;
+    const monto = Number(document.getElementById('cp_monto')?.value || 0);
+    const metodo = document.getElementById('cp_metodo')?.value;
+    if (!compra || monto <= 0 || monto > Number(compra.saldo) || !metodo) {
+        window.__toast?.toastWarn('Revisa el monto y selecciona el medio de pago.');
+        return;
+    }
+
+    try {
+        const res = await fetch(compra.pago_url || `/movimientos/compras/${compra.movimiento_id}/pagos`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({
+                monto,
+                fecha: document.getElementById('cp_fecha')?.value,
+                metodo_pago: metodo,
+                numero_operacion: document.getElementById('cp_operacion')?.value || null,
+                observacion: document.getElementById('cp_observacion')?.value || null
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || Object.values(data.errors || {})[0]?.[0] || 'No se pudo registrar el pago');
+        window.__toast?.toastSuccess(data.message);
+        setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+        window.__toast?.toastError(error.message);
+    }
 }
 
 function volverDetalle() {

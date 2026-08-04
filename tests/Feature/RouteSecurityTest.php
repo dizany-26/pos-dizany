@@ -15,9 +15,13 @@ class RouteSecurityTest extends TestCase
             'usuarios.store' => ['auth', 'permission:usuarios'],
             'productos.update' => ['auth', 'permission:productos'],
             'inventario.lote.store' => ['auth', 'permission:inventario.lote'],
+            'inventario.compras' => ['auth', 'permission:inventario.lote'],
+            'inventario.compras.pagos' => ['auth', 'permission:inventario.lote', 'role:Administrador'],
+            'inventario.compra-en-curso.limpiar' => ['auth', 'permission:inventario.lote'],
             'lotes.ajustar' => ['auth', 'role:Administrador'],
             'ventas.destroy' => ['auth', 'role:Administrador'],
             'gastos.destroy' => ['auth', 'role:Administrador'],
+            'movimientos.compras.pagos' => ['auth', 'permission:movimientos', 'role:Administrador'],
             'catalogo.admin.config.update' => ['auth', 'permission:catalogo.config'],
         ];
 

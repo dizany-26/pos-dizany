@@ -62,20 +62,43 @@ class CajaController extends Controller
             'observaciones' => 'nullable|string|max:1000',
         ]);
 
-        DB::transaction(function () use ($caja, $data) {
+        $cierreDirecto = auth()->user()->esAdmin() && $caja->usuario_id === auth()->id();
+
+        DB::transaction(function () use ($caja, $data, $cierreDirecto) {
             $caja = Caja::whereKey($caja->id)->lockForUpdate()->firstOrFail();
 
             if ($caja->estado !== 'abierta') {
                 abort(422, 'La caja no se encuentra abierta.');
             }
 
-            $caja->update([
+            $datosCierre = [
                 'cierre_solicitado_en' => now(),
                 'monto_declarado' => round((float) $data['monto_contado'], 2),
                 'cerrada_por' => auth()->id(),
                 'observaciones' => $data['observaciones'] ?? null,
-                'estado' => 'pendiente_cierre',
-            ]);
+            ];
+
+            // El administrador que opera su propia caja tiene autoridad para
+            // realizar y aprobar el arqueo en una sola operación auditable.
+            if ($cierreDirecto) {
+                $totales = $caja->calcularEfectivo();
+                $declarado = $datosCierre['monto_declarado'];
+
+                $caja->update($datosCierre + [
+                    'cerrada_en' => now(),
+                    'ingresos_efectivo' => $totales['ingresos'],
+                    'egresos_efectivo' => $totales['egresos'],
+                    'monto_esperado' => $totales['esperado'],
+                    'monto_contado' => $declarado,
+                    'diferencia' => round($declarado - $totales['esperado'], 2),
+                    'aprobada_por' => auth()->id(),
+                    'estado' => 'cerrada',
+                ]);
+
+                return;
+            }
+
+            $caja->update($datosCierre + ['estado' => 'pendiente_cierre']);
 
             $cajero = $caja->usuario()->first();
             $administradores = User::where('rol_id', 1)
@@ -94,7 +117,9 @@ class CajaController extends Controller
             }
         });
 
-        return back()->with('success', 'Conteo enviado. Un administrador debe revisar y aprobar el cierre.');
+        return back()->with('success', $cierreDirecto
+            ? 'Caja cerrada correctamente. El arqueo quedó registrado.'
+            : 'Conteo enviado. Un administrador debe revisar y aprobar el cierre.');
     }
 
     public function aprobar(Caja $caja)

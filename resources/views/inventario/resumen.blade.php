@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
-<link href="{{ asset('css/resumen.css') }}" rel="stylesheet" />
+<link href="{{ asset('css/resumen.css') }}?v={{ filemtime(public_path('css/resumen.css')) }}" rel="stylesheet" />
 @endpush
 
 {{-- BOTÓN ATRÁS --}}
@@ -18,14 +18,26 @@ Resumen de Inventario
 
 @section('content')
 
-<div class="container py-4">
+<div class="container-fluid py-4 inventory-summary-page">
+
+    <div class="summary-heading mb-4">
+        <div>
+            <span class="summary-kicker">CONTROL DE EXISTENCIAS</span>
+            <h2>Estado general del inventario</h2>
+            <p>Alertas de stock, vencimientos y valorización actual del almacén.</p>
+        </div>
+        <div class="summary-actions">
+            <a href="{{ route('inventario.lotes') }}" class="btn-soft btn-soft-info"><i class="fas fa-layer-group"></i> Lotes registrados</a>
+            <a href="{{ route('inventario.lote') }}" class="btn-soft btn-soft-success"><i class="fas fa-plus"></i> Nuevo ingreso</a>
+        </div>
+    </div>
 
     {{-- DASHBOARD CARDS --}}
     <div class="row g-3 mb-4 align-items-stretch">
 
         {{-- Sin stock --}}
         <div class="col-12 col-md">
-            <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-danger text-white h-100 position-relative overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 dashboard-card summary-metric metric-danger h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
                     <!-- Línea 1 -->
@@ -49,7 +61,7 @@ Resumen de Inventario
 
         {{-- Stock bajo --}}
         <div class="col-12 col-md">
-            <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-warning text-dark h-100 position-relative overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 dashboard-card summary-metric metric-warning h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
                     <!-- Línea 1 -->
@@ -66,14 +78,14 @@ Resumen de Inventario
                 </div>
 
                 <!-- Icono decorativo -->
-                <i class="fa-solid fa-triangle-exclamation card-icon text-dark"></i>
+                <i class="fa-solid fa-triangle-exclamation card-icon"></i>
 
             </div>
         </div>
 
         {{-- Por vencer --}}
         <div class="col-12 col-md">
-            <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-info text-white h-100 position-relative overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 dashboard-card summary-metric metric-info h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
                     <!-- Línea 1 -->
@@ -97,7 +109,7 @@ Resumen de Inventario
 
         {{-- Total unidades --}}
         <div class="col-12 col-md">
-            <div class="card border-0 shadow-sm rounded-4 dashboard-card bg-gradient-success text-white h-100 position-relative overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 dashboard-card summary-metric metric-success h-100 position-relative overflow-hidden">
                 <div class="card-body py-3 px-4 d-flex flex-column justify-content-between">
 
                     <!-- Línea 1 -->
@@ -121,7 +133,7 @@ Resumen de Inventario
 
         {{-- Tarjeta financiera --}}
         <div class="col-12 col-md-5">
-            <div class="card border-0 shadow-sm rounded-4 bg-dark text-white h-100">
+            <div class="card border-0 shadow-sm rounded-4 finance-summary-card text-white h-100">
                 <div class="card-body py-3 px-4">
 
                     <div class="d-flex justify-content-between align-items-center">
@@ -175,11 +187,12 @@ Resumen de Inventario
     <div class="row g-4">
 
         <div class="col-md-6">
-            <div class="card shadow-sm rounded-4 border-0 h-100">
-                <div class="card-header bg-white fw-bold border-0">
-                    Productos críticos
+            <div class="card shadow-sm rounded-4 border-0 h-100 summary-table-card">
+                <div class="card-header fw-bold border-0 d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-triangle-exclamation text-warning me-2"></i>Productos críticos</span>
+                    <span class="summary-count">{{ $productosCriticos->count() }}</span>
                 </div>
-                <div class="card-body table-responsive">
+                <div class="card-body table-responsive summary-table-scroll">
                     <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
                         <thead class="table-light">
                             <tr>
@@ -189,7 +202,7 @@ Resumen de Inventario
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($productosStockBajo as $producto)
+                            @forelse($productosCriticos as $producto)
                                 <tr>
                                     <td data-label="Producto">
                                         {{ $producto->nombre }}
@@ -207,7 +220,9 @@ Resumen de Inventario
                                         @endif
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr><td colspan="3" class="summary-empty"><i class="fas fa-circle-check"></i><span>Todo el inventario tiene stock suficiente.</span></td></tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -215,11 +230,12 @@ Resumen de Inventario
         </div>
 
         <div class="col-md-6">
-            <div class="card shadow-sm rounded-4 border-0 h-100">
-                <div class="card-header bg-white fw-bold border-0">
-                    Lotes próximos a vencer (30 días)
+            <div class="card shadow-sm rounded-4 border-0 h-100 summary-table-card">
+                <div class="card-header fw-bold border-0 d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-calendar-days text-info me-2"></i>Lotes próximos a vencer</span>
+                    <span class="summary-count">{{ $lotesPorVencer->count() }}</span>
                 </div>
-                <div class="card-body table-responsive">
+                <div class="card-body table-responsive summary-table-scroll">
                     <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
                         <thead class="table-light">
                             <tr>
@@ -231,7 +247,7 @@ Resumen de Inventario
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($lotesPorVencer as $lote)
+                            @forelse($lotesPorVencer as $lote)
                                 @php
                                     $dias = \Carbon\Carbon::now()->diffInDays($lote->fecha_vencimiento, false);
                                 @endphp
@@ -258,7 +274,9 @@ Resumen de Inventario
                                         </span>
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr><td colspan="5" class="summary-empty"><i class="fas fa-shield-alt"></i><span>No hay lotes próximos a vencer.</span></td></tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>

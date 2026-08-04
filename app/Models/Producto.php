@@ -32,6 +32,7 @@ class Producto extends Model
 
         // Vencimiento
         'maneja_vencimiento',
+        'stock_minimo',
 
         // Relaciones
         'categoria_id',
@@ -46,6 +47,7 @@ class Producto extends Model
         'activo'               => 'boolean',
         'visible_en_catalogo'  => 'boolean',
         'maneja_vencimiento'   => 'boolean',
+        'stock_minimo'         => 'integer',
         'precio_venta'         => 'decimal:2',
         'precio_paquete'       => 'decimal:2',
         'precio_caja'          => 'decimal:2',
