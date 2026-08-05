@@ -18,7 +18,8 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install gd pdo pdo_mysql zip
 
     RUN pecl install imagick \
-    && docker-php-ext-enable imagick
+    && docker-php-ext-enable imagick \
+    && php -m | grep -i imagick
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
