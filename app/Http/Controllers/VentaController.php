@@ -269,24 +269,48 @@ public function registrarVenta(Request $request)
                 $logoBase64 = 'data:image/' . pathinfo($path, PATHINFO_EXTENSION) .
                     ';base64,' . base64_encode(file_get_contents($path));
             }
-
+//........................
             // QR (evita usar $venta->hash si no existe)
-            $qrData = "{$config->ruc}|{$tipo}|{$serie}|{$correlativo}|{$venta->total}|{$venta->igv}|{$venta->fecha->format('d/m/Y')}";
-            $qr = base64_encode(\QrCode::format('png')->size(120)->generate($qrData));
+            //$qrData = "{$config->ruc}|{$tipo}|{$serie}|{$correlativo}|{$venta->total}|{$venta->igv}|{$venta->fecha->format('d/m/Y')}";
+            //$qr = base64_encode(\QrCode::format('png')->size(120)->generate($qrData));
 
-            $pdf = \PDF::setOptions([
-                'isRemoteEnabled'   => true,
-                'dpi'               => 96,
-                'defaultMediaType'  => 'screen',
-            ])->loadView($vista, [
-                'venta' => $venta,
-                'config' => $config,
-                'qr' => $qr,
-                'logoBase64' => $logoBase64,
-                'subtotal' => $venta->op_gravadas,
-                'igv' => $venta->igv,
-                'total' => $venta->total,
-            ]);
+            //$pdf = \PDF::setOptions([
+                //'isRemoteEnabled'   => true,
+               // 'dpi'               => 96,
+               // 'defaultMediaType'  => 'screen',
+           // ])->loadView($vista, [
+                //'venta' => $venta,
+                //'config' => $config,
+                //'qr' => $qr,
+                //'logoBase64' => $logoBase64,
+                //'subtotal' => $venta->op_gravadas,
+               // 'igv' => $venta->igv,
+               // 'total' => $venta->total,
+            //]);
+//.........................
+// QR en SVG: no depende de Imagick
+$qrData = "{$config->ruc}|{$tipo}|{$serie}|{$correlativo}|{$venta->total}|{$venta->igv}|{$venta->fecha->format('d/m/Y')}";
+
+$qr = base64_encode(
+    QrCode::format('svg')
+        ->size(120)
+        ->generate($qrData)
+);
+
+$pdf = Pdf::setOptions([
+    'isRemoteEnabled'  => true,
+    'dpi'              => 96,
+    'defaultMediaType' => 'screen',
+])->loadView($vista, [
+    'venta'      => $venta,
+    'config'     => $config,
+    'qr'         => $qr,
+    'logoBase64' => $logoBase64,
+    'subtotal'   => $venta->op_gravadas,
+    'igv'        => $venta->igv,
+    'total'      => $venta->total,
+]);
+
 
             if ($formato === 'ticket') {
                 $alto = max(400, count($venta->detalleVentas) * 35 + 400);

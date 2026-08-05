@@ -130,7 +130,7 @@
 
     <!-- QR -->
     <div class="qr">
-        <img src="data:image/png;base64,{{ $qr }}" alt="Código QR">
+        <img src="data:image/svg+xml;base64,{{ $qr }}" alt="Código QR">
     </div>
 
     <div class="footer">
