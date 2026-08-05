@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_mysql zip
 
-    RUN pecl install imagick \
+RUN pecl install imagick \
     && docker-php-ext-enable imagick \
     && php -m | grep -i imagick
 
