@@ -15,7 +15,9 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql zip
+    && docker-php-ext-install gd pdo pdo_mysql zip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pecl install imagick \
     && docker-php-ext-enable imagick \
@@ -29,14 +31,32 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
 
-RUN npm install
-RUN npm run build
+RUN npm install \
+    && npm run build
 
-RUN php artisan config:clear
-RUN php artisan route:clear
-RUN php artisan view:clear
+RUN php artisan config:clear \
+    && php artisan route:clear \
+    && php artisan view:clear
 
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Crear carpetas necesarias y permitir escritura a Apache/Laravel
+RUN mkdir -p \
+    /var/www/html/public/comprobantes \
+    /var/www/html/public/uploads/productos \
+    /var/www/html/storage/app/public \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views \
+    /var/www/html/storage/logs \
+    && chown -R www-data:www-data \
+        /var/www/html/storage \
+        /var/www/html/bootstrap/cache \
+        /var/www/html/public/comprobantes \
+        /var/www/html/public/uploads \
+    && chmod -R 775 \
+        /var/www/html/storage \
+        /var/www/html/bootstrap/cache \
+        /var/www/html/public/comprobantes \
+        /var/www/html/public/uploads
 
 RUN a2enmod rewrite
 
