@@ -94,7 +94,7 @@ return [
     'users' => [
             'provider' => 'users',
             'table' => 'password_resets', // ✅ Usa tu tabla real
-            'expire' => 60,
+            'expire' => 30,
             'throttle' => 60,
         ],
     ],

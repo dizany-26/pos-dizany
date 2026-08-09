@@ -58,9 +58,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $host = request()->getHost();
 
-        return $this->app->environment('production')
-            || request()->isSecure()
-            || str_contains($host, 'onrender.com')
+        return request()->isSecure()
             || str_contains($host, 'ngrok-free.dev')
             || str_contains($host, 'ngrok.io');
     }

@@ -3,59 +3,86 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Carbon;
 use App\Models\User;
+use App\Models\Configuracion;
+use App\Models\PasswordResetLinkAudit;
+use App\Support\SecurePassword;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class ResetPasswordController extends Controller
 {
-    public function showResetForm(Request $request, $token)
+    public function showResetForm(Request $request, string $token)
     {
-        // Verificar que el token exista
-        $reset = DB::table('password_resets')
-            ->where('token', $token)
-            ->where('email', $request->email)
+        $email = mb_strtolower(trim((string) $request->query('email')));
+        $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+        $audit = PasswordResetLinkAudit::where('token_hash', PasswordResetLinkAudit::fingerprint($token))
+            ->where('email', $email)
             ->first();
 
-        if (!$reset) {
-            return redirect()->route('login')->with('error', 'El token no es válido o ha expirado.');
+        if ($audit?->used_at) {
+            return redirect()->route('password.request')->withErrors([
+                'email' => 'Este enlace de recuperación ya fue utilizado. Solicita uno nuevo si necesitas cambiar nuevamente tu contraseña.',
+            ]);
         }
 
-        return view('auth.passwords.reset', [
-            'token' => $token,
-            'email' => $request->email
-        ]);
+        if ($audit && $audit->expires_at->isPast()) {
+            return redirect()->route('password.request')->withErrors([
+                'email' => 'Este enlace de recuperación expiró. Solicita uno nuevo.',
+            ]);
+        }
+
+        if (! $user || ! Password::broker()->tokenExists($user, $token)) {
+            return redirect()->route('password.request')->withErrors([
+                'email' => 'Este enlace de recuperación no es válido o fue reemplazado por uno más reciente. Solicita uno nuevo.',
+            ]);
+        }
+
+        $config = Configuracion::first();
+
+        return view('auth.passwords.reset', compact('token', 'email', 'config'));
     }
 
     public function reset(Request $request)
     {
-        $request->validate([
-            'token'    => 'required',
-            'email'    => 'required|email|exists:usuarios,email',
-            'password' => 'required|confirmed|min:6',
+        $request->merge([
+            'email' => mb_strtolower(trim((string) $request->input('email'))),
         ]);
 
-        $reset = DB::table('password_resets')
-            ->where('email', $request->email)
-            ->where('token', $request->token)
-            ->first();
+        $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email:rfc', 'max:255'],
+            'password' => ['required', 'confirmed', SecurePassword::rule()],
+        ], SecurePassword::messages());
 
-        if (!$reset) {
-            return back()->withErrors(['email' => 'Token inválido o expirado.']);
+        $status = Password::broker()->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) use ($request): void {
+                $user->forceFill([
+                    'clave' => Hash::make($password),
+                ])->save();
+
+                PasswordResetLinkAudit::where(
+                    'token_hash',
+                    PasswordResetLinkAudit::fingerprint((string) $request->input('token'))
+                )->update(['used_at' => now()]);
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return back()->withInput($request->only('email'))->withErrors([
+                'email' => 'El enlace de recuperación no es válido o ya expiró. Solicita uno nuevo.',
+            ]);
         }
 
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return back()->withErrors(['email' => 'No se encontró ningún usuario con este correo.']);
-        }
-
-        $user->clave = Hash::make($request->password); // ⚠️ usamos 'clave' porque así se llama en tu DB
-        $user->save();
-
-        DB::table('password_resets')->where('email', $request->email)->delete();
-
-        return redirect()->route('login')->with('success', 'Tu contraseña ha sido restablecida con éxito.');
+        return redirect()->route('login')->with(
+            'success',
+            'Tu contraseña fue actualizada. Ya puedes iniciar sesión con la nueva contraseña.'
+        );
     }
+
 }

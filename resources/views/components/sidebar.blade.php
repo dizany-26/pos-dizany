@@ -130,11 +130,29 @@
 
                 <div class="sidebar-section-title">SISTEMA</div>
 
-                <a href="{{ route('configuracion.index') }}"
-                class="{{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
-                    <i class="fas fa-cog"></i>
-                    <span class="menu-text">Configuración</span>
-                </a>
+                <div class="submenu">
+                    <button class="submenu-toggle {{ request()->is('configuracion*') ? 'active' : '' }}">
+                        <div class="submenu-left">
+                            <i class="fas fa-cog me-2"></i>
+                            <span class="menu-text">Configuración</span>
+                        </div>
+                        <i class="fas fa-caret-down toggle-icon"></i>
+                    </button>
+
+                    <div class="submenu-items {{ request()->is('configuracion*') ? 'show' : '' }}">
+                        <a href="{{ route('configuracion.index') }}"
+                        class="{{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
+                            <i class="fas fa-sliders-h me-1"></i>
+                            <span class="menu-text">Configuración general</span>
+                        </a>
+
+                        <a href="{{ route('backups.index') }}"
+                        class="{{ request()->routeIs('backups.*') ? 'active' : '' }}">
+                            <i class="fas fa-database me-1"></i>
+                            <span class="menu-text">Copias de seguridad</span>
+                        </a>
+                    </div>
+                </div>
 
                 <div class="sidebar-section-title sidebar-section-catalogo">CATÁLOGO WEB</div>
                 <div class="submenu">
@@ -161,7 +179,7 @@
                     </div>
                 </div>
 
-            @elseif(auth()->user()->rol->nombre == 'Empleado')
+            @else
                 @php($permisosUsuario = auth()->user()->permisos->pluck('permiso'))
 
                 @if($permisosUsuario->contains('dashboard.empleado'))
@@ -292,12 +310,34 @@
                     </a>
                 @endif
 
-                @if($permisosUsuario->contains('configuracion'))
-                    <a href="{{ route('configuracion.index') }}"
-                    class="{{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
-                        <i class="fas fa-cog"></i>
-                        <span class="menu-text">Configuración</span>
-                    </a>
+                @if($permisosUsuario->contains('configuracion') || $permisosUsuario->contains('backups'))
+                    <div class="submenu">
+                        <button class="submenu-toggle {{ request()->is('configuracion*') ? 'active' : '' }}">
+                            <div class="submenu-left">
+                                <i class="fas fa-cog me-2"></i>
+                                <span class="menu-text">Configuración</span>
+                            </div>
+                            <i class="fas fa-caret-down toggle-icon"></i>
+                        </button>
+
+                        <div class="submenu-items {{ request()->is('configuracion*') ? 'show' : '' }}">
+                            @if($permisosUsuario->contains('configuracion'))
+                                <a href="{{ route('configuracion.index') }}"
+                                class="{{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
+                                    <i class="fas fa-sliders-h me-1"></i>
+                                    <span class="menu-text">Configuración general</span>
+                                </a>
+                            @endif
+
+                            @if($permisosUsuario->contains('backups'))
+                                <a href="{{ route('backups.index') }}"
+                                class="{{ request()->routeIs('backups.*') ? 'active' : '' }}">
+                                    <i class="fas fa-database me-1"></i>
+                                    <span class="menu-text">Copias de seguridad</span>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
                 @endif
 
                 @if($permisosUsuario->contains('catalogo.ver'))

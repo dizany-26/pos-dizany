@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
@@ -57,9 +59,45 @@ public function getEmailForPasswordReset()
 {
     return $this->email;
 }
+
+public function sendPasswordResetNotification($token): void
+{
+    $fallback = rtrim((string) config('password_reset.local_origin', config('app.url')), '/');
+    $requestOrigin = app()->runningInConsole()
+        ? null
+        : rtrim(request()->getSchemeAndHttpHost(), '/');
+    $allowedOrigins = config('password_reset.allowed_origins', []);
+
+    $isLocalhost = $requestOrigin === null
+        || in_array(parse_url($requestOrigin, PHP_URL_HOST), ['localhost', '127.0.0.1', '::1'], true);
+
+    $origin = ! $isLocalhost && in_array($requestOrigin, $allowedOrigins, true)
+        ? $requestOrigin
+        : $fallback;
+
+    if (! in_array($origin, $allowedOrigins, true)) {
+        $origin = rtrim((string) config('app.url'), '/');
+    }
+
+    try {
+        PasswordResetLinkAudit::create([
+            'email' => mb_strtolower(trim((string) $this->getEmailForPasswordReset())),
+            'token_hash' => PasswordResetLinkAudit::fingerprint($token),
+            'expires_at' => now()->addMinutes(
+                (int) config('auth.passwords.'.config('auth.defaults.passwords').'.expire', 30)
+            ),
+        ]);
+    } catch (\Throwable $exception) {
+        Log::warning('No se pudo registrar la auditoría del enlace de recuperación.', [
+            'exception' => $exception,
+        ]);
+    }
+
+    $this->notify(new ResetPasswordNotification($token, $origin));
+}
 public function esAdmin()
 {
-    return $this->rol_id == 1;
+    return optional($this->rol)->nombre === 'Administrador';
 }
 
 public function cajas(): HasMany
@@ -87,6 +125,7 @@ public function rutaInicio(): string
         'gastos' => 'gastos.index',
         'reportes' => 'reportes.index',
         'configuracion' => 'configuracion.index',
+        'backups' => 'backups.index',
         'catalogo.ver' => 'catalogo.admin.index',
         'catalogo.config' => 'catalogo.admin.config',
         'usuarios' => 'usuarios.index',

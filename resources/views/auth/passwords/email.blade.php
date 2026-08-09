@@ -2,110 +2,50 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Recuperar Contraseña | Dizany</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Estilos Bootstrap y FontAwesome -->
+    <title>Recuperar contraseña | {{ $config->nombre_empresa ?? 'DIZANY' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background: linear-gradient(to right, #6a11cb, #2575fc);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .card-email {
-            background-color: #fff;
-            border-radius: 15px;
-            padding: 40px 30px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 420px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .card-email h4 {
-            font-weight: 700;
-            color: #333;
-        }
-
-        .form-control {
-            border-radius: 8px;
-        }
-
-        .btn-enviar {
-            background-color: #0069ed;
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-        }
-
-        .btn-enviar:hover {
-            background-color: #0053ba;
-        }
-
-        .volver-login {
-            margin-top: 15px;
-            display: block;
-            font-size: 0.9rem;
-            color: #444;
-        }
-
-        .volver-login:hover {
-            color: #000;
-            text-decoration: underline;
-        }
-
-        .logo {
-            font-size: 32px;
-            color: #2575fc;
-            margin-bottom: 10px;
-        }
-    </style>
+    <link href="{{ asset('css/auth-recovery.css') }}" rel="stylesheet">
 </head>
-<body>
+<body class="auth-recovery-page">
+    <main class="recovery-card">
+        <img src="{{ asset(($config && $config->logo) ? $config->logo : 'images/logo.png') }}"
+             alt="Logo de {{ $config->nombre_empresa ?? 'DIZANY' }}"
+             class="recovery-logo">
 
-    <div class="card-email">
-        <div class="logo">
-            <i class="fas fa-unlock-alt"></i>
-        </div>
-        <h4>¿Olvidaste tu contraseña?</h4>
-        <p class="text-muted mb-4">Ingresa tu correo y te enviaremos un enlace para restablecerla.</p>
+        <div class="recovery-icon"><i class="fa-solid fa-key"></i></div>
+        <h1 class="recovery-title">Recupera tu acceso</h1>
+        <p class="recovery-subtitle">Ingresa el correo registrado en tu cuenta. Te enviaremos un enlace privado para crear una nueva contraseña.</p>
 
-        <!-- Mensajes -->
         @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success recovery-alert">
+                <i class="fa-solid fa-circle-check me-1"></i>{{ session('success') }}
+            </div>
         @endif
 
         @if($errors->any())
-            <div class="alert alert-danger">
-                {{ $errors->first('email') }}
+            <div class="alert alert-danger recovery-alert">
+                <i class="fa-solid fa-circle-exclamation me-1"></i>{{ $errors->first('email') }}
             </div>
         @endif
 
-        <!-- Formulario -->
-        <form method="POST" action="{{ route('password.email') }}">
+        <form method="POST" action="{{ route('password.email', [], false) }}" class="recovery-form" autocomplete="off" data-form-type="other">
             @csrf
-
-            <div class="mb-3 text-start">
+            <div class="mb-3">
                 <label for="email" class="form-label">Correo electrónico</label>
-                <input type="email" name="email" id="email" class="form-control" placeholder="ejemplo@correo.com" required autofocus>
+                <input type="email" name="email" id="email" class="form-control"
+                       value="{{ old('email') }}" placeholder="nombre@correo.com" required autofocus
+                       autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
-
-            <button type="submit" class="btn btn-enviar w-100">
-                <i class="fas fa-paper-plane me-1"></i> Enviar enlace
+            <button type="submit" class="btn recovery-btn w-100">
+                <i class="fa-solid fa-paper-plane me-1"></i> Enviar enlace seguro
             </button>
         </form>
 
-        <a href="{{ route('login') }}" class="volver-login">
-            <i class="fas fa-arrow-left"></i> Volver al inicio de sesión
+        <a href="{{ route('login', [], false) }}" class="recovery-back">
+            <i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesión
         </a>
-    </div>
-
+    </main>
 </body>
 </html>

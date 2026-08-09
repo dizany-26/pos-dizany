@@ -27,7 +27,8 @@
             'reportes' => 'Reportes',
         ],
         'SISTEMA' => [
-            'configuracion' => 'Configuración',
+            'configuracion' => 'Configuración general',
+            'backups' => 'Copias de seguridad',
         ],
         'CATÁLOGO WEB' => [
             'catalogo.ver' => 'Vista catálogo',
@@ -127,7 +128,8 @@ Usuarios
 
                                 <form action="{{ route('usuarios.destroy', $usuario->id) }}"
                                     method="POST"
-                                    onsubmit="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                    class="eliminar-usuario-form"
+                                    data-usuario="{{ $usuario->nombre }}">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">
@@ -154,7 +156,7 @@ Usuarios
 
 <div class="modal fade" id="modalNuevoUsuario" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl usuario-modal-dialog">
-        <form method="POST" action="{{ route('usuarios.store') }}" class="modal-content usuario-modal-form" id="formNuevoUsuario">
+        <form method="POST" action="{{ route('usuarios.store') }}" class="modal-content usuario-modal-form" id="formNuevoUsuario" autocomplete="off" data-form-type="other">
             @csrf
 
             <div class="modal-header">
@@ -175,7 +177,7 @@ Usuarios
 
                             <div class="mb-3">
                                 <label class="form-label">Usuario</label>
-                                <input type="text" name="usuario" class="form-control ui-input" autocomplete="off" value="" required>
+                                <input type="text" name="usuario" class="form-control ui-input" autocomplete="off" value="" required data-lpignore="true" data-1p-ignore>
                             </div>
 
                             <div class="mb-3">
@@ -186,10 +188,15 @@ Usuarios
                             <div class="mb-3">
                                 <label class="form-label">Contraseña</label>
                                 <div class="usuario-password-group position-relative">
-                                    <input type="password" name="password" class="form-control ui-input usuario-password-input pe-5" autocomplete="new-password" value="" required>
+                                    <input type="text" id="nuevo-password-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida pe-5" autocomplete="one-time-code" value="" required data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Contraseña nueva">
+                                    <input type="hidden" name="password" id="nuevo-password-payload" value="">
                                     <button type="button" class="toggle-password-btn" data-target="password" aria-label="Mostrar contraseña">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
+                                </div>
+                                <div class="password-security-help mt-2">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    Usa 8 caracteres o más e incluye mayúscula, minúscula, número y símbolo.
                                 </div>
                             </div>
 
@@ -198,9 +205,13 @@ Usuarios
                                 <select name="rol_id" id="nuevo-rol-id" class="form-select ui-input" required>
                                     <option value="" disabled selected>Seleccione un rol</option>
                                     @foreach($roles as $rol)
-                                        <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
+                                        <option value="{{ $rol->id }}"
+                                                data-description="{{ $descripcionesRol[$rol->nombre] ?? '' }}">
+                                            {{ $rol->nombre }}
+                                        </option>
                                     @endforeach
                                 </select>
+                                <div id="nuevo-rol-ayuda" class="usuario-modal-section-help mt-2" aria-live="polite"></div>
                             </div>
                         </div>
                     </div>
@@ -210,7 +221,7 @@ Usuarios
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                                 <div>
                                     <h6 class="usuario-modal-section-title mb-1">Permisos de acceso</h6>
-                                    <p class="usuario-modal-section-help mb-0">Para empleado solo se marcará por defecto el dashboard. Luego eliges los demás accesos.</p>
+                                    <p class="usuario-modal-section-help mb-0">Al elegir un rol se marcarán permisos recomendados. Puedes personalizarlos antes de guardar.</p>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-sm btn-light usuario-permisos-action" id="marcarTodosPermisos">Marcar todo</button>
@@ -262,7 +273,7 @@ Usuarios
 
 <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl usuario-modal-dialog">
-        <form method="POST" id="formEditarUsuario" class="modal-content usuario-modal-form">
+        <form method="POST" id="formEditarUsuario" class="modal-content usuario-modal-form" autocomplete="off" data-form-type="other">
             @csrf
             @method('PUT')
             <div class="modal-header">
@@ -294,9 +305,13 @@ Usuarios
                                 <label class="form-label">Rol</label>
                                 <select name="rol_id" id="editar-rol" class="form-select ui-input" required>
                                     @foreach($roles as $rol)
-                                        <option value="{{ $rol->id }}">{{ $rol->nombre }}</option>
+                                        <option value="{{ $rol->id }}"
+                                                data-description="{{ $descripcionesRol[$rol->nombre] ?? '' }}">
+                                            {{ $rol->nombre }}
+                                        </option>
                                     @endforeach
                                 </select>
+                                <div id="editar-rol-ayuda" class="usuario-modal-section-help mt-2" aria-live="polite"></div>
                             </div>
                         </div>
                     </div>
@@ -354,7 +369,7 @@ Usuarios
 
 <div class="modal fade" id="modalCambiarClave" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
-        <form method="POST" action="{{ route('usuarios.cambiarClave') }}" class="modal-content">
+        <form method="POST" action="{{ route('usuarios.cambiarClave') }}" class="modal-content" autocomplete="off" data-form-type="other">
             @csrf
             <input type="hidden" name="usuario_id" id="usuario_id_cambiar_clave">
             <div class="modal-header">
@@ -365,7 +380,12 @@ Usuarios
                 <p id="nombre_usuario_label"></p>
                 <div class="mb-3">
                     <label class="form-label">Nueva Contraseña</label>
-                    <input type="password" name="nueva_clave" class="form-control ui-input" required>
+                    <input type="text" id="cambiar-clave-visible" class="form-control ui-input usuario-clave-protegida" required autocomplete="one-time-code" data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Nueva contraseña">
+                    <input type="hidden" name="nueva_clave" id="cambiar-clave-payload" value="">
+                    <div class="password-security-help mt-2">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        Usa 8 caracteres o más e incluye mayúscula, minúscula, número y símbolo.
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -379,6 +399,7 @@ Usuarios
 @push('scripts')
 <script>
     window.rolesUsuarios = @json($roles->pluck('id', 'nombre'));
+    window.plantillasRolesUsuarios = @json($plantillasRol);
 </script>
 <script src="{{ asset('js/usuarios.js') }}"></script>
 @endpush

@@ -158,19 +158,26 @@
                 <h5 class="modal-title" id="modalCambiarClaveHeaderLabel">Cambiar Contraseña</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form action="{{ route('perfil.cambiar-clave') }}" method="POST">
+            <form action="{{ route('perfil.cambiar-clave') }}" method="POST" id="headerChangePasswordForm" autocomplete="off" data-form-type="other">
                 @csrf
                 <div class="modal-body">
                     <p class="mb-4">Usuario: <strong>{{ Auth::user()->nombre }}</strong></p>
                     <div class="mb-3">
                         <label for="headerNuevaClave" class="form-label">Nueva Contraseña</label>
-                        <input type="password"
-                               class="form-control"
+                        <input type="text"
+                               class="form-control secure-credential-entry"
                                id="headerNuevaClave"
-                               name="nueva_clave"
-                               minlength="4"
+                               minlength="8"
                                required
-                               autocomplete="new-password">
+                               autocomplete="one-time-code"
+                               data-lpignore="true"
+                               data-1p-ignore
+                               data-bwignore>
+                        <input type="hidden" name="nueva_clave" id="headerNuevaClavePayload" value="">
+                        <div class="password-policy-hint mt-2">
+                            <i class="fas fa-shield-halved me-1"></i>
+                            Usa 8 caracteres o más, con mayúscula, minúscula, número y símbolo.
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -206,6 +213,19 @@ function cargarNotificaciones() {
 
 document.addEventListener("DOMContentLoaded", function () {
     cargarNotificaciones();
+
+    const headerChangePasswordForm = document.getElementById('headerChangePasswordForm');
+    if (headerChangePasswordForm) {
+        headerChangePasswordForm.addEventListener('submit', () => {
+            document.getElementById('headerNuevaClavePayload').value =
+                document.getElementById('headerNuevaClave').value;
+        });
+
+        document.getElementById('modalCambiarClaveHeader')?.addEventListener('show.bs.modal', () => {
+            document.getElementById('headerNuevaClave').value = '';
+            document.getElementById('headerNuevaClavePayload').value = '';
+        });
+    }
 
     const revisarAlertasCaja = () => {
         fetch("{{ route('notificaciones.caja') }}", {

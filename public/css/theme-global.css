@@ -14,6 +14,158 @@
     --lt-shadow-sm: 0 2px 10px rgba(15, 35, 65, 0.08);
 }
 
+/* =========================================================
+   MODALES DE CLIENTES Y PROVEEDORES — MODO OSCURO
+========================================================= */
+:root[data-theme='dark'] #formNuevoProveedor,
+:root[data-theme='dark'] #formEditarProveedor,
+:root[data-theme='dark'] #formNuevoCliente,
+:root[data-theme='dark'] #formEditarCliente {
+    background: var(--dm-surface) !important;
+    color: var(--dm-text) !important;
+    border-color: var(--dm-border) !important;
+    box-shadow: 0 28px 70px rgba(0, 0, 0, .58) !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-modal-body,
+:root[data-theme='dark'] #formEditarProveedor .provider-modal-body,
+:root[data-theme='dark'] #formNuevoCliente .provider-modal-body,
+:root[data-theme='dark'] #formEditarCliente .provider-modal-body {
+    background: #0b1424 !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-form-section,
+:root[data-theme='dark'] #formEditarProveedor .provider-form-section,
+:root[data-theme='dark'] #formNuevoCliente .provider-form-section,
+:root[data-theme='dark'] #formEditarCliente .provider-form-section {
+    background: var(--dm-surface-soft) !important;
+    border-color: var(--dm-border) !important;
+    box-shadow: 0 8px 24px rgba(2, 8, 20, .28) !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-section-heading strong,
+:root[data-theme='dark'] #formEditarProveedor .provider-section-heading strong,
+:root[data-theme='dark'] #formNuevoCliente .provider-section-heading strong,
+:root[data-theme='dark'] #formEditarCliente .provider-section-heading strong,
+:root[data-theme='dark'] #formNuevoProveedor .form-label,
+:root[data-theme='dark'] #formEditarProveedor .form-label,
+:root[data-theme='dark'] #formNuevoCliente .form-label,
+:root[data-theme='dark'] #formEditarCliente .form-label {
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-section-heading small,
+:root[data-theme='dark'] #formEditarProveedor .provider-section-heading small,
+:root[data-theme='dark'] #formNuevoCliente .provider-section-heading small,
+:root[data-theme='dark'] #formEditarCliente .provider-section-heading small,
+:root[data-theme='dark'] #formNuevoProveedor .provider-query-status,
+:root[data-theme='dark'] #formEditarProveedor .provider-query-status,
+:root[data-theme='dark'] #formNuevoCliente .provider-query-status,
+:root[data-theme='dark'] #formEditarCliente .provider-query-status {
+    color: var(--dm-text-muted) !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-query-status.is-loading,
+:root[data-theme='dark'] #formEditarProveedor .provider-query-status.is-loading,
+:root[data-theme='dark'] #formNuevoCliente .provider-query-status.is-loading,
+:root[data-theme='dark'] #formEditarCliente .provider-query-status.is-loading {
+    color: #7db4ff !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-query-status.is-success,
+:root[data-theme='dark'] #formEditarProveedor .provider-query-status.is-success,
+:root[data-theme='dark'] #formNuevoCliente .provider-query-status.is-success,
+:root[data-theme='dark'] #formEditarCliente .provider-query-status.is-success {
+    color: #5ee0a0 !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-query-status.is-warning,
+:root[data-theme='dark'] #formEditarProveedor .provider-query-status.is-warning,
+:root[data-theme='dark'] #formNuevoCliente .provider-query-status.is-warning,
+:root[data-theme='dark'] #formEditarCliente .provider-query-status.is-warning {
+    color: #fbbf24 !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-query-status.is-error,
+:root[data-theme='dark'] #formEditarProveedor .provider-query-status.is-error,
+:root[data-theme='dark'] #formNuevoCliente .provider-query-status.is-error,
+:root[data-theme='dark'] #formEditarCliente .provider-query-status.is-error {
+    color: #fb7185 !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-section-icon,
+:root[data-theme='dark'] #formEditarProveedor .provider-section-icon,
+:root[data-theme='dark'] #formNuevoCliente .provider-section-icon,
+:root[data-theme='dark'] #formEditarCliente .provider-section-icon {
+    background: rgba(59, 130, 246, .16) !important;
+    color: #8fbdff !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-section-icon-green,
+:root[data-theme='dark'] #formEditarProveedor .provider-section-icon-green,
+:root[data-theme='dark'] #formNuevoCliente .provider-section-icon-green,
+:root[data-theme='dark'] #formEditarCliente .provider-section-icon-green {
+    background: rgba(16, 185, 129, .14) !important;
+    color: #61dfad !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .form-control,
+:root[data-theme='dark'] #formNuevoProveedor .form-select,
+:root[data-theme='dark'] #formEditarProveedor .form-control,
+:root[data-theme='dark'] #formEditarProveedor .form-select,
+:root[data-theme='dark'] #formNuevoCliente .form-control,
+:root[data-theme='dark'] #formNuevoCliente .form-select,
+:root[data-theme='dark'] #formEditarCliente .form-control,
+:root[data-theme='dark'] #formEditarCliente .form-select {
+    background-color: var(--dm-input-bg) !important;
+    border-color: var(--dm-input-border) !important;
+    color: var(--dm-text) !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .form-control:focus,
+:root[data-theme='dark'] #formNuevoProveedor .form-select:focus,
+:root[data-theme='dark'] #formEditarProveedor .form-control:focus,
+:root[data-theme='dark'] #formEditarProveedor .form-select:focus,
+:root[data-theme='dark'] #formNuevoCliente .form-control:focus,
+:root[data-theme='dark'] #formNuevoCliente .form-select:focus,
+:root[data-theme='dark'] #formEditarCliente .form-control:focus,
+:root[data-theme='dark'] #formEditarCliente .form-select:focus {
+    border-color: var(--dm-focus) !important;
+    box-shadow: 0 0 0 3px rgba(79, 143, 247, .18) !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .input-icon-field > i,
+:root[data-theme='dark'] #formEditarProveedor .input-icon-field > i,
+:root[data-theme='dark'] #formNuevoCliente .input-icon-field > i,
+:root[data-theme='dark'] #formEditarCliente .input-icon-field > i {
+    color: #86a1c7 !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-document-input .btn,
+:root[data-theme='dark'] #formEditarProveedor .provider-document-input .btn,
+:root[data-theme='dark'] #formNuevoCliente .provider-document-input .btn,
+:root[data-theme='dark'] #formEditarCliente .provider-document-input .btn {
+    background: rgba(59, 130, 246, .18) !important;
+    border-color: #416da8 !important;
+    color: #dbeafe !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .provider-document-input .btn:hover,
+:root[data-theme='dark'] #formEditarProveedor .provider-document-input .btn:hover,
+:root[data-theme='dark'] #formNuevoCliente .provider-document-input .btn:hover,
+:root[data-theme='dark'] #formEditarCliente .provider-document-input .btn:hover {
+    background: rgba(59, 130, 246, .30) !important;
+    border-color: #6495d7 !important;
+}
+
+:root[data-theme='dark'] #formNuevoProveedor .modal-footer,
+:root[data-theme='dark'] #formEditarProveedor .modal-footer,
+:root[data-theme='dark'] #formNuevoCliente .modal-footer,
+:root[data-theme='dark'] #formEditarCliente .modal-footer {
+    background: #0f192b !important;
+    border-top-color: var(--dm-border) !important;
+}
+
 :root[data-theme='dark'] {
     color-scheme: dark;
 
@@ -723,4 +875,17 @@
     color: #ffe9a8 !important;
     background: rgba(245, 158, 11, 0.16) !important;
     border-color: rgba(245, 158, 11, 0.36) !important;
+}
+.secure-credential-entry {
+    -webkit-text-security: disc;
+}
+
+.password-policy-hint {
+    color: var(--text-muted, #64748b);
+    font-size: .8rem;
+    line-height: 1.45;
+}
+
+.password-policy-hint i {
+    color: #2563eb;
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\CajaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ConsultaDocumentoController;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\EmpleadoController;
@@ -48,6 +49,9 @@ Route::middleware('guest')->group(function () {
         ->name('password.email');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
         ->name('password.reset');
+    // Compatibilidad con enlaces emitidos por versiones anteriores del sistema.
+    Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])
+        ->name('password.reset.legacy');
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
         ->middleware('throttle:5,1')
         ->name('password.update');
@@ -85,7 +89,7 @@ Route::get('/catalogo', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::post('/perfil/cambiar-clave', [UsuarioController::class, 'cambiarMiClave'])
         ->name('perfil.cambiar-clave');
@@ -342,6 +346,16 @@ Route::middleware('auth')->group(function () {
             ->name('configuracion.index');
         Route::put('/configuracion', [ConfiguracionController::class, 'update'])
             ->name('configuracion.update');
+    });
+
+    Route::middleware('permission:backups')->prefix('configuracion/copias-seguridad')->group(function () {
+        Route::get('/', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/', [BackupController::class, 'store'])->middleware('throttle:3,1')->name('backups.store');
+        Route::get('/{filename}/descargar', [BackupController::class, 'download'])->name('backups.download');
+        Route::post('/{filename}/restaurar', [BackupController::class, 'restore'])
+            ->middleware('throttle:2,5')
+            ->name('backups.restore');
+        Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
     });
 
     /*

@@ -146,4 +146,60 @@
     .provider-document-input .btn span:not(.spinner-border) {
         display: none;
     }
+
+    .provider-table-content,
+    .provider-table-content .ui-table,
+    .provider-table-content .ui-table tbody {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .provider-table-content .ui-table tr {
+        width: calc(100% - 2px) !important;
+        min-width: 0 !important;
+        max-width: calc(100% - 2px) !important;
+        margin: 0 1px 14px !important;
+        padding: 14px !important;
+        box-sizing: border-box;
+        overflow: hidden;
+        white-space: normal !important;
+    }
+
+    .provider-table-content .ui-table td {
+        width: 100%;
+        min-width: 0;
+        gap: 14px;
+        align-items: flex-start;
+        white-space: normal !important;
+    }
+
+    .provider-table-content .ui-table td::before {
+        flex: 0 0 34%;
+        align-self: flex-start;
+        text-align: left !important;
+    }
+
+    .provider-table-content .ui-table td:not([data-label="Acciones"]) {
+        text-align: right;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .provider-table-content .ui-table td[data-label="Acciones"] {
+        width: 100%;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding-top: 14px;
+        text-align: center !important;
+    }
+
+    .provider-table-content .ui-table td[data-label="Acciones"] .action-buttons {
+        width: 100%;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
 }

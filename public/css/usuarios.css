@@ -223,3 +223,26 @@
         max-height: none;
     }
 }
+
+.usuario-clave-protegida {
+    -webkit-text-security: disc;
+}
+
+.usuario-clave-protegida.clave-visible {
+    -webkit-text-security: none;
+}
+
+.password-security-help {
+    color: #64748b;
+    font-size: .78rem;
+    line-height: 1.45;
+}
+
+.password-security-help i {
+    color: #2563eb;
+    margin-right: .25rem;
+}
+
+:root[data-theme='dark'] .password-security-help {
+    color: #a8b5c9;
+}

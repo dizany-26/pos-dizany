@@ -2,155 +2,97 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Restablecer Contraseña | Dizany</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Bootstrap y FontAwesome -->
+    <title>Nueva contraseña | {{ $config->nombre_empresa ?? 'DIZANY' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background: linear-gradient(to right, #6a11cb, #2575fc);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .reset-card {
-            background: #fff;
-            border-radius: 15px;
-            padding: 40px 30px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            max-width: 420px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .reset-card h4 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .form-control {
-            border-radius: 8px;
-        }
-
-        .btn-reset {
-            background-color: #0069ed;
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-        }
-
-        .btn-reset:hover {
-            background-color: #0053ba;
-        }
-
-        .volver-login {
-            margin-top: 15px;
-            display: block;
-            font-size: 0.9rem;
-            color: #444;
-        }
-
-        .volver-login:hover {
-            color: #000;
-            text-decoration: underline;
-        }
-
-        .logo {
-            width: 100px;
-            margin-bottom: 15px;
-        }
-
-        .input-group-text {
-            background-color: #f0f0f0;
-            cursor: pointer;
-        }
-
-        .error-msg {
-            background: #f8d7da;
-            border: 1px solid #f5c2c7;
-            color: #842029;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            text-align: start;
-        }
-    </style>
+    <link href="{{ asset('css/auth-recovery.css') }}" rel="stylesheet">
 </head>
-<body>
+<body class="auth-recovery-page">
+    <main class="recovery-card">
+        <img src="{{ asset(($config && $config->logo) ? $config->logo : 'images/logo.png') }}"
+             alt="Logo de {{ $config->nombre_empresa ?? 'DIZANY' }}"
+             class="recovery-logo">
 
-<div class="reset-card">
-    <!--img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo"-->
+        <div class="recovery-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h1 class="recovery-title">Crea una nueva contraseña</h1>
+        <p class="recovery-subtitle">Elige una clave segura y diferente a las que utilizas en otros servicios.</p>
 
-    <h4><i class="fas fa-lock-open"></i> Nueva Contraseña</h4>
-    <p class="text-muted mb-3">Establece una nueva contraseña segura para tu cuenta.</p>
-
-    @if ($errors->any())
-        <div class="error-msg">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route('password.update') }}">
-        @csrf
-        <input type="hidden" name="token" value="{{ $token }}">
-
-        <div class="mb-3 text-start">
-            <label for="email" class="form-label">Correo electrónico</label>
-            <input type="email" id="email" name="email" class="form-control" value="{{ $email ?? old('email') }}" required>
-        </div>
-
-        <div class="mb-3 text-start">
-            <label for="password" class="form-label">Nueva contraseña</label>
-            <div class="input-group">
-                <input type="password" id="password" name="password" class="form-control" required>
-                <span class="input-group-text" onclick="togglePassword('password', 'eye1')">
-                    <i class="fas fa-eye" id="eye1"></i>
-                </span>
+        @if($errors->any())
+            <div class="alert alert-danger recovery-alert">
+                <i class="fa-solid fa-circle-exclamation me-1"></i>{{ $errors->first() }}
             </div>
-        </div>
+        @endif
 
-        <div class="mb-3 text-start">
-            <label for="password_confirmation" class="form-label">Confirmar contraseña</label>
-            <div class="input-group">
-                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" required>
-                <span class="input-group-text" onclick="togglePassword('password_confirmation', 'eye2')">
-                    <i class="fas fa-eye" id="eye2"></i>
-                </span>
+        <form method="POST" action="{{ route('password.update', [], false) }}" id="resetPasswordForm" class="recovery-form" autocomplete="off" data-form-type="other">
+            @csrf
+            <input type="hidden" name="token" value="{{ $token }}">
+            <input type="hidden" name="password" id="resetPasswordPayload">
+            <input type="hidden" name="password_confirmation" id="resetPasswordConfirmationPayload">
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Cuenta</label>
+                <input type="email" id="email" name="email" class="form-control"
+                       value="{{ $email ?? old('email') }}" required readonly autocomplete="off">
             </div>
-        </div>
 
-        <button type="submit" class="btn btn-reset w-100 mt-2">
-            <i class="fas fa-check-circle me-1"></i> Guardar nueva contraseña
-        </button>
-    </form>
+            <div class="mb-3">
+                <label for="resetPasswordVisible" class="form-label">Nueva contraseña</label>
+                <div class="recovery-input-group">
+                    <input type="text" id="resetPasswordVisible"
+                           class="form-control recovery-sensitive-input" minlength="8" required
+                           autocomplete="one-time-code" spellcheck="false" autocapitalize="none"
+                           data-lpignore="true" data-1p-ignore data-bwignore>
+                    <button type="button" class="recovery-password-toggle" data-password-target="resetPasswordVisible" aria-label="Mostrar contraseña">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <div class="password-security-help">
+                    <i class="fa-solid fa-shield-halved me-1"></i>
+                    Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo. Evita datos personales y contraseñas anteriores.
+                </div>
+            </div>
 
-    <a href="{{ route('login') }}" class="volver-login">
-        <i class="fas fa-arrow-left"></i> Volver al inicio de sesión
-    </a>
-</div>
+            <div class="mb-3">
+                <label for="resetPasswordConfirmationVisible" class="form-label">Confirmar contraseña</label>
+                <div class="recovery-input-group">
+                    <input type="text" id="resetPasswordConfirmationVisible"
+                           class="form-control recovery-sensitive-input" minlength="8" required
+                           autocomplete="one-time-code" spellcheck="false" autocapitalize="none"
+                           data-lpignore="true" data-1p-ignore data-bwignore>
+                    <button type="button" class="recovery-password-toggle" data-password-target="resetPasswordConfirmationVisible" aria-label="Mostrar contraseña">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </div>
 
-<script>
-    function togglePassword(fieldId, iconId) {
-        const input = document.getElementById(fieldId);
-        const icon = document.getElementById(iconId);
-        const isPassword = input.type === "password";
-        input.type = isPassword ? "text" : "password";
-        icon.classList.toggle("fa-eye");
-        icon.classList.toggle("fa-eye-slash");
-    }
-</script>
+            <button type="submit" class="btn recovery-btn w-100">
+                <i class="fa-solid fa-check me-1"></i> Guardar nueva contraseña
+            </button>
+        </form>
 
+        <a href="{{ route('login', [], false) }}" class="recovery-back">
+            <i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesión
+        </a>
+    </main>
+
+    <script>
+        document.querySelectorAll('[data-password-target]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.getElementById(button.dataset.passwordTarget);
+                const icon = button.querySelector('i');
+                const show = !input.classList.contains('is-visible');
+                input.classList.toggle('is-visible', show);
+                icon.classList.toggle('fa-eye', !show);
+                icon.classList.toggle('fa-eye-slash', show);
+                button.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            });
+        });
+
+        document.getElementById('resetPasswordForm').addEventListener('submit', () => {
+            document.getElementById('resetPasswordPayload').value = document.getElementById('resetPasswordVisible').value;
+            document.getElementById('resetPasswordConfirmationPayload').value = document.getElementById('resetPasswordConfirmationVisible').value;
+        });
+    </script>
 </body>
 </html>

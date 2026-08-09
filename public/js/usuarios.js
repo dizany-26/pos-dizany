@@ -14,8 +14,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnEditarMarcarTodos = document.getElementById('editarMarcarTodosPermisos');
     const btnEditarLimpiar = document.getElementById('editarLimpiarPermisos');
     const togglePasswordButtons = document.querySelectorAll('.toggle-password-btn');
-    const empleadoRoleId = String(window.rolesUsuarios?.Empleado ?? '');
+    const deleteUserForms = document.querySelectorAll('.eliminar-usuario-form');
+    const changePasswordForm = document.querySelector('#modalCambiarClave form');
     const adminRoleId = String(window.rolesUsuarios?.Administrador ?? '');
+    const roleTemplates = window.plantillasRolesUsuarios || {};
 
     const setCheckedPermissions = (checkboxes, permissions) => {
         const selected = new Set(permissions);
@@ -24,22 +26,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
+    const selectedRoleName = (select) => select?.selectedOptions?.[0]?.textContent?.trim() || '';
+
+    const updateRoleHelp = (select, helpId) => {
+        const help = document.getElementById(helpId);
+        if (!help) return;
+        help.textContent = select?.selectedOptions?.[0]?.dataset?.description || '';
+    };
+
+    const setAdminPermissionState = (select, checkboxes, markButton, clearButton) => {
+        const isAdmin = String(select?.value || '') === adminRoleId;
+        checkboxes.forEach((checkbox) => {
+            checkbox.disabled = isAdmin;
+        });
+        if (markButton) markButton.disabled = isAdmin;
+        if (clearButton) clearButton.disabled = isAdmin;
+    };
+
+    const applyRoleTemplate = (select, checkboxes, helpId, markButton, clearButton) => {
+        if (!select) return;
+        const permissions = roleTemplates[selectedRoleName(select)] || [];
+        setCheckedPermissions(checkboxes, permissions);
+        updateRoleHelp(select, helpId);
+        setAdminPermissionState(select, checkboxes, markButton, clearButton);
+    };
+
     const applyRoleDefaults = () => {
-        if (!rolSelect) return;
-
-        const selectedRole = String(rolSelect.value || '');
-
-        if (selectedRole === empleadoRoleId) {
-            setCheckedPermissions(permisoCheckboxes, ['dashboard.empleado']);
-            return;
-        }
-
-        if (selectedRole === adminRoleId) {
-            setCheckedPermissions(permisoCheckboxes, ['dashboard.admin']);
-            return;
-        }
-
-        setCheckedPermissions(permisoCheckboxes, []);
+        applyRoleTemplate(rolSelect, permisoCheckboxes, 'nuevo-rol-ayuda', btnMarcarTodos, btnLimpiar);
     };
 
     if (buscador) {
@@ -52,6 +65,32 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    deleteUserForms.forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const userName = form.dataset.usuario || 'este usuario';
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: '¿Eliminar usuario?',
+                text: `Se eliminará la cuenta de "${userName}" y sus permisos de acceso.`,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#64748b',
+                reverseButtons: true,
+                focusCancel: true,
+                customClass: {
+                    popup: 'rounded-4',
+                    confirmButton: 'rounded-3 px-4',
+                    cancelButton: 'rounded-3 px-4'
+                }
+            });
+
+            if (result.isConfirmed) form.submit();
+        });
+    });
+
     document.querySelectorAll('.cambiar-clave-btn').forEach(button => {
         button.addEventListener('click', function () {
             document.getElementById('usuario_id_cambiar_clave').value = this.dataset.id;
@@ -61,6 +100,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (rolSelect) {
         rolSelect.addEventListener('change', applyRoleDefaults);
+    }
+
+    if (editarRolSelect) {
+        editarRolSelect.addEventListener('change', () => {
+            applyRoleTemplate(
+                editarRolSelect,
+                editarPermisoCheckboxes,
+                'editar-rol-ayuda',
+                btnEditarMarcarTodos,
+                btnEditarLimpiar
+            );
+        });
     }
 
     if (btnMarcarTodos) {
@@ -102,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const usuarioInput = formNuevoUsuario?.querySelector('input[name="usuario"]');
-            const passwordInput = formNuevoUsuario?.querySelector('input[name="password"]');
+            const passwordInput = document.getElementById('nuevo-password-visible');
 
             if (usuarioInput) {
                 usuarioInput.value = '';
@@ -111,8 +162,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (passwordInput) {
                 passwordInput.value = '';
-                passwordInput.type = 'password';
-                passwordInput.setAttribute('autocomplete', 'new-password');
+                passwordInput.classList.remove('clave-visible');
+                passwordInput.setAttribute('autocomplete', 'one-time-code');
             }
 
             togglePasswordButtons.forEach((button) => {
@@ -129,8 +180,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (formNuevoUsuario) {
+        formNuevoUsuario.addEventListener('submit', () => {
+            const visible = document.getElementById('nuevo-password-visible');
+            const payload = document.getElementById('nuevo-password-payload');
+            if (visible && payload) payload.value = visible.value;
+        });
+
         formNuevoUsuario.addEventListener('reset', () => {
             window.setTimeout(() => applyRoleDefaults(), 0);
+        });
+    }
+
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', () => {
+            const visible = document.getElementById('cambiar-clave-visible');
+            const payload = document.getElementById('cambiar-clave-payload');
+            if (visible && payload) payload.value = visible.value;
+        });
+
+        document.getElementById('modalCambiarClave')?.addEventListener('show.bs.modal', () => {
+            const visible = document.getElementById('cambiar-clave-visible');
+            const payload = document.getElementById('cambiar-clave-payload');
+            if (visible) visible.value = '';
+            if (payload) payload.value = '';
         });
     }
 
@@ -154,6 +226,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 editarRolSelect.value = rol;
             }
             setCheckedPermissions(editarPermisoCheckboxes, permisos);
+            updateRoleHelp(editarRolSelect, 'editar-rol-ayuda');
+            setAdminPermissionState(
+                editarRolSelect,
+                editarPermisoCheckboxes,
+                btnEditarMarcarTodos,
+                btnEditarLimpiar
+            );
 
             if (formEditarUsuario) {
                 formEditarUsuario.action = `/usuarios/${id}`;
@@ -167,11 +246,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const icon = button.querySelector('i');
             if (!input || !icon) return;
 
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            icon.classList.toggle('fa-eye', !isPassword);
-            icon.classList.toggle('fa-eye-slash', isPassword);
-            button.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            const isHidden = !input.classList.contains('clave-visible');
+            input.classList.toggle('clave-visible', isHidden);
+            icon.classList.toggle('fa-eye', !isHidden);
+            icon.classList.toggle('fa-eye-slash', isHidden);
+            button.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
         });
     });
 });

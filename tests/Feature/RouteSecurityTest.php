@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\TrustProxies;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use ReflectionClass;
 use Tests\TestCase;
@@ -23,6 +25,11 @@ class RouteSecurityTest extends TestCase
             'gastos.destroy' => ['auth', 'role:Administrador'],
             'movimientos.compras.pagos' => ['auth', 'permission:movimientos', 'role:Administrador'],
             'catalogo.admin.config.update' => ['auth', 'permission:catalogo.config'],
+            'backups.index' => ['auth', 'permission:backups'],
+            'backups.store' => ['auth', 'permission:backups'],
+            'backups.download' => ['auth', 'permission:backups'],
+            'backups.restore' => ['auth', 'permission:backups'],
+            'backups.destroy' => ['auth', 'permission:backups'],
         ];
 
         foreach ($expectedMiddleware as $routeName => $middleware) {
@@ -41,7 +48,7 @@ class RouteSecurityTest extends TestCase
 
     public function test_public_routes_do_not_require_authentication(): void
     {
-        foreach (['login', 'password.request', 'password.reset', 'catalogo'] as $routeName) {
+        foreach (['login', 'password.request', 'password.reset', 'password.reset.legacy', 'catalogo'] as $routeName) {
             $this->assertNotContains('auth', $this->routeByName($routeName)->gatherMiddleware());
         }
     }
@@ -55,6 +62,28 @@ class RouteSecurityTest extends TestCase
         $this->assertNotContains(
             '/ventas/registrar',
             $property->getValue($middleware)
+        );
+    }
+
+    public function test_ngrok_forwarded_origin_is_recognized_from_local_proxy(): void
+    {
+        $request = Request::create('/', 'GET', [], [], [], [
+            'REMOTE_ADDR' => '127.0.0.1',
+            'HTTP_HOST' => 'localhost:8000',
+            'HTTP_X_FORWARDED_HOST' => 'hauriant-irrelatively-emely.ngrok-free.dev',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_X_FORWARDED_PORT' => '443',
+        ]);
+
+        $response = app(TrustProxies::class)->handle($request, static function (Request $trustedRequest) {
+            return response()->json([
+                'origin' => $trustedRequest->getSchemeAndHttpHost(),
+            ]);
+        });
+
+        $this->assertSame(
+            'https://hauriant-irrelatively-emely.ngrok-free.dev',
+            $response->getData(true)['origin']
         );
     }
 

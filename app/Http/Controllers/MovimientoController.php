@@ -28,7 +28,7 @@ class MovimientoController extends Controller
         }
         $tipo  = $request->get('tipo', 'transacciones');
         $rango = $request->get('rango', 'diario');
-        $fecha = $request->get('fecha', now()->format('Y-m-d'));
+        $fecha = trim((string) $request->get('fecha', ''));
 
         // Normalizar separadores
         $fecha = str_replace([' to ', ' | ', ' → '], ' a ', $fecha);
@@ -77,24 +77,51 @@ class MovimientoController extends Controller
 
         try {
             if ($rango === 'diario') {
+                if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+                    $fecha = now()->format('Y-m-d');
+                }
+
                 $inicio = Carbon::parse($fecha)->startOfDay();
                 $fin    = Carbon::parse($fecha)->endOfDay();
 
             } elseif ($rango === 'semanal') {
-                [$f1, $f2] = array_pad(explode(' a ', $fecha), 2, $fecha);
-                $inicio = Carbon::parse($f1)->startOfDay();
-                $fin    = Carbon::parse($f2)->endOfDay();
+                $partes = explode(' a ', $fecha);
+                $tieneRangoValido = count($partes) === 2
+                    && preg_match('/^\d{4}-\d{2}-\d{2}$/', $partes[0])
+                    && preg_match('/^\d{4}-\d{2}-\d{2}$/', $partes[1]);
+
+                if ($tieneRangoValido) {
+                    $inicio = Carbon::parse($partes[0])->startOfDay();
+                    $fin    = Carbon::parse($partes[1])->endOfDay();
+                } else {
+                    $base = preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)
+                        ? Carbon::parse($fecha)
+                        : now();
+
+                    $inicio = $base->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+                    $fin    = $base->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+                }
+
+                // La vista siempre recibe el rango semanal completo y consistente.
+                $fecha = $inicio->format('Y-m-d') . ' a ' . $fin->format('Y-m-d');
 
             } elseif ($rango === 'mensual') {
+                if (! preg_match('/^\d{4}-\d{2}$/', $fecha)) {
+                    $fecha = now()->format('Y-m');
+                }
+
                 $carbon = preg_match('/^\d{4}-\d{2}$/', $fecha)
                     ? Carbon::createFromFormat('Y-m', $fecha)
                     : Carbon::createFromLocaleFormat('M Y', 'es', $fecha);
 
-                $inicio = $carbon->startOfMonth();
-                $fin    = $carbon->endOfMonth();
+                // Carbon es mutable: usar copias evita que endOfMonth también
+                // convierta el inicio en el último día del mes.
+                $inicio = $carbon->copy()->startOfMonth()->startOfDay();
+                $fin    = $carbon->copy()->endOfMonth()->endOfDay();
 
             } elseif ($rango === 'anual') {
                 $year   = preg_match('/^\d{4}$/', $fecha) ? $fecha : now()->year;
+                $fecha  = (string) $year;
                 $inicio = Carbon::create($year, 1, 1)->startOfDay();
                 $fin    = Carbon::create($year, 12, 31)->endOfDay();
 

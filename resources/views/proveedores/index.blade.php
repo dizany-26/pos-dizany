@@ -50,7 +50,7 @@ Proveedores
         </div>
 
             <div class="table-responsive ui-scroll">
-                <div id="table-content">
+                <div id="table-content" class="provider-table-content">
                     <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
                         <thead>
                             <tr>

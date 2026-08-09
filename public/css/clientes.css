@@ -1,0 +1,56 @@
+/* Lista de clientes */
+@media (max-width: 768px) {
+    #clientesTableContent,
+    #clientesTableContent .table-responsive,
+    #clientesTableContent .ui-table,
+    #clientesTableContent .ui-table tbody {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    #clientesTableContent .ui-table tr {
+        width: calc(100% - 2px) !important;
+        min-width: 0 !important;
+        max-width: calc(100% - 2px) !important;
+        margin: 0 1px 14px !important;
+        padding: 14px !important;
+        box-sizing: border-box;
+        overflow: hidden;
+        white-space: normal !important;
+    }
+
+    #clientesTableContent .ui-table td {
+        width: 100%;
+        min-width: 0;
+        gap: 14px;
+        align-items: flex-start;
+        white-space: normal !important;
+    }
+
+    #clientesTableContent .ui-table td::before {
+        flex: 0 0 34%;
+        align-self: flex-start;
+        text-align: left !important;
+    }
+
+    #clientesTableContent .ui-table td:not([data-label="Acciones"]) {
+        text-align: right;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    #clientesTableContent .ui-table td[data-label="Acciones"] {
+        width: 100%;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding-top: 14px;
+        text-align: center !important;
+    }
+
+    #clientesTableContent .ui-table td[data-label="Acciones"] .btn-edit-client {
+        margin-inline: auto;
+    }
+}

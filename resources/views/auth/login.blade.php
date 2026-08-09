@@ -131,6 +131,15 @@ body {
     cursor: pointer;
 }
 
+/* Campo visualmente protegido sin exponerlo al gestor de contraseñas. */
+.login-sensitive-input {
+    -webkit-text-security: disc;
+}
+
+.login-sensitive-input.is-visible {
+    -webkit-text-security: none;
+}
+
 /* ===============================
    BUTTON
 ================================ */
@@ -391,6 +400,13 @@ body::after {
             Inicia sesión con tus credenciales
         </p>
 
+        @if(request('restored') === '1')
+            <div class="alert alert-success py-2 small" role="status">
+                <i class="fas fa-check-circle me-1"></i>
+                Base de datos restaurada correctamente. Inicia sesión nuevamente.
+            </div>
+        @endif
+
         <div class="authorized-access-notice" role="note">
             <i class="fas fa-shield-halved" aria-hidden="true"></i>
             <span>
@@ -402,19 +418,21 @@ body::after {
 
         <div id="error-message" class="error-message"></div>
 
-        <form id="loginForm" method="POST">
+        <form id="loginForm" method="POST" autocomplete="off" data-form-type="other">
             @csrf
             <div class="mb-3">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-user"></i></span>
-                    <input type="text" class="form-control" name="usuario" required placeholder="Usuario">
+                    <input type="text" class="form-control" name="usuario" required placeholder="Usuario"
+                           autocomplete="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore>
                 </div>
             </div>
 
             <div class="mb-3">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="Contraseña">
+                    <input type="text" class="form-control login-sensitive-input" id="access-key" name="access_key" required placeholder="Contraseña"
+                           autocomplete="off" autocapitalize="none" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore data-bwignore>
                     <span class="input-group-text password-toggle" onclick="togglePassword()">
                         <i class="fas fa-eye" id="toggle-icon"></i>
                     </span>
@@ -424,7 +442,7 @@ body::after {
             <button type="submit" class="btn btn-login w-100">Iniciar Sesión</button>
 
             <div class="mt-3 text-end">
-                <a href="{{ route('password.request') }}" class="text-decoration-none text-primary small">¿Olvidaste tu contraseña?</a>
+                <a href="{{ route('password.request', [], false) }}" class="text-decoration-none text-primary small">¿Olvidaste tu contraseña?</a>
             </div>
         </form>
 
@@ -433,24 +451,37 @@ body::after {
 
     <script>
         function togglePassword() {
-            const input = document.getElementById("password");
+            const input = document.getElementById("access-key");
             const icon = document.getElementById("toggle-icon");
-            input.type = input.type === "password" ? "text" : "password";
+            input.classList.toggle("is-visible");
             icon.classList.toggle("fa-eye");
             icon.classList.toggle("fa-eye-slash");
         }
+
+        window.addEventListener('pageshow', function () {
+            const form = document.getElementById('loginForm');
+            if (!form) return;
+            form.querySelectorAll('input[name="usuario"], input[name="access_key"]').forEach(input => {
+                input.value = '';
+            });
+        });
 
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("loginForm");
             const errorDiv = document.getElementById("error-message");
             const loginCard = document.getElementById("loginCard");
 
+            // No conservar valores al volver con el historial del navegador.
+            form.reset();
+
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
 
                 const formData = new FormData(form);
+                formData.set('password', formData.get('access_key') || '');
+                formData.delete('access_key');
 
-                fetch("{{ route('login.ajax') }}", {
+                fetch("{{ route('login.ajax', [], false) }}", {
                     method: "POST",
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
