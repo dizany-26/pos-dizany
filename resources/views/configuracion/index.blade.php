@@ -53,8 +53,16 @@ Panel General
                     </div>
 
                     <div class="mb-3">
-                        <label for="igv" class="form-label">IGV (%):</label>
-                        <input type="number" step="0.01" name="igv" id="igv" class="form-control" value="{{ $config->igv }}">
+                        <label class="form-label">Tratamiento tributario:</label>
+                        @if($taxProfile)
+                            @php($taxLabels = ['gravada'=>'Gravada con IGV', 'exonerada'=>'Exonerada de IGV', 'inafecta'=>'Inafecta al IGV', 'nrus_no_desglosado'=>'Nuevo RUS · IGV no desglosado'])
+                            <input class="form-control" value="{{ $taxLabels[$taxProfile->default_tax_treatment] ?? $taxProfile->default_tax_treatment }}{{ $taxProfile->default_tax_treatment === 'gravada' ? ' · '.$taxProfile->igv_rate.'%' : '' }}" disabled>
+                            <div class="form-text">Se administra desde el perfil tributario activo para evitar c&aacute;lculos contradictorios.</div>
+                            <a class="btn btn-sm btn-outline-primary mt-2" href="{{ route('sunat.settings.edit') }}"><i class="fas fa-receipt me-1"></i>Administrar facturaci&oacute;n electr&oacute;nica</a>
+                        @else
+                            <input class="form-control" value="Sin perfil tributario activo" disabled>
+                            <div class="form-text text-warning">Activa un perfil tributario antes de realizar nuevas ventas.</div>
+                        @endif
                     </div>
 
                 </div>

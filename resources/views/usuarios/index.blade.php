@@ -23,13 +23,6 @@
             'movimientos' => 'Movimientos',
             'gastos' => 'Gastos',
         ],
-        'ANÁLISIS' => [
-            'reportes' => 'Reportes',
-        ],
-        'SISTEMA' => [
-            'configuracion' => 'Configuración general',
-            'backups' => 'Copias de seguridad',
-        ],
         'CATÁLOGO WEB' => [
             'catalogo.ver' => 'Vista catálogo',
             'catalogo.config' => 'Configurar catálogo',

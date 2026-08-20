@@ -18,10 +18,12 @@ Productos
 
 {{-- BOTONES DERECHA --}}
 @section('header-buttons')
+@if(auth()->user()->esAdmin() || auth()->user()->tienePermiso('productos.create'))
 <a href="{{ route('productos.create') }}" class="btn-gasto">
     <i class="fa-solid fa-plus"></i>
     <span class="btn-text">Nuevo producto</span>
 </a>
+@endif
 @endsection
 
 @section('content')

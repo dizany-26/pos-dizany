@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\Tax\TaxProfileService;
+
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
@@ -10,6 +12,10 @@ class DocumentNumberService
 {
     public function seriesFor(string $documentType): string
     {
+        $profile = app()->bound(TaxProfileService::class) ? app(TaxProfileService::class)->current() : null;
+        if ($profile?->emission_system === 'see_sol' && in_array($documentType, ['boleta','factura'], true)) {
+            return $documentType === 'boleta' ? 'SOLB' : 'SOLF';
+        }
         return match ($documentType) {
             'boleta' => 'B001',
             'factura' => 'F001',

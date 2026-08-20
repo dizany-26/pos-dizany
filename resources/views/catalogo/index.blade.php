@@ -40,6 +40,14 @@
     </div>
 
     <nav class="header-actions">
+        <button type="button" class="catalog-theme-toggle" data-catalog-theme-toggle
+                aria-label="Cambiar a modo oscuro" aria-pressed="false" title="Cambiar a modo oscuro">
+            <span class="catalog-theme-track" aria-hidden="true">
+                <svg class="catalog-theme-icon catalog-theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+                <svg class="catalog-theme-icon catalog-theme-moon" viewBox="0 0 24 24"><path d="M20 15.2A8.4 8.4 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z"/></svg>
+                <span class="catalog-theme-thumb"></span>
+            </span>
+        </button>
         <div class="header-menu">
             <button type="button" class="menu-trigger" data-menu-trigger aria-label="Abrir menú" aria-expanded="false">
                 <span></span><span></span><span></span>
@@ -98,13 +106,19 @@
 
         <label class="header-search catalog-search" for="searchInput">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"/></svg>
-            <input id="searchInput" type="search" placeholder="Buscar productos en el catálogo..." autocomplete="off">
+            <input id="searchInput" type="search" placeholder="Buscar por nombre o categoría..." autocomplete="off">
         </label>
 
         <div class="product-grid" id="productContainer">
             @forelse($productos as $producto)
                 @php
                     $stock = (int) ($producto->stock_total ?? 0);
+                    $imagenesCatalogo = collect([$producto->imagen])
+                        ->filter()
+                        ->merge($producto->imagenesCatalogo->pluck('imagen'))
+                        ->take(3)
+                        ->map(fn ($imagen) => asset('uploads/productos/' . $imagen))
+                        ->values();
                     $presentaciones = collect([
                         ['key' => 'unidad', 'name' => 'Unidad', 'factor' => 1, 'price' => (float) $producto->precio_venta],
                         ['key' => 'paquete', 'name' => 'Paquete', 'factor' => (int) $producto->unidades_por_paquete, 'price' => (float) $producto->precio_paquete],
@@ -119,12 +133,13 @@
                 @endphp
                 <article class="product-card"
                     data-product
-                    data-name="{{ Illuminate\Support\Str::lower($producto->nombre . ' ' . ($producto->descripcion ?? '')) }}"
+                    data-name="{{ Illuminate\Support\Str::lower($producto->nombre . ' ' . ($producto->categoria->nombre ?? '') . ' ' . ($producto->descripcion ?? '')) }}"
                     data-category="{{ $producto->categoria_id }}"
                     data-id="{{ $producto->id }}"
                     data-stock="{{ $stock }}"
                     data-description="{{ $producto->descripcion ?: 'Disponible en nuestra tienda.' }}"
                     data-category-name="{{ $producto->categoria->nombre ?? 'Producto' }}"
+                    data-images='@json($imagenesCatalogo)'
                     aria-disabled="{{ $stock <= 0 ? 'true' : 'false' }}">
                     @if($stock <= 0)
                         <div class="sold-out-cover" aria-label="Producto agotado">
@@ -256,7 +271,10 @@
     <div class="product-modal-backdrop" data-close-product></div>
     <section class="product-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalProductName">
         <button type="button" class="modal-close" data-close-product aria-label="Cerrar">×</button>
-        <div class="modal-product-image" data-modal-image></div>
+        <div class="modal-product-gallery">
+            <div class="modal-product-image" data-modal-image></div>
+            <div class="modal-product-thumbnails" data-modal-thumbnails hidden></div>
+        </div>
         <div class="modal-product-copy">
             <div class="modal-product-meta">
                 <span class="modal-field-title">Categoría</span>

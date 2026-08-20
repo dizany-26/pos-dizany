@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#071a35">
+    <script>
+        (() => {
+            const saved = localStorage.getItem('dizany-catalog-theme');
+            document.documentElement.setAttribute('data-catalog-theme', saved === 'dark' ? 'dark' : 'light');
+        })();
+    </script>
     <title>@yield('title', 'Catálogo DIZANY')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

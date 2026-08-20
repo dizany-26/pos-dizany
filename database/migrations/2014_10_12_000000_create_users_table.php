@@ -11,15 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
-        });
+        // DIZANY autentica con App\Models\User sobre la tabla legada `usuarios`.
+        // No crear la tabla estándar `users`, porque no forma parte del sistema.
     }
 
     /**
@@ -27,6 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        // Sin cambios: esta migración no crea ninguna tabla.
     }
 };

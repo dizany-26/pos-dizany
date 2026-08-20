@@ -237,7 +237,7 @@ Nuevo Producto
 
                 {{-- ================= IMAGEN ================= --}}
                 <div class="col-md-4">
-                    <label class="form-label">Imagen</label>
+                    <label class="form-label">Imagen principal</label>
                     <input type="file"
                         name="imagen"
                         id="imagen"
@@ -248,6 +248,17 @@ Nuevo Producto
                         src=""
                         class="ui-product-preview d-none mt-2"
                         alt="Vista previa">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Imágenes adicionales del catálogo</label>
+                    <input type="file"
+                        name="imagenes_catalogo[]"
+                        class="form-control ui-input"
+                        accept="image/*"
+                        multiple
+                        data-catalog-images>
+                    <small class="form-text text-muted">Opcional. Elige hasta 2 imágenes; sólo aparecerán en el catálogo público.</small>
                 </div>
 
                 {{-- ================= ESTADO ================= --}}

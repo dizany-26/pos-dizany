@@ -12,7 +12,17 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('sunat:retry-pending --limit=20')
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
+
+        $schedule->command('sunat:send-daily-summary')
+            ->hourlyAt(15)
+            ->withoutOverlapping();
+
+        $schedule->command('sunat:poll-daily-summaries --limit=20')
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
     }
 
     /**

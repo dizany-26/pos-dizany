@@ -5,6 +5,36 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    const responsableCaja = document.getElementById('responsableCaja');
+    const ayudaResponsableCaja = document.getElementById('ayudaResponsableCaja');
+    const botonAbrirCaja = document.getElementById('btnAbrirAsignarCaja');
+
+    const actualizarFlujoCaja = () => {
+        if (!responsableCaja || !ayudaResponsableCaja || !botonAbrirCaja) return;
+
+        const opcion = responsableCaja.options[responsableCaja.selectedIndex];
+        const esCajaPropia = opcion?.dataset.propio === '1';
+        const textoBoton = botonAbrirCaja.querySelector('span');
+
+        if (!opcion?.value) {
+            ayudaResponsableCaja.textContent = 'Selecciona quién será responsable del dinero y de las ventas de este turno.';
+            if (textoBoton) textoBoton.textContent = 'Abrir caja';
+            return;
+        }
+
+        if (esCajaPropia) {
+            ayudaResponsableCaja.textContent = 'Abrirás tu propia caja. No se generará una notificación dirigida a otro usuario.';
+            if (textoBoton) textoBoton.textContent = 'Abrir mi caja';
+            return;
+        }
+
+        ayudaResponsableCaja.textContent = 'El usuario seleccionado recibirá una notificación con el fondo inicial asignado.';
+        if (textoBoton) textoBoton.textContent = 'Asignar caja';
+    };
+
+    responsableCaja?.addEventListener('change', actualizarFlujoCaja);
+    actualizarFlujoCaja();
+
     const panel = document.getElementById('offcanvasDetalle');
     const contenido = document.getElementById('detalleContenido');
     const panelTitle = document.getElementById('detalleMovimientoTitulo');
@@ -224,10 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = Number(v.total || 0);
             const saldo = Number(v.saldo || 0);
 
-            // Monto REAL a cobrar en el panel:
-            // - credito => saldo
-            // - pendiente => total
-            const montoCobrar = (estado === 'credito') ? saldo : total;
+            // El saldo es la fuente de verdad para ventas fiadas y parciales.
+            const montoCobrar = ['credito', 'pendiente'].includes(estado) ? saldo : total;
+            const esVentaCredito = ['credito', 'pendiente'].includes(estado);
 
             // Fuente de verdad global
             window.__venta = {
@@ -240,6 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
 const pdfUrl = v.pdf_url || v.url_pdf || v.pdf || v.pdfPath || null;
 const xmlUrl = v.xml_url || v.url_xml || v.xml || v.xmlPath || null;
 const cdrUrl = v.cdr_url || v.url_cdr || v.cdr || v.cdrPath || null;
+const sol = v.sunat_sol || {};
+const documentoSol = sol.documento || null;
             // Render detalle FE
             contenido.innerHTML = `
             <div id="panel-detalle">
@@ -275,10 +306,11 @@ const cdrUrl = v.cdr_url || v.url_cdr || v.cdr || v.cdrPath || null;
                     </div>
 
                     ${
-                        estado === 'credito'
-                        ? `<div class="text-danger fw-bold mt-1">
-                                Saldo pendiente: ${money(saldo)}
-                        </div>`
+                        esVentaCredito
+                        ? `<div class="d-flex justify-content-between align-items-center border-top mt-3 pt-3">
+                                <span class="text-muted">Saldo pendiente</span>
+                                <strong class="text-danger fs-5">${money(saldo)}</strong>
+                           </div>`
                         : ''
                     }
 
@@ -313,6 +345,32 @@ const cdrUrl = v.cdr_url || v.url_cdr || v.cdr || v.cdrPath || null;
                         <span>Cliente</span>
                         <strong>${typeof v.cliente === 'string' ? v.cliente : (v.cliente?.nombre ?? '—')}</strong>
                     </div>
+
+                    <div class="detalle-item">
+                        <i class="fas fa-hand-holding-dollar"></i>
+                        <span>Condición de pago</span>
+                        <strong>${v.condicion_pago ?? (esVentaCredito ? 'Crédito' : 'Contado')}</strong>
+                    </div>
+
+                    ${esVentaCredito ? `
+                        <div class="detalle-item">
+                            <i class="fas fa-money-check-dollar"></i>
+                            <span>Monto abonado</span>
+                            <strong class="text-success">${money(v.monto_pagado)}</strong>
+                        </div>
+                        <div class="detalle-item">
+                            <i class="fas fa-coins"></i>
+                            <span>Saldo por cobrar</span>
+                            <strong class="text-danger">${money(saldo)}</strong>
+                        </div>
+                        <div class="detalle-item">
+                            <i class="far fa-calendar-check"></i>
+                            <span>Vencimiento</span>
+                            <strong class="${v.credito_vencido ? 'text-danger' : ''}">
+                                ${v.fecha_vencimiento ?? 'Sin fecha registrada'}${v.credito_vencido ? ' · Vencido' : ''}
+                            </strong>
+                        </div>
+                    ` : ''}
 
                     ${
                         v.cliente_doc
@@ -354,6 +412,60 @@ const cdrUrl = v.cdr_url || v.url_cdr || v.cdr || v.cdrPath || null;
                         <strong class="fw-bold">${money(total)}</strong>
                     </div>
                 </div>
+
+                ${sol.aplica ? `
+                    <h6 class="mt-4 fw-semibold text-muted small text-uppercase">
+                        Boleta oficial SUNAT SOL
+                    </h6>
+                    ${documentoSol ? `
+                        <div class="card ui-card rounded-4 p-3 sol-linked-card">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="sol-status-icon"><i class="fas fa-check"></i></span>
+                                <div>
+                                    <div class="fw-bold">Boleta vinculada</div>
+                                    <small class="text-muted">Este registro ya no puede reemplazarse.</small>
+                                </div>
+                            </div>
+                            <div class="detalle-item"><i class="far fa-file-alt"></i><span>Comprobante SUNAT</span><strong>${documentoSol.serie}-${documentoSol.numero}</strong></div>
+                            <div class="detalle-item"><i class="far fa-calendar-check"></i><span>Fecha de emisión</span><strong>${documentoSol.fecha || '—'}</strong></div>
+                            <div class="detalle-item"><i class="fas fa-coins"></i><span>Total oficial</span><strong>${money(documentoSol.total)}</strong></div>
+                        </div>
+                    ` : sol.puede_vincular ? `
+                        <form id="form-vincular-sol" class="card ui-card rounded-4 p-3 sol-link-form" action="${sol.link_url}" method="post">
+                            <div class="sol-info-box mb-3">
+                                <i class="fas fa-info-circle"></i>
+                                <span>${esVentaCredito
+                                    ? 'Emite la boleta en SUNAT SOL como venta al crédito y registra su vencimiento. Luego vincula aquí sus datos oficiales; no necesitas esperar a cobrar todo el saldo.'
+                                    : 'Primero emite la boleta en SUNAT SOL. Luego registra aquí sus datos oficiales para relacionarla con esta venta.'}</span>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-5">
+                                    <label class="form-label">Serie SUNAT</label>
+                                    <input name="series" class="form-control ui-input text-uppercase" maxlength="4" pattern="(?:EB01|B[A-Za-z0-9]{3})" placeholder="EB01" required>
+                                </div>
+                                <div class="col-7">
+                                    <label class="form-label">Número</label>
+                                    <input name="number" type="number" class="form-control ui-input" min="1" placeholder="125" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Fecha y hora de emisión</label>
+                                    <input name="issued_at" type="datetime-local" class="form-control ui-input" required>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-top mt-3 pt-3">
+                                <span class="text-muted">Total de esta venta</span>
+                                <strong class="fs-5">${money(total)}</strong>
+                            </div>
+                            <button type="submit" class="btn-soft btn-soft-primary w-100 mt-3">
+                                <i class="fas fa-link"></i><span>Vincular boleta oficial</span>
+                            </button>
+                        </form>
+                    ` : `
+                        <div class="card ui-card rounded-4 p-3 text-muted small">
+                            Esta venta SEE-SOL todavía no tiene una boleta oficial vinculada. Solicita a un administrador que complete el registro.
+                        </div>
+                    `}
+                ` : ''}
 
                 <!-- ===== PRODUCTOS ===== -->
                 <h6 class="mt-4 fw-semibold text-muted small text-uppercase">
@@ -466,6 +578,46 @@ const cdrUrl = v.cdr_url || v.url_cdr || v.cdr || v.cdrPath || null;
         } catch (err) {
             console.error(err);
             contenido.innerHTML = `<div class="text-danger">Error al cargar detalle</div>`;
+        }
+    });
+
+    document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('#form-vincular-sol');
+        if (!form) return;
+        event.preventDefault();
+
+        const submit = form.querySelector('button[type="submit"]');
+        const original = submit.innerHTML;
+        submit.disabled = true;
+        submit.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Vinculando...</span>';
+
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token || '',
+                },
+                body: new FormData(form),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const message = Object.values(data.errors || {}).flat()[0]
+                    || data.message
+                    || 'No se pudo vincular la boleta oficial.';
+                throw new Error(message);
+            }
+
+            if (window.Swal) {
+                await Swal.fire({ icon: 'success', title: 'Boleta vinculada', text: data.message, confirmButtonText: 'Entendido' });
+            }
+            window.location.reload();
+        } catch (error) {
+            if (window.Swal) Swal.fire({ icon: 'error', title: 'No se pudo vincular', text: error.message });
+            else alert(error.message);
+            submit.disabled = false;
+            submit.innerHTML = original;
         }
     });
 

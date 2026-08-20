@@ -242,7 +242,7 @@ Editar Producto
 
             {{-- ================= IMAGEN ================= --}}
             <div class="col-md-4">
-                <label class="form-label">Imagen</label>
+                <label class="form-label">Imagen principal</label>
                 <input type="file"
                        name="imagen"
                        id="imagen"
@@ -253,6 +253,33 @@ Editar Producto
                      src="{{ $producto->imagen ? asset('uploads/productos/'.$producto->imagen) : '' }}"
                      class="ui-product-preview mt-2 {{ $producto->imagen ? '' : 'd-none' }}"
                      style="max-height:150px;">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Imágenes adicionales del catálogo</label>
+                @if($producto->imagenesCatalogo->isNotEmpty())
+                    <div class="catalog-images-current mb-2">
+                        @foreach($producto->imagenesCatalogo as $imagenCatalogo)
+                            <label class="catalog-image-current">
+                                <img src="{{ asset('uploads/productos/' . $imagenCatalogo->imagen) }}"
+                                     alt="Imagen adicional de {{ $producto->nombre }}">
+                                <span>
+                                    <input type="checkbox"
+                                           name="eliminar_imagenes_catalogo[]"
+                                           value="{{ $imagenCatalogo->id }}">
+                                    Eliminar
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                @endif
+                <input type="file"
+                       name="imagenes_catalogo[]"
+                       class="form-control ui-input"
+                       accept="image/*"
+                       multiple
+                       data-catalog-images>
+                <small class="form-text text-muted">Máximo 2 adicionales y 3 imágenes en total. Sólo se usan en el catálogo público.</small>
             </div>
 
             {{-- ================= ESTADO ================= --}}

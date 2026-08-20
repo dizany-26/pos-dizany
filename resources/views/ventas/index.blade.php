@@ -191,10 +191,15 @@ Nueva venta
                                 <div class="input-group input-group-sm mb-2">
                                     <span class="input-group-text"><i class="fas fa-file-invoice"></i></span>
                                     <select id="tipo_comprobante" class="form-select">
-                                        <option value="boleta">Boleta</option>
-                                        <option value="factura">Factura</option>
+                                        @if(!$taxProfile || in_array('issue_boleta', $taxCapabilities, true))<option value="boleta">Boleta</option>@endif
+                                        @if(!$taxProfile || in_array('issue_factura', $taxCapabilities, true))<option value="factura">Factura</option>@endif
                                         <option value="nota_venta">Nota de Venta</option>
                                     </select>
+                                    @if($taxProfile)
+                                        <small class="text-muted d-block mt-1">
+                                            {{ strtoupper(str_replace('_',' ', $taxProfile->emission_system)) }} · {{ $taxProfile->default_tax_treatment === 'nrus_no_desglosado' ? 'Nuevo RUS · IGV no desglosado' : ucfirst($taxProfile->default_tax_treatment) }}
+                                        </small>
+                                    @endif
                                 </div>
 
                                 <!-- SERIE - CORRELATIVO -->
@@ -233,15 +238,16 @@ Nueva venta
                     <div class="card-body">
 
                         <!-- IGV desde configuración global -->
-                        <input type="hidden" id="igv-config" value="{{ $config->igv }}">
+                        <input type="hidden" id="igv-config" value="{{ $taxProfile?->default_tax_treatment === 'gravada' ? $taxProfile->igv_rate : 0 }}">
+                        <input type="hidden" id="tax-treatment" value="{{ $taxProfile?->default_tax_treatment ?? 'nrus_no_desglosado' }}">
 
                         <div class="resumen-box mb-3">
                             <div class="resumen-row">
-                                <div class="resumen-label">Op. Gravadas:</div>
+                                <div class="resumen-label" id="resumen-operacion-label">{{ match($taxProfile?->default_tax_treatment) {'exonerada'=>'Op. Exoneradas:', 'inafecta'=>'Op. Inafectas:', 'nrus_no_desglosado'=>'Valor de venta:', default=>'Op. Gravadas:'} }}</div>
                                 <div class="resumen-value" id="resumen-op-gravadas">S/ 0.00</div>
                             </div>
 
-                            <div class="resumen-row">
+                            <div class="resumen-row" @if($taxProfile?->default_tax_treatment !== 'gravada') style="display:none" @endif>
                                 <div class="resumen-label">
                                     IGV (<span id="resumen-igv-porcentaje">0%</span>):
                                 </div>
@@ -306,7 +312,7 @@ Nueva venta
             <div id="step-3" class="step-panel">
 
                 <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white" id="step3-titulo">
                         Calcula el cambio de tu venta
                     </div>
 
@@ -315,11 +321,21 @@ Nueva venta
                         <label class="form-label">Valor de la venta</label>
                         <input type="text" id="vuelto-total-venta" class="form-control mb-3" readonly>
 
-                        <label class="form-label">Valor a pagar</label>
-                        <input type="number" id="vuelto-paga" class="form-control mb-3">
+                        <div id="step3-pago-wrap">
+                            <label class="form-label" id="step3-pago-label">Valor a pagar</label>
+                            <input type="number" id="vuelto-paga" class="form-control mb-3" min="0" step="0.01">
+                        </div>
 
-                        <label class="form-label">Vuelto</label>
-                        <input type="text" id="vuelto-mostrar" class="form-control mb-3" readonly>
+                        <div id="step3-resultado-wrap">
+                            <label class="form-label" id="step3-resultado-label">Vuelto</label>
+                            <input type="text" id="vuelto-mostrar" class="form-control mb-3" readonly>
+                        </div>
+
+                        <div id="credito-vencimiento-wrap" class="d-none">
+                            <label class="form-label" for="credito-vencimiento">Vencimiento del pago pendiente</label>
+                            <input type="date" id="credito-vencimiento" class="form-control mb-3" min="{{ date('Y-m-d') }}">
+                            <small class="text-muted d-block mb-3">Solo se solicita cuando la venta queda fiada o con saldo pendiente.</small>
+                        </div>
 
                         <label class="form-label">Formato de impresión</label>
                         <select id="formato_pdf" class="form-select">
@@ -620,18 +636,6 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const efectivo = document.querySelector('.metodo-pago-item[data-value="efectivo"]');
-        const hidden   = document.getElementById("metodo_pago");
-
-        if (efectivo && hidden) {
-            efectivo.classList.add("active");
-            hidden.value = "efectivo";
-        }
-    });
-</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

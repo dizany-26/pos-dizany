@@ -146,6 +146,12 @@
                             <span class="menu-text">Configuración general</span>
                         </a>
 
+                        <a href="{{ route('sunat.settings.edit') }}"
+                        class="{{ request()->routeIs('sunat.settings.*') ? 'active' : '' }}">
+                            <i class="fas fa-file-invoice me-1"></i>
+                            <span class="menu-text">Facturación electrónica</span>
+                        </a>
+
                         <a href="{{ route('backups.index') }}"
                         class="{{ request()->routeIs('backups.*') ? 'active' : '' }}">
                             <i class="fas fa-database me-1"></i>
@@ -231,6 +237,7 @@
                                     <i class="fas fa-box-open me-1"></i>
                                     <span class="menu-text">Ver Productos</span>
                                 </a>
+
                             @endif
 
                             @if($permisosUsuario->contains('productos.create'))
@@ -300,44 +307,6 @@
                         <i class="fas fa-money-bill-wave"></i>
                         <span class="menu-text">Gastos</span>
                     </a>
-                @endif
-
-                @if($permisosUsuario->contains('reportes'))
-                    <a href="{{ route('reportes.index') }}"
-                    class="{{ request()->routeIs('reportes.index') ? 'active' : '' }}">
-                        <i class="fas fa-chart-line"></i>
-                        <span class="menu-text">Reportes</span>
-                    </a>
-                @endif
-
-                @if($permisosUsuario->contains('configuracion') || $permisosUsuario->contains('backups'))
-                    <div class="submenu">
-                        <button class="submenu-toggle {{ request()->is('configuracion*') ? 'active' : '' }}">
-                            <div class="submenu-left">
-                                <i class="fas fa-cog me-2"></i>
-                                <span class="menu-text">Configuración</span>
-                            </div>
-                            <i class="fas fa-caret-down toggle-icon"></i>
-                        </button>
-
-                        <div class="submenu-items {{ request()->is('configuracion*') ? 'show' : '' }}">
-                            @if($permisosUsuario->contains('configuracion'))
-                                <a href="{{ route('configuracion.index') }}"
-                                class="{{ request()->routeIs('configuracion.index') ? 'active' : '' }}">
-                                    <i class="fas fa-sliders-h me-1"></i>
-                                    <span class="menu-text">Configuración general</span>
-                                </a>
-                            @endif
-
-                            @if($permisosUsuario->contains('backups'))
-                                <a href="{{ route('backups.index') }}"
-                                class="{{ request()->routeIs('backups.*') ? 'active' : '' }}">
-                                    <i class="fas fa-database me-1"></i>
-                                    <span class="menu-text">Copias de seguridad</span>
-                                </a>
-                            @endif
-                        </div>
-                    </div>
                 @endif
 
                 @if($permisosUsuario->contains('catalogo.ver'))

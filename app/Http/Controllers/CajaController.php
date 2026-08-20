@@ -20,14 +20,22 @@ class CajaController extends Controller
             'monto_inicial' => 'required|numeric|min:0|max:999999999.99',
         ]);
 
-        DB::transaction(function () use ($data) {
+        $resultado = DB::transaction(function () use ($data) {
+            $responsable = User::with(['rol', 'permisos'])
+                ->lockForUpdate()
+                ->findOrFail($data['usuario_id']);
+
+            if (! $responsable->esAdmin() && ! $responsable->tienePermiso('ventas')) {
+                abort(422, 'El usuario seleccionado no tiene permiso para operar ventas y caja.');
+            }
+
             $existente = Caja::where('usuario_id', $data['usuario_id'])
                 ->whereIn('estado', ['abierta', 'pendiente_cierre'])
                 ->lockForUpdate()
                 ->exists();
 
             if ($existente) {
-                abort(422, 'El empleado ya tiene una caja activa o pendiente de aprobación.');
+                abort(422, 'El usuario ya tiene una caja activa o pendiente de aprobación.');
             }
 
             $caja = Caja::create([
@@ -38,19 +46,33 @@ class CajaController extends Controller
                 'estado' => 'abierta',
             ]);
 
-            if ($caja->usuario_id !== auth()->id()) {
+            $esCajaPropia = (int) $caja->usuario_id === (int) auth()->id();
+
+            if (! $esCajaPropia) {
                 $caja->usuario?->notify(new CajaNotification([
                     'titulo' => 'Caja asignada',
-                    'mensaje' => 'El administrador abrió tu caja con un fondo inicial de S/ '
+                    'mensaje' => (auth()->user()->nombre ?? 'El administrador')
+                        .' te asignó una caja con un fondo inicial de S/ '
                         .number_format((float) $data['monto_inicial'], 2).'.',
                     'icono' => 'fa-cash-register',
                     'color' => 'success',
-                    'url' => route('movimientos.index'),
+                    'url' => route('movimientos.index', [], false),
                 ]));
             }
+
+            return [
+                'es_caja_propia' => $esCajaPropia,
+                'responsable' => $responsable->nombre,
+                'monto' => (float) $data['monto_inicial'],
+            ];
         });
 
-        return back()->with('success', 'Caja abierta y asignada correctamente.');
+        $mensaje = $resultado['es_caja_propia']
+            ? 'Tu caja fue abierta con un fondo inicial de S/ '.number_format($resultado['monto'], 2).'.'
+            : 'Caja asignada a '.$resultado['responsable'].' con un fondo inicial de S/ '
+                .number_format($resultado['monto'], 2).'.';
+
+        return back()->with('success', $mensaje);
     }
 
     public function solicitarCierre(Request $request, Caja $caja)
@@ -58,7 +80,13 @@ class CajaController extends Controller
         abort_unless($caja->usuario_id === auth()->id() || auth()->user()->esAdmin(), 403);
 
         $data = $request->validate([
-            'monto_contado' => 'required|numeric|min:0|max:999999999.99',
+            'metodos' => 'required|array',
+            'metodos.efectivo' => 'required|numeric|min:0|max:999999999.99',
+            'metodos.yape' => 'required|numeric|min:0|max:999999999.99',
+            'metodos.plin' => 'required|numeric|min:0|max:999999999.99',
+            'metodos.tarjeta' => 'required|numeric|min:0|max:999999999.99',
+            'metodos.transferencia' => 'required|numeric|min:0|max:999999999.99',
+            'metodos.otro' => 'required|numeric|min:0|max:999999999.99',
             'observaciones' => 'nullable|string|max:1000',
         ]);
 
@@ -71,9 +99,23 @@ class CajaController extends Controller
                 abort(422, 'La caja no se encuentra abierta.');
             }
 
+            $conciliacion = $caja->calcularConciliacion();
+            $declarados = collect(Caja::mediosConciliables())
+                ->mapWithKeys(fn ($label, $medio) => [$medio => round((float) $data['metodos'][$medio], 2)])
+                ->all();
+            $esperados = collect($conciliacion)
+                ->mapWithKeys(fn ($valores, $medio) => [$medio => round((float) $valores['esperado'], 2)])
+                ->all();
+            $diferencias = collect($declarados)
+                ->mapWithKeys(fn ($declarado, $medio) => [$medio => round($declarado - ($esperados[$medio] ?? 0), 2)])
+                ->all();
+
             $datosCierre = [
                 'cierre_solicitado_en' => now(),
-                'monto_declarado' => round((float) $data['monto_contado'], 2),
+                'monto_declarado' => $declarados['efectivo'],
+                'metodos_esperados' => $esperados,
+                'metodos_declarados' => $declarados,
+                'metodos_diferencias' => $diferencias,
                 'cerrada_por' => auth()->id(),
                 'observaciones' => $data['observaciones'] ?? null,
             ];
@@ -81,7 +123,7 @@ class CajaController extends Controller
             // El administrador que opera su propia caja tiene autoridad para
             // realizar y aprobar el arqueo en una sola operación auditable.
             if ($cierreDirecto) {
-                $totales = $caja->calcularEfectivo();
+                $totales = $conciliacion['efectivo'];
                 $declarado = $datosCierre['monto_declarado'];
 
                 $caja->update($datosCierre + [
@@ -109,10 +151,10 @@ class CajaController extends Controller
                 $administradores->each->notify(new CajaNotification([
                     'titulo' => 'Cierre de caja por revisar',
                     'mensaje' => ($cajero?->nombre ?? 'Un empleado')
-                        .' declaró S/ '.number_format((float) $data['monto_contado'], 2).'.',
+                        .' envió el cuadre de todos los medios de pago para revisión.',
                     'icono' => 'fa-hourglass-half',
                     'color' => 'warning',
-                    'url' => route('movimientos.index', ['tipo' => 'cierres']),
+                    'url' => route('movimientos.index', ['tipo' => 'cierres'], false),
                 ]));
             }
         });
@@ -150,11 +192,10 @@ class CajaController extends Controller
             if ($caja->usuario_id !== auth()->id()) {
                 $caja->usuario?->notify(new CajaNotification([
                     'titulo' => 'Cierre de caja aprobado',
-                    'mensaje' => 'Tu cierre por S/ '.number_format($declarado, 2)
-                        .' fue aprobado. Diferencia: S/ '.number_format($declarado - $totales['esperado'], 2).'.',
+                    'mensaje' => 'El administrador aprobó tu cuadre de todos los medios de pago.',
                     'icono' => 'fa-check-circle',
                     'color' => 'success',
-                    'url' => route('movimientos.index', ['tipo' => 'cierres']),
+                    'url' => route('movimientos.index', ['tipo' => 'cierres'], false),
                 ]));
             }
         });
@@ -179,6 +220,9 @@ class CajaController extends Controller
                 'monto_declarado' => null,
                 'cerrada_por' => null,
                 'observaciones' => null,
+                'metodos_esperados' => null,
+                'metodos_declarados' => null,
+                'metodos_diferencias' => null,
                 'estado' => 'abierta',
             ]);
 
@@ -189,7 +233,7 @@ class CajaController extends Controller
                         .' fue devuelto para revisar y realizar un nuevo conteo.',
                     'icono' => 'fa-undo-alt',
                     'color' => 'warning',
-                    'url' => route('movimientos.index'),
+                    'url' => route('movimientos.index', [], false),
                 ]));
             }
         });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Configuracion;
+use App\Services\Tax\TaxProfileService;
 
 class ConfiguracionController extends Controller
 {
@@ -13,7 +14,8 @@ class ConfiguracionController extends Controller
     public function index()
     {
         $config = Configuracion::first(); // Solo hay un registro
-        return view('configuracion.index', compact('config'));
+        $taxProfile = app(TaxProfileService::class)->current();
+        return view('configuracion.index', compact('config', 'taxProfile'));
     }
 
     /**
@@ -25,7 +27,6 @@ class ConfiguracionController extends Controller
             'nombre_empresa' => 'required|string|max:100',
             'ruc'            => 'required|string|max:20',
             'moneda'         => 'required|string|max:10',
-            'igv'            => 'required|numeric',
             'direccion'      => 'nullable|string',
             'telefono'       => 'nullable|string|max:20',
             'correo'         => 'nullable|email|max:100',
@@ -48,7 +49,7 @@ class ConfiguracionController extends Controller
         $config->nombre_empresa = $request->nombre_empresa;
         $config->ruc            = $request->ruc;
         $config->moneda         = $request->moneda;
-        $config->igv            = $request->igv;
+        // El IGV se administra exclusivamente desde el perfil tributario activo.
         $config->direccion      = $request->direccion;
         $config->telefono       = $request->telefono;
         $config->correo         = $request->correo;

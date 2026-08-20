@@ -278,6 +278,110 @@
     white-space: nowrap;
 }
 
+/* Tema oscuro del POS: modal administrativo de detalles del producto. */
+:root[data-theme='dark'] #productoModal .modal-content {
+    color: #e8f0fc;
+    border-color: #294565;
+    background: #0b1729;
+}
+
+:root[data-theme='dark'] #productoModal .modal-header,
+:root[data-theme='dark'] #productoModal .modal-footer {
+    border-color: #294565;
+    background: #0e1d33;
+}
+
+:root[data-theme='dark'] #productoModal .modal-title,
+:root[data-theme='dark'] #productoModal .modal-footer {
+    color: #f4f8ff;
+}
+
+:root[data-theme='dark'] .product-detail-body {
+    background: #081426;
+}
+
+:root[data-theme='dark'] .product-detail-hero,
+:root[data-theme='dark'] .detail-panel {
+    border-color: #294565;
+    background: #101f35;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .2);
+}
+
+:root[data-theme='dark'] .product-detail-image-wrap {
+    border-color: #365676;
+    background: #f8fbff;
+}
+
+:root[data-theme='dark'] .product-detail-heading h3,
+:root[data-theme='dark'] .detail-panel-title h6,
+:root[data-theme='dark'] .detail-data-list dd {
+    color: #f3f7fd;
+}
+
+:root[data-theme='dark'] .product-detail-heading p,
+:root[data-theme='dark'] .detail-data-list dt,
+:root[data-theme='dark'] .presentation-detail-card span,
+:root[data-theme='dark'] .inventory-summary-grid span,
+:root[data-theme='dark'] .presentation-detail-card small,
+:root[data-theme='dark'] .inventory-summary-grid small,
+:root[data-theme='dark'] .detail-scroll-hint {
+    color: #a8bad0;
+}
+
+:root[data-theme='dark'] .detail-data-list > div {
+    border-color: #2b4564;
+}
+
+:root[data-theme='dark'] .presentation-detail-card {
+    border-color: #315b88;
+    background: #132943;
+}
+
+:root[data-theme='dark'] .presentation-detail-card strong {
+    color: #65adff;
+}
+
+:root[data-theme='dark'] .inventory-summary-grid > div {
+    border-color: #2b496a;
+    background: #13243b;
+}
+
+:root[data-theme='dark'] .inventory-summary-grid strong {
+    color: #f1f6ff;
+}
+
+:root[data-theme='dark'] .detail-lots-scroll {
+    border-color: #2c4969;
+    background: #0d1b2f;
+}
+
+:root[data-theme='dark'] .detail-lots-table {
+    --bs-table-color: #dbe7f6;
+    --bs-table-bg: #101f35;
+    --bs-table-border-color: #2b4564;
+    --bs-table-striped-color: #dbe7f6;
+    --bs-table-striped-bg: #142741;
+    --bs-table-hover-color: #fff;
+    --bs-table-hover-bg: #19314f;
+    color: #dbe7f6;
+}
+
+:root[data-theme='dark'] .detail-lots-table thead {
+    color: #fff;
+    background: #155fae;
+}
+
+:root[data-theme='dark'] .detail-lots-table th {
+    color: #fff;
+    background: #155fae;
+}
+
+:root[data-theme='dark'] .detail-lots-table td {
+    color: #dbe7f6;
+    border-color: #2b4564;
+    background: #101f35;
+}
+
 @media (max-width: 991.98px) {
     .product-detail-hero {
         grid-template-columns: 100px minmax(0, 1fr);

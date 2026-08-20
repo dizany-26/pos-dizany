@@ -7,6 +7,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\CajaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\SunatConfigurationController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ConsultaDocumentoController;
 use App\Http\Controllers\DashboardAdminController;
@@ -22,10 +23,12 @@ use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VentaController;
+use App\Http\Controllers\PublicElectronicDocumentController;
 use App\Models\Categoria;
 use App\Models\Configuracion;
 use App\Models\ConfiguracionCatalogo;
 use App\Models\Producto;
+use App\Services\Tax\TaxProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,9 +62,12 @@ Route::middleware('guest')->group(function () {
 
 Route::get('/', function () {
     $config = ConfiguracionCatalogo::first();
-    $igv = max(0, (float) (Configuracion::first()?->igv ?? 0));
+    $taxProfile = app(TaxProfileService::class)->current();
+    $igv = $taxProfile?->default_tax_treatment === 'gravada'
+        ? max(0, (float) $taxProfile->igv_rate)
+        : 0;
 
-    $productos = Producto::with('categoria')
+    $productos = Producto::with(['categoria', 'imagenesCatalogo'])
         ->withSum(['lotes as stock_total' => function ($query) {
             $query->where('activo', 1)
                 ->where('stock_actual', '>', 0);
@@ -82,6 +88,9 @@ Route::get('/', function () {
 Route::get('/catalogo', function () {
     return redirect()->route('inicio');
 })->name('catalogo');
+Route::get('/consultar-comprobante', [PublicElectronicDocumentController::class,'index'])->name('sunat.public.index');
+Route::post('/consultar-comprobante', [PublicElectronicDocumentController::class,'search'])->middleware('throttle:10,1')->name('sunat.public.search');
+Route::get('/consultar-comprobante/{document}/{kind}', [PublicElectronicDocumentController::class,'download'])->whereIn('kind',['pdf','xml'])->name('sunat.public.download');
 
 /*
 |--------------------------------------------------------------------------
@@ -155,7 +164,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::get('/consulta-documento/{tipo}/{numero}', [ConsultaDocumentoController::class, 'show'])
         ->whereIn('tipo', ['dni', 'ruc'])
         ->whereNumber('numero')
-        ->middleware(['permission:proveedores,ventas', 'throttle:30,1'])
+        ->middleware(['permission:proveedores,ventas,configuracion', 'throttle:30,1'])
         ->name('documentos.consultar');
 
     /*
@@ -275,6 +284,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/ventas/registrar', [VentaController::class, 'registrarVenta']);
         Route::post('/ventas/{venta}/cerrar-pendiente', [VentaController::class, 'cerrarPendiente']);
         Route::post('/ventas/{venta}/pagar-credito', [VentaController::class, 'pagarCredito']);
+        Route::post('/ventas/{venta}/vincular-boleta-sol', [SunatConfigurationController::class, 'linkSolDocument'])
+            ->middleware('role:Administrador')
+            ->name('sunat.sol.link');
         Route::get('/ventas/{id}/detalle', [VentaController::class, 'detalle']);
         Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
         Route::get('/comprobantes/descargar/{filename}', [VentaController::class, 'descargarComprobante']);
@@ -283,10 +295,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             ->name('ventas.autorizar');
     });
 
-    Route::middleware('role:Administrador')->group(function () {
+    Route::middleware('permission:reportes')->group(function () {
         Route::get('/ventas/{venta}/edit', [VentaController::class, 'edit'])->name('ventas.edit');
         Route::put('/ventas/{venta}', [VentaController::class, 'update'])->name('ventas.update');
-        Route::delete('/ventas/{venta}', [VentaController::class, 'destroy'])->name('ventas.destroy');
     });
 
     /*
@@ -323,32 +334,70 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
                 ->name('cajas.operaciones');
         });
         Route::get('/movimientos/reporte', [MovimientoController::class, 'reporte'])
+            ->middleware('role:Administrador')
             ->name('movimientos.reporte');
         Route::get('/movimientos/gastos/{id}/detalle', [MovimientoController::class, 'detalleGasto'])
             ->name('movimientos.gastos.detalle');
         Route::get('/movimientos/compras/{movimiento}/detalle', [MovimientoController::class, 'detalleCompra'])
+            ->middleware('role:Administrador')
             ->name('movimientos.compras.detalle');
         Route::post('/movimientos/compras/{movimiento}/pagos', [MovimientoController::class, 'registrarPagoCompra'])
             ->middleware('role:Administrador')
             ->name('movimientos.compras.pagos');
     });
 
-    Route::middleware('permission:reportes')->group(function () {
+    Route::middleware('role:Administrador')->group(function () {
         Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
         Route::get('/reportes/ganancias', [ReporteController::class, 'ganancias'])
             ->name('reportes.ganancias');
         Route::get('/reportes/resumen', [ReporteController::class, 'resumen'])
             ->name('reportes.resumen');
+        Route::get('/reportes/exportar/{formato}', [ReporteController::class, 'exportar'])
+            ->whereIn('formato', ['csv', 'pdf'])
+            ->name('reportes.exportar');
     });
 
-    Route::middleware('permission:configuracion')->group(function () {
+    Route::middleware('role:Administrador')->group(function () {
         Route::get('/configuracion', [ConfiguracionController::class, 'index'])
             ->name('configuracion.index');
         Route::put('/configuracion', [ConfiguracionController::class, 'update'])
             ->name('configuracion.update');
+        Route::get('/configuracion/facturacion-electronica', [SunatConfigurationController::class, 'edit'])
+            ->name('sunat.settings.edit');
+        Route::put('/configuracion/facturacion-electronica', [SunatConfigurationController::class, 'update'])
+            ->name('sunat.settings.update');
+        Route::post('/configuracion/facturacion-electronica/perfil-tributario', [SunatConfigurationController::class, 'activateTaxProfile'])
+            ->name('sunat.tax-profile.activate');
+        Route::post('/configuracion/facturacion-electronica/ventas/{venta}/preparar', [SunatConfigurationController::class, 'prepareXml'])
+            ->middleware('throttle:10,1')
+            ->name('sunat.documents.prepare');
+        Route::post('/configuracion/facturacion-electronica/demostracion', [SunatConfigurationController::class, 'downloadDemo'])
+            ->middleware('throttle:5,1')
+            ->name('sunat.demo.download');
+        Route::post('/configuracion/facturacion-electronica/demostracion/zip', [SunatConfigurationController::class, 'downloadDemoZip'])
+            ->middleware('throttle:5,1')
+            ->name('sunat.demo.zip');
+        Route::post('/configuracion/facturacion-electronica/documentos/{document}/reintentar', [SunatConfigurationController::class, 'retryDocument'])
+            ->middleware('throttle:10,1')->name('sunat.documents.retry');
+        Route::get('/configuracion/facturacion-electronica/documentos/{document}/{kind}', [SunatConfigurationController::class, 'downloadDocument'])
+            ->whereIn('kind', ['xml', 'cdr'])->name('sunat.documents.download');
+        Route::post('/configuracion/facturacion-electronica/resumenes', [SunatConfigurationController::class, 'createDailySummary'])
+            ->middleware('throttle:10,1')->name('sunat.summaries.create');
+        Route::post('/configuracion/facturacion-electronica/boletas/{venta}/anular', [SunatConfigurationController::class, 'cancelBoleta'])
+            ->middleware('throttle:5,1')->name('sunat.boletas.cancel');
+        Route::post('/configuracion/facturacion-electronica/resumenes/{summary}/reintentar', [SunatConfigurationController::class, 'retrySummary'])
+            ->middleware('throttle:10,1')->name('sunat.summaries.retry');
+        Route::get('/configuracion/facturacion-electronica/resumenes/{summary}/{kind}', [SunatConfigurationController::class, 'downloadSummary'])
+            ->whereIn('kind', ['xml', 'cdr'])->name('sunat.summaries.download');
+        Route::post('/configuracion/facturacion-electronica/ventas/{venta}/notas-credito', [SunatConfigurationController::class, 'createCreditNote'])
+            ->middleware('throttle:5,1')->name('sunat.credit-notes.store');
+        Route::post('/configuracion/facturacion-electronica/notas-credito/{note}/reintentar', [SunatConfigurationController::class, 'retryCreditNote'])
+            ->middleware('throttle:10,1')->name('sunat.credit-notes.retry');
+        Route::get('/configuracion/facturacion-electronica/notas-credito/{note}/{kind}', [SunatConfigurationController::class, 'downloadCreditNote'])
+            ->whereIn('kind', ['xml', 'cdr'])->name('sunat.credit-notes.download');
     });
 
-    Route::middleware('permission:backups')->prefix('configuracion/copias-seguridad')->group(function () {
+    Route::middleware(['role:Administrador', 'permission:backups'])->prefix('configuracion/copias-seguridad')->group(function () {
         Route::get('/', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/', [BackupController::class, 'store'])->middleware('throttle:3,1')->name('backups.store');
         Route::get('/{filename}/descargar', [BackupController::class, 'download'])->name('backups.download');

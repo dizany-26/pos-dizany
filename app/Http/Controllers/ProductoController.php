@@ -102,6 +102,8 @@ class ProductoController extends Controller
 
         'ubicacion'            => 'nullable|string|max:255',
         'imagen'               => 'nullable|image|mimes:jpeg,png,jpg,webp,avif|max:2048',
+        'imagenes_catalogo'    => 'nullable|array|max:2',
+        'imagenes_catalogo.*'  => 'image|mimes:jpeg,png,jpg,webp,avif|max:2048',
 
         'categoria_id'         => 'required|exists:categorias,id',
         'marca_id'             => 'nullable|exists:marcas,id',
@@ -149,7 +151,8 @@ class ProductoController extends Controller
         $validated['imagen'] = $imageName;
     }
 
-    Producto::create($validated);
+    $producto = Producto::create($validated);
+    $this->guardarImagenesCatalogo($request, $producto);
 
     return redirect()
         ->route('productos.create')
@@ -159,7 +162,7 @@ class ProductoController extends Controller
 
     public function edit($id)
     {
-        $producto = Producto::findOrFail($id);
+        $producto = Producto::with('imagenesCatalogo')->findOrFail($id);
         extract($this->obtenerCategoriasYMarcas());
 
         return view('productos.edit', compact('producto', 'categorias', 'marcas'));
@@ -184,7 +187,25 @@ class ProductoController extends Controller
         'marca_id'             => 'nullable|exists:marcas,id',
 
         'imagen'               => 'nullable|image|mimes:jpg,jpeg,png,webp,avif|max:2048',
+        'imagenes_catalogo'    => 'nullable|array|max:2',
+        'imagenes_catalogo.*'  => 'image|mimes:jpg,jpeg,png,webp,avif|max:2048',
+        'eliminar_imagenes_catalogo'   => 'nullable|array',
+        'eliminar_imagenes_catalogo.*' => 'integer',
     ]);
+
+    $idsEliminar = collect($request->input('eliminar_imagenes_catalogo', []))
+        ->map(fn ($id) => (int) $id)
+        ->unique();
+    $secundariasRestantes = $producto->imagenesCatalogo()
+        ->whereNotIn('id', $idsEliminar)
+        ->count();
+    $nuevasSecundarias = count($request->file('imagenes_catalogo', []));
+
+    if ($secundariasRestantes + $nuevasSecundarias > 2) {
+        return back()->withErrors([
+            'imagenes_catalogo' => 'El catálogo admite como máximo dos imágenes secundarias.'
+        ])->withInput();
+    }
 
     // Normalize the selected box model before checking logical conflicts.
     // A hidden direct-box value may still be submitted after switching to packages.
@@ -263,9 +284,42 @@ class ProductoController extends Controller
 
     $producto->update($validated);
 
+    $producto->imagenesCatalogo()
+        ->whereIn('id', $idsEliminar)
+        ->get()
+        ->each(function ($imagen) {
+            $ruta = public_path('uploads/productos/' . $imagen->imagen);
+            if (is_file($ruta)) {
+                unlink($ruta);
+            }
+            $imagen->delete();
+        });
+
+    $this->guardarImagenesCatalogo($request, $producto);
+
     return redirect()
         ->route('productos.edit', $producto->id)
         ->with('success', 'Producto actualizado correctamente.');
+}
+
+private function guardarImagenesCatalogo(Request $request, Producto $producto): void
+{
+    $archivos = $request->file('imagenes_catalogo', []);
+    if (empty($archivos)) {
+        return;
+    }
+
+    $orden = (int) $producto->imagenesCatalogo()->max('orden');
+    foreach ($archivos as $archivo) {
+        $orden++;
+        $nombre = Str::slug($producto->nombre)
+            . '-catalogo-' . uniqid() . '.' . $archivo->getClientOriginalExtension();
+        $archivo->move(public_path('uploads/productos'), $nombre);
+        $producto->imagenesCatalogo()->create([
+            'imagen' => $nombre,
+            'orden' => $orden,
+        ]);
+    }
 }
 
 

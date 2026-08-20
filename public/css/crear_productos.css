@@ -241,3 +241,4 @@
     cursor: not-allowed;
     pointer-events: none;
 }
+.catalog-images-current{display:flex;gap:10px;flex-wrap:wrap}.catalog-image-current{width:92px;padding:6px;border:1px solid #d8e2ef;border-radius:10px;background:#fff;text-align:center;cursor:pointer}.catalog-image-current img{display:block;width:78px;height:72px;object-fit:contain;margin:0 auto 5px;border-radius:7px}.catalog-image-current span{display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;color:#62748a}.dark-mode .catalog-image-current,body.dark-mode .catalog-image-current{background:#0d1b31;border-color:#365170}.dark-mode .catalog-image-current span,body.dark-mode .catalog-image-current span{color:#d9e6f7}

@@ -331,10 +331,10 @@
 :root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(3) .dashboard-card h5 { color: #fda4af !important; }
 :root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(4) .dashboard-card h5 { color: #fde68a !important; }
 
-:root[data-theme='dark'] .icon-soft-primary { background: rgba(56, 189, 248, 0.16) !important; color: #7dd3fc !important; }
-:root[data-theme='dark'] .icon-soft-success { background: rgba(34, 197, 94, 0.16) !important; color: #86efac !important; }
-:root[data-theme='dark'] .icon-soft-danger { background: rgba(244, 63, 94, 0.16) !important; color: #fda4af !important; }
-:root[data-theme='dark'] .icon-soft-warning { background: rgba(250, 204, 21, 0.16) !important; color: #fde68a !important; }
+:root[data-theme='dark'] .icon-soft-primary { color: #7dd3fc !important; }
+:root[data-theme='dark'] .icon-soft-success { color: #86efac !important; }
+:root[data-theme='dark'] .icon-soft-danger { color: #fda4af !important; }
+:root[data-theme='dark'] .icon-soft-warning { color: #fde68a !important; }
 
 :root[data-theme='dark'] #year-picker.year-picker {
     background: #0f223f !important;
@@ -373,9 +373,43 @@
 
 :root[data-theme='dark'] .row.mb-4.g-3 .icon-soft {
     border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.18);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
+
+/* Métodos de pago: lectura rápida y consistente en escritorio/móvil. */
+.payment-method-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 78px;
+    padding: .32rem .65rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.payment-method-efectivo { color: #087443; background: #dcfce7; border-color: #bbf7d0; }
+.payment-method-yape { color: #6b21a8; background: #f3e8ff; border-color: #e9d5ff; }
+.payment-method-plin { color: #075985; background: #e0f2fe; border-color: #bae6fd; }
+.payment-method-tarjeta { color: #1d4ed8; background: #dbeafe; border-color: #bfdbfe; }
+.payment-method-transferencia { color: #155e75; background: #cffafe; border-color: #a5f3fc; }
+.payment-method-otro { color: #475569; background: #f1f5f9; border-color: #e2e8f0; }
+.payment-method-fiado,
+.payment-method-credito { color: #92400e; background: #fef3c7; border-color: #fde68a; }
+
+:root[data-theme='dark'] .payment-method-efectivo { color: #86efac; background: rgba(34,197,94,.14); border-color: rgba(74,222,128,.3); }
+:root[data-theme='dark'] .payment-method-yape { color: #d8b4fe; background: rgba(147,51,234,.18); border-color: rgba(192,132,252,.35); }
+:root[data-theme='dark'] .payment-method-plin { color: #7dd3fc; background: rgba(14,165,233,.16); border-color: rgba(56,189,248,.32); }
+:root[data-theme='dark'] .payment-method-tarjeta { color: #93c5fd; background: rgba(37,99,235,.17); border-color: rgba(96,165,250,.32); }
+:root[data-theme='dark'] .payment-method-transferencia { color: #67e8f9; background: rgba(8,145,178,.16); border-color: rgba(34,211,238,.3); }
+:root[data-theme='dark'] .payment-method-otro { color: #cbd5e1; background: rgba(100,116,139,.18); border-color: rgba(148,163,184,.3); }
+:root[data-theme='dark'] .payment-method-fiado,
+:root[data-theme='dark'] .payment-method-credito { color: #fde68a; background: rgba(245,158,11,.15); border-color: rgba(251,191,36,.3); }
 
 :root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card h5,
 :root[data-theme='dark'] .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card i { color: #7dd3fc !important; }
@@ -601,7 +635,188 @@
         border-top: 1px solid #cdebdc;
     }
 
-    #cajaCierresScroll {
-        overflow-x: auto !important;
+    .cash-table-scroll-hint {
+        display: none;
     }
+
+    #cajaCierresScroll {
+        padding: .7rem;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        scrollbar-gutter: auto;
+        border-radius: 0 0 14px 14px !important;
+    }
+
+    .caja-cierres-table {
+        display: block;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        background: transparent !important;
+    }
+
+    .caja-cierres-table thead {
+        display: none;
+    }
+
+    .caja-cierres-table tbody {
+        display: grid;
+        width: 100%;
+        gap: .8rem;
+    }
+
+    .caja-cierres-table tbody tr {
+        display: grid;
+        width: 100%;
+        min-width: 0;
+        padding: .75rem .8rem;
+        border: 1px solid var(--border-color, #d7e1ee);
+        border-radius: .9rem;
+        background: var(--card-bg, #fff);
+        box-shadow: 0 5px 14px rgba(15, 23, 42, .06);
+    }
+
+    .caja-cierres-table tbody td {
+        display: grid;
+        grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+        align-items: center;
+        gap: .7rem;
+        width: 100%;
+        min-width: 0;
+        padding: .48rem 0 !important;
+        border: 0 !important;
+        border-bottom: 1px dashed var(--border-color, #e2e8f0) !important;
+        text-align: right !important;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .caja-cierres-table tbody td:last-child {
+        border-bottom: 0 !important;
+    }
+
+    .caja-cierres-table tbody td::before {
+        content: attr(data-label);
+        min-width: 0;
+        color: var(--muted-color, #64748b);
+        font-size: .72rem;
+        font-weight: 700;
+        text-align: left;
+    }
+
+    .caja-cierres-table tbody td[data-label="Cajero"] {
+        padding-top: 0 !important;
+        font-weight: 800;
+    }
+
+    .caja-cierres-table tbody td[data-label="Acciones"] {
+        display: block;
+        padding-top: .7rem !important;
+        text-align: left !important;
+    }
+
+    .caja-cierres-table tbody td[data-label="Acciones"]::before {
+        display: block;
+        margin-bottom: .55rem;
+    }
+
+    .caja-cierres-table tbody td[data-label="Acciones"] > .d-flex {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .45rem !important;
+    }
+
+    .caja-cierres-table tbody td[data-label="Acciones"] form,
+    .caja-cierres-table tbody td[data-label="Acciones"] button {
+        width: 100%;
+    }
+
+    .caja-cierres-table tbody td[colspan] {
+        display: block;
+        padding: 1rem !important;
+        border-bottom: 0 !important;
+        text-align: center !important;
+    }
+
+    .caja-cierres-table tbody td[colspan]::before {
+        display: none;
+    }
+}
+
+:root[data-theme='dark'] .caja-cierres-table tbody tr {
+    border-color: #294260;
+    background: #10213a;
+    box-shadow: 0 5px 16px rgba(0, 0, 0, .2);
+}
+.sol-info-box {
+    display: flex;
+    gap: .7rem;
+    padding: .85rem;
+    border: 1px solid rgba(37, 99, 235, .22);
+    border-radius: .85rem;
+    background: rgba(37, 99, 235, .08);
+    color: var(--text-color, #334155);
+    font-size: .82rem;
+    line-height: 1.45;
+}
+
+.sol-info-box i { color: #2563eb; margin-top: .15rem; }
+.sol-status-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: .75rem;
+    color: #15803d;
+    background: rgba(34, 197, 94, .14);
+}
+
+:root[data-theme='dark'] .sol-info-box {
+    color: #dbeafe;
+    border-color: rgba(96, 165, 250, .3);
+    background: rgba(30, 64, 175, .2);
+}
+.cash-methods-heading {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin-bottom: .85rem;
+}
+
+.cash-methods-heading small { color: var(--text-muted, #64748b); }
+
+.cash-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+.cash-method-field {
+    padding: .8rem;
+    border: 1px solid var(--border-color, #dbe4ef);
+    border-radius: 14px;
+    background: var(--card-bg, #fff);
+}
+
+.cash-method-field > span {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .55rem;
+    font-weight: 700;
+}
+
+.reconciliation-table-wrap { overflow-x: auto; border-radius: 14px; }
+.reconciliation-table { min-width: 580px; }
+
+:root[data-theme='dark'] .cash-method-field {
+    background: #0f1d33;
+    border-color: #304766;
+    color: #e8f0fb;
+}
+
+@media (max-width: 575.98px) {
+    .cash-methods-grid { grid-template-columns: 1fr; }
+    #modalCerrarCaja .modal-dialog { margin: .5rem; }
+    #modalCerrarCaja .modal-body { max-height: 68vh; overflow-y: auto; }
 }

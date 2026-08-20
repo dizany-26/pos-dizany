@@ -66,6 +66,10 @@ class ConsultaDocumentoController extends Controller
             'numero' => $numero,
             'nombre' => data_get($data, 'nombre_o_razon_social', ''),
             'direccion' => data_get($data, 'direccion'),
+            'ubigeo' => data_get($data, 'ubigeo_sunat', data_get($data, 'ubigeo')),
+            'departamento' => data_get($data, 'departamento'),
+            'provincia' => data_get($data, 'provincia'),
+            'distrito' => data_get($data, 'distrito'),
             'estado' => data_get($data, 'estado'),
             'condicion' => data_get($data, 'condicion'),
         ]);

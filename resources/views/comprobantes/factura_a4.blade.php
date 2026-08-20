@@ -77,7 +77,7 @@
             <td style="text-align:right;">S/ {{ number_format($subtotal, 2) }}</td>
         </tr>
         <tr>
-            <td style="text-align:right;"><strong>IGV ({{ $config->igv }}%):</strong></td>
+            <td style="text-align:right;"><strong>IGV ({{ number_format($venta->igv_rate, 2) }}%):</strong></td>
             <td style="text-align:right;">S/ {{ number_format($igv, 2) }}</td>
         </tr>
         <tr>

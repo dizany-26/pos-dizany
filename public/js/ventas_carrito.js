@@ -37,6 +37,8 @@ function calcularSubtotal() {
 }
 
 function obtenerIGVPercent() {
+    const treatment = document.getElementById("tax-treatment")?.value || "gravada";
+    if (treatment !== "gravada") return 0;
     const el = document.getElementById("igv-config");
     const val = el ? parseFloat(el.value) : 0;
     return isNaN(val) ? 0 : val;

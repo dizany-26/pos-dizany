@@ -23,6 +23,9 @@ class Caja extends Model
         'monto_esperado',
         'monto_contado',
         'diferencia',
+        'metodos_esperados',
+        'metodos_declarados',
+        'metodos_diferencias',
         'observaciones',
         'estado',
     ];
@@ -38,6 +41,9 @@ class Caja extends Model
         'monto_esperado' => 'decimal:2',
         'monto_contado' => 'decimal:2',
         'diferencia' => 'decimal:2',
+        'metodos_esperados' => 'array',
+        'metodos_declarados' => 'array',
+        'metodos_diferencias' => 'array',
     ];
 
     public function usuario()
@@ -73,5 +79,54 @@ class Caja extends Model
             'retiros' => round((float) $retiros, 2),
             'esperado' => round((float) $this->monto_inicial + $ingresos + $refuerzos - $egresos - $retiros, 2),
         ];
+    }
+
+    public static function mediosConciliables(): array
+    {
+        return [
+            'efectivo' => 'Efectivo', 'yape' => 'Yape', 'plin' => 'Plin',
+            'tarjeta' => 'Tarjeta', 'transferencia' => 'Transferencia', 'otro' => 'Otro',
+        ];
+    }
+
+    public static function normalizarMetodo(?string $metodo): string
+    {
+        $metodo = mb_strtolower(trim((string) $metodo));
+
+        return match ($metodo) {
+            'efectivo', 'cash' => 'efectivo',
+            'yape' => 'yape',
+            'plin' => 'plin',
+            'tarjeta', 'tarjeta de credito', 'tarjeta de debito', 'tarjeta de débito' => 'tarjeta',
+            'transferencia', 'transf.', 'transfer' => 'transferencia',
+            'fiado', 'credito', 'crédito', 'pendiente' => 'pendiente',
+            default => 'otro',
+        };
+    }
+
+    public function calcularConciliacion(): array
+    {
+        $resultado = array_fill_keys(
+            array_keys(static::mediosConciliables()),
+            ['ingresos' => 0.0, 'egresos' => 0.0, 'esperado' => 0.0]
+        );
+
+        $this->movimientos()->where('estado', 'pagado')->get(['tipo', 'monto', 'metodo_pago'])
+            ->each(function (Movimiento $movimiento) use (&$resultado) {
+                $medio = static::normalizarMetodo($movimiento->metodo_pago);
+                if ($medio === 'pendiente') return;
+                $tipo = $movimiento->tipo === 'egreso' ? 'egresos' : 'ingresos';
+                $resultado[$medio][$tipo] += (float) $movimiento->monto;
+            });
+
+        foreach ($resultado as &$valores) {
+            $valores['ingresos'] = round($valores['ingresos'], 2);
+            $valores['egresos'] = round($valores['egresos'], 2);
+            $valores['esperado'] = round($valores['ingresos'] - $valores['egresos'], 2);
+        }
+        unset($valores);
+        $resultado['efectivo'] = $this->calcularEfectivo();
+
+        return $resultado;
     }
 }

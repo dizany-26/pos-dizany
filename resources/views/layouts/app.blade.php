@@ -17,7 +17,7 @@
 
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('css/header-actions.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/header-actions.css') }}?v={{ filemtime(public_path('css/header-actions.css')) }}">
     
     <link href="{{ asset('css/ui/ui-botones.css') }}" rel="stylesheet" />
     <link href="{{ asset('css/ui/ui-table.css') }}" rel="stylesheet" />
@@ -63,7 +63,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- JS HEADER ACTIONS (NUEVO SISTEMA) -->
-    <script src="{{ asset('js/header-actions.js') }}"></script>
+    <script src="{{ asset('js/header-actions.js') }}?v={{ filemtime(public_path('js/header-actions.js')) }}"></script>
 
     <!-- Script: Toggle Sidebar -->
     <script>

@@ -574,7 +574,8 @@ select.form-select-sm,
     }
 
     .treinta-col.derecha #carrito-lista,
-    .treinta-col.derecha .step2-scroll {
+    .treinta-col.derecha .step2-scroll,
+    .treinta-col.derecha #step-3 .card-body {
         overflow-y: auto;
         overscroll-behavior: contain;
     }
@@ -1009,6 +1010,28 @@ select.form-select-sm,
     flex-direction: column;
     flex: 1;
     min-height: 0; /* IMPORTANTE para que el scroll funcione */
+}
+
+/* Paso final: los campos se desplazan y las acciones permanecen accesibles. */
+#step-3.is-active > .card {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#step-3 .card-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+#step-3 .card-footer {
+    flex: 0 0 auto;
+    background: var(--card-bg, #fff);
 }
 
 /* LISTA DEL CARRITO: ocupa el espacio disponible entre header y footer */

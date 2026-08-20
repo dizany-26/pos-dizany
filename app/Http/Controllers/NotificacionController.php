@@ -13,9 +13,43 @@ class NotificacionController extends Controller
         $notificacion = auth()->user()->notifications()->findOrFail($id);
         $notificacion->markAsRead();
 
-        $url = $notificacion->data['url'] ?? route('movimientos.index');
+        $url = $this->rutaInterna($notificacion->data['url'] ?? null);
 
         return redirect()->to($url);
+    }
+
+    /**
+     * Convierte enlaces absolutos antiguos (localhost, IP o ngrok) en rutas
+     * internas. Asi la notificacion siempre abre en el mismo host desde el
+     * que el usuario esta utilizando DIZANY y no permite redirecciones externas.
+     */
+    private function rutaInterna(?string $url): string
+    {
+        $fallback = route('movimientos.index', [], false);
+
+        if (! is_string($url) || trim($url) === '') {
+            return $fallback;
+        }
+
+        $partes = parse_url(trim($url));
+        if ($partes === false) {
+            return $fallback;
+        }
+
+        $ruta = $partes['path'] ?? '';
+        if ($ruta === '' || ! str_starts_with($ruta, '/')) {
+            return $fallback;
+        }
+
+        $destino = $ruta;
+        if (! empty($partes['query'])) {
+            $destino .= '?'.$partes['query'];
+        }
+        if (! empty($partes['fragment'])) {
+            $destino .= '#'.$partes['fragment'];
+        }
+
+        return $destino;
     }
 
     public function caja(): JsonResponse

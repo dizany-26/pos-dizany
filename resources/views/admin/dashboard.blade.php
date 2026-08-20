@@ -28,7 +28,7 @@ Dashboard
                 <div class="kpi-icon">
                     <i class="fas fa-wallet"></i>
                 </div>
-                <small class="kpi-label">Balance actual</small>
+                <small class="kpi-label">Balance operativo</small>
                 <div class="kpi-value counter" data-value="{{ $balance }}">
                     S/ 0.00
                 </div>
@@ -173,9 +173,9 @@ Dashboard
 
                         <div class="text-muted">
                             @if($balance > 0)
-                                Flujo positivo esta semana. Buen ritmo de ventas 👌
+                                El flujo operativo acumulado es positivo. Buen ritmo de ventas.
                             @elseif($balance < 0)
-                                El balance es negativo. Revisa gastos y pendientes.
+                                El flujo operativo acumulado es negativo. Revisa las ventas y gastos pequeños.
                             @else
                                 No hay movimientos suficientes para analizar el flujo.
                             @endif

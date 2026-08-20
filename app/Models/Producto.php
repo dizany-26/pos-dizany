@@ -72,6 +72,11 @@ class Producto extends Model
         return $this->hasMany(\App\Models\DetalleVenta::class, 'producto_id');
     }
 
+    public function imagenesCatalogo()
+    {
+        return $this->hasMany(ProductoImagen::class, 'producto_id')->orderBy('orden');
+    }
+
     /* -------------------
        Utilidades
     --------------------*/

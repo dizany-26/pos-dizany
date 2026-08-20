@@ -1,156 +1,137 @@
 @extends('layouts.app')
 
-{{-- BOTÓN ATRÁS (opcional) --}}
 @section('header-back')
-<button class="btn-header-back" onclick="history.back()">
-    <i class="fas fa-chevron-left"></i>
-</button>
+<button class="btn-header-back" type="button" onclick="history.back()"><i class="fas fa-chevron-left"></i></button>
 @endsection
 
-{{-- TÍTULO --}}
-@section('header-title')
-Reportes
-@endsection
+@section('header-title', 'Reportes')
 
-{{-- BOTONES DERECHA --}}
 @section('header-buttons')
-{{-- vacio --}}
+<a class="report-header-action btn-movimientos-outline" href="{{ route('reportes.exportar', array_merge(['formato' => 'pdf'], request()->query())) }}"><i class="fas fa-file-pdf"></i><span>Exportar PDF</span></a>
+<a class="report-header-action btn-movimientos-outline" href="{{ route('reportes.exportar', array_merge(['formato' => 'csv'], request()->query())) }}"><i class="fas fa-file-excel"></i><span>Exportar Excel</span></a>
 @endsection
 
 @push('styles')
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{{ asset('css/calendar-theme.css') }}?v={{ filemtime(public_path('css/calendar-theme.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/reportes.css') }}?v={{ filemtime(public_path('css/reportes.css')) }}">
 @endpush
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/reportes.css') }}">
+@php
+    $money = fn ($value) => 'S/ '.number_format((float) $value, 2);
+    $methodClass = fn ($value) => 'method-'.strtolower(str_replace([' ', 'é'], ['-', 'e'], (string) $value));
+    $maxFlujo = max(1, (float) $flujo->max(fn ($d) => max($d['ventas'], $d['gastos'])));
+@endphp
 
-<div class="container">
-    <h2 class="mb-4"><i class="fas fa-chart-line"></i> Reporte de Ganancias</h2>
+<main class="reports-page">
+    <section class="reports-hero">
+        <div>
+            <span class="reports-eyebrow">INTELIGENCIA DEL NEGOCIO</span>
+            <h1>Centro de reportes</h1>
+            <p>{{ $filtros['es_admin'] ? 'Ventas, rentabilidad, caja e inventario en una sola vista.' : 'Consulta tus ventas y el resumen de tu caja en una sola vista.' }}</p>
+        </div>
+        <div class="reports-period"><i class="far fa-calendar-alt"></i><span><small>Periodo analizado</small><strong>{{ \Carbon\Carbon::parse($filtros['desde'])->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($filtros['hasta'])->format('d/m/Y') }}</strong></span></div>
+    </section>
 
-    {{-- Filtro de fechas --}}
-    <div class="row g-3 mb-3">
-        <div class="col-md-4">
-            <label for="desde">Desde:</label>
-            <input type="date" name="desde" id="desde" class="form-control"
-                   value="{{ $desde ?? date('Y-m-01') }}">
-        </div>
-        <div class="col-md-4">
-            <label for="hasta">Hasta:</label>
-            <input type="date" name="hasta" id="hasta" class="form-control"
-                   value="{{ $hasta ?? date('Y-m-d') }}">
-        </div>
-        <div class="col-md-4 d-flex align-items-end">
-            <button type="button" id="filtrar" class="btn btn-primary w-100">
-                <i class="fas fa-filter"></i> Filtrar
-            </button>
-        </div>
-    </div>
+    <form class="reports-filters" method="GET" action="{{ route('reportes.index') }}" id="reportFilters">
+        <label><span>Desde</span><input type="text" name="desde" value="{{ $filtros['desde'] }}" data-report-date></label>
+        <label><span>Hasta</span><input type="text" name="hasta" value="{{ $filtros['hasta'] }}" data-report-date></label>
+        @if($filtros['es_admin'])
+            <label><span>Responsable</span><select name="usuario_id"><option value="">Todos</option>@foreach($usuarios as $usuario)<option value="{{ $usuario->id }}" @selected($filtros['usuario_id'] === $usuario->id)>{{ $usuario->nombre }}</option>@endforeach</select></label>
+        @endif
+        <label><span>Método</span><select name="metodo"><option value="">Todos</option>@foreach($metodos as $key => $nombre)<option value="{{ $key }}" @selected($filtros['metodo'] === $key)>{{ $nombre }}</option>@endforeach</select></label>
+        <label><span>Estado</span><select name="estado"><option value="">Vigentes</option><option value="pagado" @selected($filtros['estado'] === 'pagado')>Pagadas</option><option value="pendiente" @selected($filtros['estado'] === 'pendiente')>Pendientes</option><option value="anulado" @selected($filtros['estado'] === 'anulado')>Anuladas</option></select></label>
+        <button type="submit" class="reports-filter-btn"><i class="fas fa-filter"></i> Aplicar</button>
+        <a href="{{ route('reportes.index') }}" class="reports-clear" title="Limpiar filtros"><i class="fas fa-rotate-left"></i></a>
+    </form>
 
-    <hr class="my-4">
-    <h4 class="mb-3">Resumen financiero</h4>
+    <section class="reports-kpis">
+        <article class="report-kpi kpi-sales"><span class="kpi-icon"><i class="fas fa-cash-register"></i></span><div><small>Ventas</small><strong>{{ $money($kpis['ventasTotal']) }}</strong><em>{{ $kpis['operaciones'] }} operaciones</em></div></article>
+        @if($filtros['es_admin'])
+            <article class="report-kpi kpi-cost"><span class="kpi-icon"><i class="fas fa-boxes-stacked"></i></span><div><small>Costo vendido</small><strong>{{ $money($kpis['costoVentas']) }}</strong><em>Mercadería despachada</em></div></article>
+            <article class="report-kpi kpi-profit"><span class="kpi-icon"><i class="fas fa-chart-line"></i></span><div><small>Utilidad bruta</small><strong>{{ $money($kpis['utilidadBruta']) }}</strong><em>Antes de gastos</em></div></article>
+            <article class="report-kpi kpi-expense"><span class="kpi-icon"><i class="fas fa-receipt"></i></span><div><small>Gastos</small><strong>{{ $money($kpis['gastos']) }}</strong><em>Gastos operativos</em></div></article>
+            <article class="report-kpi kpi-net"><span class="kpi-icon"><i class="fas fa-sack-dollar"></i></span><div><small>Utilidad neta</small><strong>{{ $money($kpis['utilidadNeta']) }}</strong><em>Bruta menos gastos</em></div></article>
+        @endif
+        <article class="report-kpi kpi-ticket"><span class="kpi-icon"><i class="fas fa-ticket"></i></span><div><small>Ticket promedio</small><strong>{{ $money($kpis['ticketPromedio']) }}</strong><em>Promedio por venta</em></div></article>
+    </section>
 
-    {{-- Tarjetas en una sola fila horizontal --}}
-    <div class="row row-cols-1 row-cols-md-5 g-3 text-center mb-4">
-        <div class="col">
-            <div class="card resumen-card border-success">
-                <h6 class="text-success"><i class="fas fa-cash-register me-1"></i> Total Ventas</h6>
-                <p id="total-ventas" class="fs-5 fw-bold text-success">
-                    S/ {{ number_format($ventas, 2) }}
-                </p>
+    <section class="reports-overview-grid">
+        <article class="report-panel cashflow-panel">
+            <div class="report-panel-heading"><div><span class="panel-kicker">TENDENCIA</span><h2>Flujo del periodo</h2></div><div class="chart-legend"><span><i class="legend-sales"></i>Ventas</span>@if($filtros['es_admin'])<span><i class="legend-expenses"></i>Gastos</span>@endif</div></div>
+            <div class="flow-chart">
+                @forelse($flujo as $day)
+                    <div class="flow-day" title="{{ $day['dia'] }} · Ventas {{ $money($day['ventas']) }}{{ $filtros['es_admin'] ? ' · Gastos '.$money($day['gastos']) : '' }}">
+                        <div class="flow-bars"><i class="flow-sale" style="height: {{ max(2, ($day['ventas'] / $maxFlujo) * 100) }}%"></i>@if($filtros['es_admin'])<i class="flow-expense" style="height: {{ max(2, ($day['gastos'] / $maxFlujo) * 100) }}%"></i>@endif</div><small>{{ $day['dia'] }}</small>
+                    </div>
+                @empty <div class="report-empty"><i class="fas fa-chart-column"></i><p>Sin datos en el periodo.</p></div>@endforelse
             </div>
-        </div>
-        <div class="col">
-            <div class="card resumen-card border-danger">
-                <h6 class="text-danger"><i class="fas fa-box-open me-1"></i> Costo de Productos</h6>
-                <p id="costo-productos" class="fs-5 fw-bold text-danger">
-                    S/ {{ number_format($costo, 2) }}
-                </p>
+        </article>
+        <article class="report-panel payment-panel">
+            <div class="report-panel-heading"><div><span class="panel-kicker">COBROS</span><h2>Métodos de pago</h2></div></div>
+            <div class="payment-list">
+                @forelse($metodosPago as $metodo)
+                    @php($percent = $kpis['ventasTotal'] > 0 ? ($metodo->total / $kpis['ventasTotal']) * 100 : 0)
+                    <div class="payment-row"><div><span class="payment-name {{ $methodClass($metodo->metodo) }}">{{ ucfirst($metodo->metodo) }}</span><strong>{{ $money($metodo->total) }}</strong></div><div class="payment-track"><i style="width: {{ min(100, $percent) }}%"></i></div><small>{{ $metodo->operaciones }} operaciones · {{ number_format($percent, 1) }}%</small></div>
+                @empty <div class="report-empty compact"><i class="fas fa-wallet"></i><p>Sin cobros registrados.</p></div>@endforelse
             </div>
-        </div>
-        <div class="col">
-            <div class="card resumen-card border-info">
-                <h6 class="text-info"><i class="fas fa-coins me-1"></i> Ganancia Bruta</h6>
-                <p id="ganancia-bruta" class="fs-5 fw-bold text-info">
-                    S/ {{ number_format($gananciaBruta, 2) }}
-                </p>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card resumen-card border-warning">
-                <h6 class="text-warning"><i class="fas fa-money-bill-wave me-1"></i> Gastos</h6>
-                <p id="gastos-report" class="fs-5 fw-bold text-warning">
-                    S/ {{ number_format($gastos, 2) }}
-                </p>
-            </div>
-        </div>
-        <div class="col">
-            @php
-                $claseGanancia = $gananciaNeta >= 0 ? 'text-primary' : 'text-danger';
-                $iconoGanancia = $gananciaNeta >= 0 ? 'fa-wallet' : 'fa-exclamation-triangle';
-                $bordeGanancia = $gananciaNeta >= 0 ? 'primary' : 'danger';
-            @endphp
-            <div class="card resumen-card border-{{ $bordeGanancia }}">
-                <h6 class="{{ $claseGanancia }}">
-                    <i class="fas {{ $iconoGanancia }} me-1"></i> Ganancia Neta
-                </h6>
-                <p id="ganancia-neta" class="fs-5 fw-bold {{ $claseGanancia }}">
-                    S/ {{ number_format($gananciaNeta, 2) }}
-                </p>
-            </div>
-        </div>
-    </div>
+        </article>
+    </section>
 
-    {{-- Enlaces rápidos --}}
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <a href="{{ route('gastos.index') }}" class="btn btn-outline-dark w-100">
-                <i class="fas fa-money-bill-wave"></i> Ver lista de gastos
-            </a>
+    <nav class="reports-tabs" aria-label="Módulos del reporte">
+        @php($reportTabs = $filtros['es_admin']
+            ? ['ventas' => ['fa-cart-shopping','Ventas'], 'productos' => ['fa-box-open','Productos'], 'caja' => ['fa-cash-register','Caja'], 'creditos' => ['fa-hand-holding-dollar','Créditos'], 'inventario' => ['fa-warehouse','Inventario'], 'compras' => ['fa-truck-ramp-box','Compras'], 'gastos' => ['fa-receipt','Gastos'], 'clientes' => ['fa-users','Clientes']]
+            : ['ventas' => ['fa-cart-shopping','Mis ventas'], 'caja' => ['fa-cash-register','Mi caja']])
+        @foreach($reportTabs as $tab => [$icon, $label])
+            <button type="button" data-report-tab="{{ $tab }}" @class(['active' => $loop->first])><i class="fas {{ $icon }}"></i><span>{{ $label }}</span></button>
+        @endforeach
+    </nav>
+
+    <section class="report-tab-pane active" data-report-pane="ventas">
+        @include('reportes.partials.table', ['title' => 'Detalle de ventas', 'icon' => 'fa-cart-shopping', 'headers' => ['Fecha','Comprobante','Cliente','Responsable','Método','Estado','Total'], 'rows' => $ventasDetalle, 'type' => 'ventas'])
+    </section>
+    @if($filtros['es_admin'])
+    <section class="report-tab-pane" data-report-pane="productos">
+        @include('reportes.partials.table', ['title' => 'Rendimiento de productos', 'icon' => 'fa-box-open', 'headers' => ['Producto','Categoría','Unidades','Ventas','Utilidad','Margen'], 'rows' => $productosVendidos, 'type' => 'productos'])
+    </section>
+    @endif
+    <section class="report-tab-pane" data-report-pane="caja">
+        @include('reportes.partials.table', ['title' => $filtros['es_admin'] ? 'Historial de cierres de caja' : 'Mis cierres de caja', 'icon' => 'fa-cash-register', 'headers' => ['Cajero','Apertura','Cierre','Inicial','Esperado','Contado','Diferencia','Estado'], 'rows' => $cajas, 'type' => 'caja'])
+    </section>
+    @if($filtros['es_admin'])
+    <section class="report-tab-pane" data-report-pane="creditos">
+        <div class="tab-summary"><div><small>Saldo por cobrar</small><strong>{{ $money($kpis['porCobrar']) }}</strong></div><p>Ventas pendientes dentro del periodo seleccionado.</p></div>
+        @include('reportes.partials.table', ['title' => 'Cuentas por cobrar', 'icon' => 'fa-hand-holding-dollar', 'headers' => ['Cliente','Compras','Consumo','Última compra','Deuda'], 'rows' => $clientes->where('deuda', '>', 0), 'type' => 'creditos'])
+    </section>
+    <section class="report-tab-pane" data-report-pane="inventario">
+        <nav class="inventory-subtabs" aria-label="Secciones de inventario">
+            <button type="button" class="active" data-inventory-tab="stock"><i class="fas fa-triangle-exclamation"></i> Stock crítico <span>{{ count($stockBajo) }}</span></button>
+            <button type="button" data-inventory-tab="vencimientos"><i class="fas fa-calendar-days"></i> Próximos vencimientos <span>{{ count($vencimientos) }}</span></button>
+        </nav>
+        <div class="inventory-subpane active" data-inventory-pane="stock">
+            @include('reportes.partials.table', ['title' => 'Stock crítico', 'icon' => 'fa-triangle-exclamation', 'headers' => ['Producto','Categoría','Stock','Mínimo','Estado'], 'rows' => $stockBajo, 'type' => 'inventario'])
         </div>
-        <div class="col-md-6">
-            <a href="{{ route('ventas.index') }}" class="btn btn-outline-success w-100">
-                <i class="fas fa-shopping-cart"></i> Ver lista de ventas
-            </a>
+        <div class="inventory-subpane" data-inventory-pane="vencimientos">
+            @include('reportes.partials.table', ['title' => 'Próximos vencimientos (60 días)', 'icon' => 'fa-calendar-days', 'headers' => ['Lote','Producto','Stock','Vencimiento','Días'], 'rows' => $vencimientos, 'type' => 'vencimientos'])
         </div>
-    </div>
-</div>
+    </section>
+    <section class="report-tab-pane" data-report-pane="compras">
+        <div class="tab-summary"><div><small>Compras registradas</small><strong>{{ $money($kpis['comprasTotal']) }}</strong></div><p>Ingreso de mercadería del periodo.</p></div>
+        @include('reportes.partials.table', ['title' => 'Compras por comprobante', 'icon' => 'fa-truck-ramp-box', 'headers' => ['Fecha','Comprobante','Proveedor','Productos','Total','Pagado','Saldo','Estado'], 'rows' => $compras, 'type' => 'compras'])
+    </section>
+    <section class="report-tab-pane" data-report-pane="gastos">
+        @include('reportes.partials.table', ['title' => 'Gastos operativos', 'icon' => 'fa-receipt', 'headers' => ['Fecha','Descripción','Método','Responsable','Monto'], 'rows' => $gastosDetalle, 'type' => 'gastos'])
+    </section>
+    <section class="report-tab-pane" data-report-pane="clientes">
+        @include('reportes.partials.table', ['title' => 'Comportamiento de clientes', 'icon' => 'fa-users', 'headers' => ['Cliente','Compras','Consumo','Última compra','Deuda'], 'rows' => $clientes, 'type' => 'clientes'])
+    </section>
+    @endif
+</main>
 @endsection
 
 @push('scripts')
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const btnFiltrar = document.getElementById('filtrar');
-    const inputDesde = document.getElementById('desde');
-    const inputHasta = document.getElementById('hasta');
-
-    function actualizarResumen() {
-        const desde = inputDesde.value;
-        const hasta = inputHasta.value;
-        const url   = "{{ route('reportes.resumen') }}";
-
-        fetch(`${url}?desde=${desde}&hasta=${hasta}`)
-            .then(res => res.json())
-            .then(data => {
-                // Convertimos cada valor a Number antes de formatear
-                document.getElementById('total-ventas').innerText    = `S/ ${( +data.ventas        ).toFixed(2)}`;
-                document.getElementById('costo-productos').innerText = `S/ ${( +data.costo         ).toFixed(2)}`;
-                document.getElementById('ganancia-bruta').innerText  = `S/ ${( +data.gananciaBruta ).toFixed(2)}`;
-                document.getElementById('gastos-report').innerText   = `S/ ${( +data.gastos        ).toFixed(2)}`;
-                document.getElementById('ganancia-neta').innerText   = `S/ ${( +data.gananciaNeta  ).toFixed(2)}`;
-            })
-            .catch(err => console.error('Error al obtener resumen:', err));
-    }
-
-    btnFiltrar.addEventListener('click', function (e) {
-        e.preventDefault();
-        actualizarResumen();
-    });
-
-    // Actualiza al cargar la página
-    actualizarResumen();
-});
-</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="{{ asset('js/reportes.js') }}?v={{ filemtime(public_path('js/reportes.js')) }}"></script>
 @endpush

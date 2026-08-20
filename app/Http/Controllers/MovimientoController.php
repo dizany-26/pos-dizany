@@ -19,6 +19,9 @@ class MovimientoController extends Controller
 {
     public function index(Request $request)
     {
+        $usuarioActual = $request->user();
+        $esAdmin = $usuarioActual->esAdmin();
+
         /* ==========================
         PARÁMETROS
         ========================== */
@@ -26,9 +29,17 @@ class MovimientoController extends Controller
         if (! in_array($tab, ['ingresos', 'egresos', 'por_cobrar'], true)) {
             $tab = 'ingresos';
         }
+        if (! $esAdmin && $tab === 'egresos' && ! $usuarioActual->tienePermiso('gastos')) {
+            $tab = 'ingresos';
+        }
         $tipo  = $request->get('tipo', 'transacciones');
         $rango = $request->get('rango', 'diario');
         $fecha = trim((string) $request->get('fecha', ''));
+        $metodo = strtolower(trim((string) $request->get('metodo', '')));
+        $metodosPermitidos = ['efectivo', 'tarjeta', 'transferencia', 'plin', 'yape', 'otro', 'fiado', 'credito'];
+        if (! in_array($metodo, $metodosPermitidos, true)) {
+            $metodo = '';
+        }
 
         // Normalizar separadores
         $fecha = str_replace([' to ', ' | ', ' → '], ' a ', $fecha);
@@ -37,6 +48,9 @@ class MovimientoController extends Controller
         QUERY BASE
         ========================== */
         $query = Movimiento::query()->with('usuario');
+        if (! $esAdmin) {
+            $query->where('usuario_id', $usuarioActual->id);
+        }
 
         // ---- FILTRO POR TAB ----
         switch ($tab) {
@@ -141,11 +155,31 @@ class MovimientoController extends Controller
             $query->whereBetween('fecha', [$inicio, $fin]);
         }
 
+        if ($metodo !== '') {
+            $query->whereRaw('LOWER(metodo_pago) = ?', [$metodo]);
+        }
+
         /* ==========================
         BUSCADOR
         ========================== */
         if ($request->filled('buscar')) {
-            $query->where('concepto', 'like', '%' . $request->buscar . '%');
+            $buscar = trim((string) $request->buscar);
+            $correlativoNumerico = ctype_digit($buscar) ? (int) ltrim($buscar, '0') : null;
+
+            $query->where(function ($busqueda) use ($buscar, $correlativoNumerico) {
+                $busqueda->where('concepto', 'like', '%' . $buscar . '%')
+                    ->orWhere(function ($porComprobante) use ($buscar, $correlativoNumerico) {
+                        $porComprobante->where('referencia_tipo', 'venta')
+                            ->whereHas('venta', function ($venta) use ($buscar, $correlativoNumerico) {
+                                $venta->where('serie', 'like', '%' . $buscar . '%')
+                                    ->orWhereRaw("CONCAT(serie, '-', LPAD(correlativo, 6, '0')) LIKE ?", ['%' . $buscar . '%']);
+
+                                if ($correlativoNumerico !== null) {
+                                    $venta->orWhere('correlativo', $correlativoNumerico);
+                                }
+                            });
+                    });
+            });
         }
 
         /* ==========================
@@ -170,8 +204,16 @@ class MovimientoController extends Controller
             ->latest('abierta_en')
             ->first();
         $resumenCaja = $cajaAbierta?->calcularEfectivo();
+        // Un administrador tambien puede operar una caja. Solo mostramos
+        // usuarios que realmente pueden trabajar en ventas, ademas de los
+        // administradores, para evitar asignar caja a perfiles sin acceso.
         $usuariosCaja = auth()->user()->esAdmin()
-            ? User::orderBy('nombre')->get(['id', 'nombre'])
+            ? User::with(['rol', 'permisos'])
+                ->orderBy('nombre')
+                ->get()
+                ->filter(fn (User $usuario) => $usuario->esAdmin() || $usuario->tienePermiso('ventas'))
+                ->sortByDesc(fn (User $usuario) => (int) $usuario->id === (int) auth()->id())
+                ->values()
             : collect();
 
         /* ==========================
@@ -182,18 +224,22 @@ class MovimientoController extends Controller
             ->pagados()
             ->activos()
             ->where('subtipo', 'venta')
+            ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
             ->when($inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
             )
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
             ->sum('monto');
 
         $gastos = Movimiento::egresos()
             ->pagados()
             ->activos()
             ->where('subtipo', 'gasto')
+            ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
             ->when($inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
             )
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
             ->sum('monto');
 
         $egresos = Movimiento::egresos()
@@ -201,15 +247,19 @@ class MovimientoController extends Controller
             ->activos()
             ->where('subtipo', 'gasto')
             ->where('referencia_tipo', 'gasto')
+            ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
             ->when($inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
             )
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
             ->sum('monto');
 
         $balance = $ventas - $egresos;
 
-        $ganancias = DetalleVenta::whereHas('venta', function ($q) use ($inicio, $fin) {
+        $ganancias = DetalleVenta::whereHas('venta', function ($q) use ($inicio, $fin, $esAdmin, $usuarioActual, $metodo) {
                 $q->where('estado', 'pagado')
+                  ->when(! $esAdmin, fn ($q2) => $q2->where('usuario_id', $usuarioActual->id))
+                  ->when($metodo !== '', fn ($q2) => $q2->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
                   ->when($inicio && $fin, fn ($q2) =>
                       $q2->whereBetween('fecha', [$inicio, $fin])
                   );
@@ -234,6 +284,7 @@ class MovimientoController extends Controller
             , 'cajaAbierta'
             , 'resumenCaja'
             , 'usuariosCaja'
+            , 'metodo'
         ));
     }
 
@@ -242,6 +293,8 @@ class MovimientoController extends Controller
     ========================== */
     public function reporte(Request $request)
     {
+        abort_unless($request->user()->esAdmin() || $request->user()->tienePermiso('reportes'), 403);
+
         $movimientos = Movimiento::activos()->orderByDesc('fecha')->get();
 
         $ventas = Movimiento::ingresos()->pagados()->activos()->sum('monto');
@@ -272,12 +325,18 @@ class MovimientoController extends Controller
         $venta = Venta::with('detalles.producto', 'cliente')
             ->findOrFail($id);
 
+        abort_if(! auth()->user()->esAdmin() && (int) $venta->usuario_id !== (int) auth()->id(), 403);
+
         return response()->json($venta);
     }
 
     public function detalleGasto($id)
     {
         $gasto = Gasto::with('usuario')->findOrFail($id);
+
+        $puedeVer = auth()->user()->esAdmin()
+            || (auth()->user()->tienePermiso('gastos') && (int) $gasto->usuario_id === (int) auth()->id());
+        abort_unless($puedeVer, 403);
 
         return response()->json([
             'id' => $gasto->id,
@@ -293,6 +352,8 @@ class MovimientoController extends Controller
 
     public function detalleCompra(Movimiento $movimiento)
     {
+        abort_unless(auth()->user()->esAdmin(), 403);
+
         abort_unless(
             $movimiento->tipo === 'egreso'
             && $movimiento->subtipo === 'compra_mercaderia'

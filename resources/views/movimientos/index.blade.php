@@ -16,7 +16,7 @@ Movimientos
 @if(auth()->user()->esAdmin())
     <button class="btn-gasto" data-bs-toggle="modal" data-bs-target="#modalAbrirCaja">
         <i class="fas fa-cash-register"></i>
-        <span class="btn-text">Asignar caja</span>
+        <span class="btn-text">Abrir / asignar caja</span>
     </button>
 @endif
 
@@ -44,11 +44,12 @@ Movimientos
     </button>
 @endif
 
-<a href="{{ route('movimientos.reporte') }}"
-   class="btn-gasto">
-    <i class="fas fa-file-download"></i>
-    <span class="btn-text">Reporte</span>
-</a>
+@if(auth()->user()->esAdmin() || auth()->user()->tienePermiso('reportes'))
+    <a href="{{ route('movimientos.reporte') }}" class="btn-gasto">
+        <i class="fas fa-file-download"></i>
+        <span class="btn-text">Reporte</span>
+    </a>
+@endif
 
 @endsection
 
@@ -153,12 +154,28 @@ Movimientos
                 </div>
             </div>
 
+            @if($tipo === 'transacciones')
+            <div class="col-md-2">
+                <select name="metodo" class="form-select ui-input" onchange="this.form.submit()">
+                    <option value="">Todos los métodos</option>
+                    <option value="efectivo" @selected($metodo === 'efectivo')>Efectivo</option>
+                    <option value="tarjeta" @selected($metodo === 'tarjeta')>Tarjeta</option>
+                    <option value="transferencia" @selected($metodo === 'transferencia')>Transferencia</option>
+                    <option value="yape" @selected($metodo === 'yape')>Yape</option>
+                    <option value="plin" @selected($metodo === 'plin')>Plin</option>
+                    <option value="otro" @selected($metodo === 'otro')>Otro</option>
+                    <option value="fiado" @selected($metodo === 'fiado')>Fiado</option>
+                    <option value="credito" @selected($metodo === 'credito')>Crédito</option>
+                </select>
+            </div>
+            @endif
+
             <div class="col-md-4">
                 <input type="text"
                        name="buscar"
                        value="{{ request('buscar') }}"
                        class="form-control ui-input"
-                       placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : 'Buscar concepto...' }}"
+                       placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : 'Buscar concepto o N.° de boleta...' }}"
                        onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
             </div>
 
@@ -168,22 +185,23 @@ Movimientos
         {{-- ================= KPIs ================= --}}
         <div class="row mb-4 g-3">
 
-            <div class="col-md-3">
+            <div class="{{ auth()->user()->esAdmin() ? 'col-md-3' : 'col-12' }}">
                 <div class="card ui-card dashboard-card rounded-4 h-100">
                     <div class="card-body d-flex align-items-center gap-3">
                         <div class="icon-soft icon-soft-primary">
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <div>
-                            <small class="text-muted">Balance</small>
+                            <small class="text-muted">{{ auth()->user()->esAdmin() ? 'Balance' : 'Tus ventas' }}</small>
                             <h5 class="fw-bold mb-0">
-                                S/ {{ number_format($balance ?? 0, 2) }}
+                                S/ {{ number_format(auth()->user()->esAdmin() ? ($balance ?? 0) : ($ventas ?? 0), 2) }}
                             </h5>
                         </div>
                     </div>
                 </div>
             </div>
 
+            @if(auth()->user()->esAdmin())
             <div class="col-md-3">
                 <div class="card ui-card dashboard-card rounded-4 h-100">
                     <div class="card-body d-flex align-items-center gap-3">
@@ -231,6 +249,7 @@ Movimientos
                     </div>
                 </div>
             </div>
+            @endif
 
         </div>
         @endif
@@ -240,9 +259,11 @@ Movimientos
         @php
             $tabs = [
                 'ingresos'   => 'Ingresos',
-                'egresos'    => 'Egresos',
                 'por_cobrar' => 'Por cobrar',
             ];
+            if (auth()->user()->esAdmin() || auth()->user()->tienePermiso('gastos')) {
+                $tabs = ['ingresos' => 'Ingresos', 'egresos' => 'Egresos', 'por_cobrar' => 'Por cobrar'];
+            }
         @endphp
 
         <div class="d-flex flex-wrap gap-2 mb-3">
@@ -281,7 +302,17 @@ Movimientos
 
                             <td data-label="Fecha">{{ \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y') }}</td>
                             <td data-label="Concepto">{{ $movimiento->concepto }}</td>
-                            <td data-label="Método">{{ ucfirst($movimiento->metodo_pago) }}</td>
+                            @php
+                                $metodoPago = strtolower($movimiento->metodo_pago ?? 'otro');
+                                $metodoLabel = match($metodoPago) {
+                                    'transferencia' => 'Transferencia',
+                                    'credito' => 'Crédito',
+                                    default => ucfirst($metodoPago),
+                                };
+                            @endphp
+                            <td data-label="Método">
+                                <span class="payment-method-badge payment-method-{{ $metodoPago }}">{{ $metodoLabel }}</span>
+                            </td>
 
                             <td data-label="Estado">
                                 @if ($movimiento->estado === 'pagado')
@@ -405,6 +436,10 @@ Movimientos
                                                 <i class="fas fa-minus"></i> Retiro
                                             </button>
                                         @elseif($caja->estado === 'pendiente_cierre')
+                                            <button type="button" class="btn-soft btn-soft-primary btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#modalCuadreCaja{{ $caja->id }}">
+                                                <i class="fas fa-scale-balanced"></i> Revisar
+                                            </button>
                                             <form method="POST" action="{{ route('cajas.aprobar', $caja) }}">
                                                 @csrf
                                                 <button class="btn-soft btn-soft-success btn-sm" type="submit">
@@ -440,25 +475,76 @@ Movimientos
 </div>
 
 @if(auth()->user()->esAdmin())
+@foreach($cajas->where('estado', 'pendiente_cierre') as $cajaPendiente)
+@php
+    $esperadosCuadre = $cajaPendiente->metodos_esperados ?? [];
+    $declaradosCuadre = $cajaPendiente->metodos_declarados ?? ['efectivo' => $cajaPendiente->monto_declarado];
+    $diferenciasCuadre = $cajaPendiente->metodos_diferencias ?? [];
+    $efectivoPendiente = $cajaPendiente->calcularEfectivo();
+@endphp
+<div class="modal fade" id="modalCuadreCaja{{ $cajaPendiente->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title"><i class="fas fa-scale-balanced"></i> Cuadre de {{ $cajaPendiente->usuario?->nombre }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body"><div class="reconciliation-table-wrap">
+            <table class="table ui-table reconciliation-table mb-0">
+                <thead><tr><th>Medio</th><th class="text-end">Sistema</th><th class="text-end">Declarado</th><th class="text-end">Diferencia</th></tr></thead>
+                <tbody>
+                @foreach(\App\Models\Caja::mediosConciliables() as $medio => $etiqueta)
+                @php
+                    $esperadoMedio = (float) ($esperadosCuadre[$medio] ?? ($medio === 'efectivo' ? $efectivoPendiente['esperado'] : 0));
+                    $declaradoMedio = (float) ($declaradosCuadre[$medio] ?? 0);
+                    $diferenciaMedio = (float) ($diferenciasCuadre[$medio] ?? ($declaradoMedio - $esperadoMedio));
+                @endphp
+                <tr><td data-label="Medio"><strong>{{ $etiqueta }}</strong></td>
+                    <td data-label="Sistema" class="text-end">S/ {{ number_format($esperadoMedio, 2) }}</td>
+                    <td data-label="Declarado" class="text-end">S/ {{ number_format($declaradoMedio, 2) }}</td>
+                    <td data-label="Diferencia" class="text-end fw-bold {{ $diferenciaMedio == 0 ? 'text-success' : 'text-danger' }}">S/ {{ number_format($diferenciaMedio, 2) }}</td></tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        @if($cajaPendiente->observaciones)<div class="cash-explanation mt-3"><strong>Observación:</strong> {{ $cajaPendiente->observaciones }}</div>@endif
+        </div>
+        <div class="modal-footer">
+            <form method="POST" action="{{ route('cajas.reabrir', $cajaPendiente) }}">@csrf<button class="btn-soft btn-soft-warning" type="submit"><i class="fas fa-rotate-left"></i> Devolver</button></form>
+            <form method="POST" action="{{ route('cajas.aprobar', $cajaPendiente) }}">@csrf<button class="btn-soft btn-soft-success" type="submit"><i class="fas fa-check"></i> Aprobar cuadre</button></form>
+        </div>
+    </div></div>
+</div>
+@endforeach
+
 <div class="modal fade" id="modalAbrirCaja" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="{{ route('cajas.abrir') }}" class="modal-content">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-cash-register"></i> Abrir caja</h5>
+                <h5 class="modal-title"><i class="fas fa-cash-register"></i> Abrir o asignar caja</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="cash-explanation">
-                    Asigna el responsable y registra el efectivo físico entregado al iniciar el turno.
+                    Abre una caja para ti o asígnala a otro usuario autorizado, registrando el efectivo inicial del turno.
                 </div>
-                <label class="form-label">Empleado responsable</label>
-                <select name="usuario_id" class="form-select ui-input mb-3" required>
-                    <option value="">Selecciona un empleado</option>
+                <label class="form-label">Responsable de caja</label>
+                <select name="usuario_id" id="responsableCaja" class="form-select ui-input" required>
+                    <option value="">Selecciona un responsable</option>
                     @foreach($usuariosCaja as $usuarioCaja)
-                        <option value="{{ $usuarioCaja->id }}">{{ $usuarioCaja->nombre }}</option>
+                        <option value="{{ $usuarioCaja->id }}"
+                            data-propio="{{ (int) $usuarioCaja->id === (int) auth()->id() ? '1' : '0' }}">
+                            @if((int) $usuarioCaja->id === (int) auth()->id())
+                                Yo - {{ $usuarioCaja->nombre }} (Administrador)
+                            @else
+                                {{ $usuarioCaja->nombre }} - {{ $usuarioCaja->rol?->nombre ?? 'Usuario' }}
+                            @endif
+                        </option>
                     @endforeach
                 </select>
+                <div id="ayudaResponsableCaja" class="form-text mb-3">
+                    Selecciona quién será responsable del dinero y de las ventas de este turno.
+                </div>
                 <label class="form-label">Fondo inicial</label>
                 <div class="input-group">
                     <span class="input-group-text">S/</span>
@@ -468,8 +554,8 @@ Movimientos
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn-soft btn-soft-success">
-                    <i class="fas fa-lock-open"></i> Abrir caja
+                <button type="submit" class="btn-soft btn-soft-success" id="btnAbrirAsignarCaja">
+                    <i class="fas fa-lock-open"></i> <span>Abrir caja</span>
                 </button>
             </div>
         </form>
@@ -499,11 +585,29 @@ Movimientos
                     Realiza el conteo físico sin consultar el total esperado. Después de enviarlo no podrás registrar más ventas hasta que un administrador revise el cierre.
                 </div>
                 @endif
-                <label class="form-label mt-3">Efectivo contado físicamente</label>
-                <div class="input-group">
-                    <span class="input-group-text">S/</span>
-                    <input type="number" name="monto_contado" id="montoContadoCaja"
-                        class="form-control ui-input" min="0" step="0.01" required>
+                <div class="cash-methods-heading mt-3">
+                    <strong>Cuadre por medio de pago</strong>
+                    <small>Cuenta el efectivo y verifica los demás importes en cada aplicación o cuenta.</small>
+                </div>
+                @php($conciliacionActual = auth()->user()->esAdmin() ? $cajaAbierta->calcularConciliacion() : [])
+                <div class="cash-methods-grid">
+                    @foreach(\App\Models\Caja::mediosConciliables() as $medio => $etiqueta)
+                    <label class="cash-method-field">
+                        <span>
+                            <i class="fas {{ $medio === 'efectivo' ? 'fa-money-bill-wave' : ($medio === 'tarjeta' ? 'fa-credit-card' : 'fa-mobile-screen-button') }}"></i>
+                            {{ $etiqueta }}
+                            @if(auth()->user()->esAdmin())
+                                <small class="ms-auto">Sistema: S/ {{ number_format($conciliacionActual[$medio]['esperado'] ?? 0, 2) }}</small>
+                            @endif
+                        </span>
+                        <div class="input-group">
+                            <span class="input-group-text">S/</span>
+                            <input type="number" name="metodos[{{ $medio }}]"
+                                id="{{ $medio === 'efectivo' ? 'montoContadoCaja' : '' }}"
+                                class="form-control ui-input" min="0" step="0.01" value="0.00" required>
+                        </div>
+                    </label>
+                    @endforeach
                 </div>
                 @if(auth()->user()->esAdmin())
                     <div id="diferenciaCaja" class="cash-difference mt-2"></div>
@@ -586,6 +690,7 @@ Movimientos
 <link rel="stylesheet" href="{{ asset('css/movimientos.css') }}?v={{ filemtime(public_path('css/movimientos.css')) }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+<link rel="stylesheet" href="{{ asset('css/calendar-theme.css') }}?v={{ filemtime(public_path('css/calendar-theme.css')) }}">
 <style>
 .range-selected{
     background:#16a34a !important;

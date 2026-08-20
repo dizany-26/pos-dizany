@@ -29,9 +29,17 @@
     @endif
 
     <div class="d-flex align-items-center ms-auto">
-        <button class="btn-header-more" id="btnHeaderMore" type="button" aria-label="Más opciones">
-            <i class="fas fa-ellipsis-v"></i>
-        </button>
+        @hasSection('header-buttons')
+            <button class="btn-header-more"
+                    id="btnHeaderMore"
+                    type="button"
+                    aria-label="Acciones de la página"
+                    aria-controls="headerMobilePanel"
+                    aria-haspopup="menu"
+                    aria-expanded="false">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+        @endif
 
         <div class="d-flex align-items-center ms-3">
             <div class="position-relative me-4">
@@ -130,11 +138,13 @@
                             <i class="fas fa-key me-2"></i>Cambiar contraseña
                         </button>
                     </li>
-                    <li>
-                        <a class="dropdown-item" href="{{ route('configuracion.index') }}">
-                            <i class="fas fa-cog me-2"></i>Configuración
-                        </a>
-                    </li>
+                    @if(Auth::user()->esAdmin())
+                        <li>
+                            <a class="dropdown-item" href="{{ route('configuracion.index') }}">
+                                <i class="fas fa-cog me-2"></i>Configuración
+                            </a>
+                        </li>
+                    @endif
                     <li><hr class="dropdown-divider"></li>
                     <li class="px-3 pt-1 pb-2">
                         <button type="button" class="btn-soft btn-soft-danger user-menu-logout w-100 justify-content-center" id="btnHeaderLogout">
@@ -194,6 +204,10 @@
 @push('scripts')
 <script>
 function cargarNotificaciones() {
+    @unless(Auth::user()->esAdmin() || Auth::user()->tienePermiso('inventario.resumen'))
+    return;
+    @endunless
+
     fetch("/notificaciones/inventario")
         .then(res => res.json())
         .then(data => {

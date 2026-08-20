@@ -114,6 +114,11 @@ function restaurarVentaActivaEnUI() {
         }
     }
 
+    // La venta restaurada puede tener un método distinto al que estaba visible
+    // anteriormente. Recalcular siempre el flujo evita mostrar "Confirmar venta"
+    // mientras la interfaz indica Efectivo.
+    actualizarBotonesSegunMetodoPagado();
+
     showStep(v.fase || 1);
 }
 
@@ -198,6 +203,20 @@ function prepararFase3() {
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
     if (inputPaga) inputPaga.value = "";
     if (inputVuelto) inputVuelto.value = "";
+
+    document.getElementById("step3-titulo").textContent = "Calcula el cambio de tu venta";
+    document.getElementById("step3-pago-wrap")?.classList.remove("d-none");
+    document.getElementById("step3-resultado-wrap")?.classList.remove("d-none");
+    document.getElementById("step3-pago-label").textContent = "Efectivo recibido";
+    document.getElementById("step3-resultado-label").textContent = "Vuelto";
+    const dueWrap = document.getElementById("credito-vencimiento-wrap");
+    const dueInput = document.getElementById("credito-vencimiento");
+    // Una venta pagada no genera saldo ni cuotas.
+    dueWrap?.classList.add("d-none");
+    if (dueInput) {
+        dueInput.required = false;
+        dueInput.value = "";
+    }
 }
 
 // ============================
@@ -209,15 +228,38 @@ function prepararFase3Credito() {
     const inputVuelto     = document.getElementById("vuelto-mostrar");
 
     const { total } = calcularTotal();
+    const estado = (document.getElementById("estado_pago")?.value || "pendiente").toLowerCase();
 
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
 
+    document.getElementById("step3-titulo").textContent = estado === "pendiente"
+        ? "Confirmar venta fiada"
+        : "Configurar venta al crédito";
+
+    const pagoWrap = document.getElementById("step3-pago-wrap");
+    const resultadoWrap = document.getElementById("step3-resultado-wrap");
+    const pagoLabel = document.getElementById("step3-pago-label");
+    const resultadoLabel = document.getElementById("step3-resultado-label");
+
+    pagoWrap?.classList.toggle("d-none", estado === "pendiente");
+    resultadoWrap?.classList.toggle("d-none", estado === "pendiente");
+
     if (inputPaga) {
         inputPaga.value = "";
-        inputPaga.placeholder = "Ingrese adelanto";
+        inputPaga.placeholder = "Ingresa el adelanto";
     }
+    if (pagoLabel) pagoLabel.textContent = "Adelanto recibido";
+    if (resultadoLabel) resultadoLabel.textContent = "Saldo pendiente";
 
     if (inputVuelto) inputVuelto.value = "";
+
+    const dueWrap = document.getElementById("credito-vencimiento-wrap");
+    const dueInput = document.getElementById("credito-vencimiento");
+    dueWrap?.classList.remove("d-none");
+    if (dueInput) {
+        dueInput.required = true;
+        if (!dueInput.value) dueInput.value = new Date().toISOString().slice(0, 10);
+    }
 }
 
 // ============================
@@ -287,13 +329,16 @@ function manejarEstadoVenta() {
         });
 
         if (hiddenMetodoPago) hiddenMetodoPago.value = "otro";
-        if (btnIrStep3) btnIrStep3.style.display = "none";
-        // 🔥 MOSTRAR TEXTO "Vuelto"
+        if (btnIrStep3) {
+            btnIrStep3.style.display = "";
+            btnIrStep3.innerHTML = `Continuar <i class="fas fa-arrow-right ms-2"></i>`;
+        }
+        // El paso siguiente solo mostrará total y vencimiento.
         if (labelVuelto) {
             labelVuelto.classList.remove("d-none");
         }
 
-        if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "block";
+        if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "none";
         return;
     }
 
@@ -469,9 +514,14 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // pendiente -> registrar directo (si existe)
+        if (!validarStockVentaActiva()) {
+            return;
+        }
+
+        // pendiente -> fase 3 sin campos de pago ni vuelto
         if (estado === "pendiente") {
-            if (typeof window.registrarVenta === "function") window.registrarVenta();
+            prepararFase3Credito();
+            showStep(3);
             return;
         }
 

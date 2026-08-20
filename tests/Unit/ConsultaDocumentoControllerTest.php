@@ -17,6 +17,10 @@ class ConsultaDocumentoControllerTest extends TestCase
                 'data' => [
                     'nombre_o_razon_social' => 'PROVEEDOR PRUEBA SAC',
                     'direccion' => 'AV. PRUEBA 123',
+                    'ubigeo_sunat' => '150101',
+                    'departamento' => 'LIMA',
+                    'provincia' => 'LIMA',
+                    'distrito' => 'LIMA',
                     'estado' => 'ACTIVO',
                     'condicion' => 'HABIDO',
                 ],
@@ -28,6 +32,8 @@ class ConsultaDocumentoControllerTest extends TestCase
         $this->assertSame(200, $response->status());
         $this->assertSame('PROVEEDOR PRUEBA SAC', $response->getData(true)['nombre']);
         $this->assertSame('AV. PRUEBA 123', $response->getData(true)['direccion']);
+        $this->assertSame('150101', $response->getData(true)['ubigeo']);
+        $this->assertSame('LIMA', $response->getData(true)['departamento']);
     }
 
     public function test_it_normalizes_a_dni_response(): void

@@ -90,16 +90,14 @@
     <div class="line"></div>
 
     @php
-        $opGravadas = $venta->total / (1 + ($config->igv / 100));
-        $igv = $venta->total - $opGravadas;
+        $operationAmount = (float) ($venta->op_gravadas + $venta->op_exoneradas + $venta->op_inafectas + $venta->op_nrus);
+        $operationLabel = match($venta->tax_treatment) {'exonerada'=>'Op. Exoneradas', 'inafecta'=>'Op. Inafectas', 'nrus_no_desglosado'=>'Valor de venta', default=>'Op. Gravadas'};
     @endphp
     <table class="totales">
         <tr>
-            <td>Op. Gravadas: {{ number_format($opGravadas, 2) }}</td>
+            <td>{{ $operationLabel }}: {{ number_format($operationAmount, 2) }}</td>
         </tr>
-        <tr>
-            <td>IGV ({{ $config->igv }}%): {{ number_format($igv, 2) }}</td>
-        </tr>
+        @if($venta->tax_treatment === 'gravada')<tr><td>IGV ({{ number_format($venta->igv_rate, 2) }}%): {{ number_format($venta->igv, 2) }}</td></tr>@endif
         <tr>
             <td><strong>Total: {{ number_format($venta->total, 2) }}</strong></td>
         </tr>

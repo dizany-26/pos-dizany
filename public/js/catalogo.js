@@ -1,5 +1,28 @@
 (() => {
     const storageKey = 'dizany_catalog_cart_v1';
+    const themeStorageKey = 'dizany-catalog-theme';
+    const themeToggle = document.querySelector('[data-catalog-theme-toggle]');
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+
+    function applyCatalogTheme(theme) {
+        const selected = theme === 'dark' ? 'dark' : 'light';
+        const isDark = selected === 'dark';
+        document.documentElement.setAttribute('data-catalog-theme', selected);
+        localStorage.setItem(themeStorageKey, selected);
+        themeColor?.setAttribute('content', isDark ? '#07162b' : '#ffffff');
+        if (themeToggle) {
+            themeToggle.setAttribute('aria-pressed', String(isDark));
+            themeToggle.setAttribute('aria-label', isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+            themeToggle.setAttribute('title', isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+        }
+    }
+
+    applyCatalogTheme(localStorage.getItem(themeStorageKey));
+    themeToggle?.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-catalog-theme');
+        applyCatalogTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
     const products = [...document.querySelectorAll('[data-product]')];
     const drawer = document.querySelector('[data-cart-drawer]');
     const itemsBox = document.querySelector('[data-cart-items]');
@@ -58,6 +81,7 @@
             id: add.dataset.id,
             name: add.dataset.name,
             image: add.dataset.image,
+            images: JSON.parse(card.dataset.images || '[]'),
             stock: Number(add.dataset.stock),
             description: card.dataset.description,
             category: card.dataset.categoryName,
@@ -68,9 +92,17 @@
         modal.querySelector('[data-modal-name]').textContent = modalProduct.name;
         modal.querySelector('[data-modal-category]').textContent = modalProduct.category;
         modal.querySelector('[data-modal-description]').textContent = modalProduct.description;
-        modal.querySelector('[data-modal-image]').innerHTML = modalProduct.image
-            ? `<img src="${escapeHtml(modalProduct.image)}" alt="${escapeHtml(modalProduct.name)}">`
+        const galleryImages = modalProduct.images.length ? modalProduct.images : (modalProduct.image ? [modalProduct.image] : []);
+        modal.querySelector('[data-modal-image]').innerHTML = galleryImages[0]
+            ? `<img src="${escapeHtml(galleryImages[0])}" alt="${escapeHtml(modalProduct.name)}">`
             : '<span>D</span>';
+        const thumbnails = modal.querySelector('[data-modal-thumbnails]');
+        thumbnails.hidden = galleryImages.length < 2;
+        thumbnails.innerHTML = galleryImages.map((image, index) => `
+            <button type="button" class="${index === 0 ? 'active' : ''}" data-gallery-image="${escapeHtml(image)}" aria-label="Ver imagen ${index + 1}">
+                <img src="${escapeHtml(image)}" alt="">
+            </button>
+        `).join('');
         const select = modal.querySelector('[data-modal-presentation]');
         select.innerHTML = modalProduct.presentations
             .filter(p => p.factor <= modalProduct.stock)
@@ -186,6 +218,13 @@
             return;
         }
         if (event.target.closest('[data-close-product]')) closeProduct();
+        const galleryButton = event.target.closest('[data-gallery-image]');
+        if (galleryButton) {
+            const modal = galleryButton.closest('[data-product-modal]');
+            const mainImage = modal.querySelector('[data-modal-image] img');
+            if (mainImage) mainImage.src = galleryButton.dataset.galleryImage;
+            modal.querySelectorAll('[data-gallery-image]').forEach(button => button.classList.toggle('active', button === galleryButton));
+        }
         if (event.target.closest('[data-modal-minus]') && modalQuantity > 1) {
             modalQuantity--;
             updateModal();

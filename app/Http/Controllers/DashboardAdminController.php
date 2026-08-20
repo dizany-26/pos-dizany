@@ -15,19 +15,27 @@ class DashboardAdminController extends Controller
         $ingresosHoy = Movimiento::whereDate('fecha', $hoy)
             ->where('tipo', 'ingreso')
             ->where('estado', 'pagado')
+            ->activos()
             ->sum('monto');
 
         $egresosHoy = Movimiento::whereDate('fecha', $hoy)
             ->where('tipo', 'egreso')
             ->where('estado', 'pagado')
+            ->where('subtipo', 'gasto')
+            ->where('referencia_tipo', 'gasto')
+            ->activos()
             ->sum('monto');
 
         $totalIngresos = Movimiento::where('tipo', 'ingreso')
             ->where('estado', 'pagado')
+            ->activos()
             ->sum('monto');
 
         $totalEgresos = Movimiento::where('tipo', 'egreso')
             ->where('estado', 'pagado')
+            ->where('subtipo', 'gasto')
+            ->where('referencia_tipo', 'gasto')
+            ->activos()
             ->sum('monto');
 
         $balance = $totalIngresos - $totalEgresos;
@@ -42,13 +50,18 @@ class DashboardAdminController extends Controller
 
         // ================= ÚLTIMOS MOVIMIENTOS =================
         $ultimosMovimientos = Movimiento::orderByDesc('fecha')
+            ->where(function ($query) {
+                $query->whereNull('subtipo')
+                    ->orWhere('subtipo', '!=', 'compra_mercaderia');
+            })
             ->limit(5)
             ->get();
         
             // ================= FLUJO 7 DÍAS =================
         $flujo = Movimiento::selectRaw('DATE(fecha) as dia')
             ->selectRaw("SUM(CASE WHEN tipo='ingreso' AND estado='pagado' THEN monto ELSE 0 END) as ingresos")
-            ->selectRaw("SUM(CASE WHEN tipo='egreso' AND estado='pagado' THEN monto ELSE 0 END) as egresos")
+            ->selectRaw("SUM(CASE WHEN tipo='egreso' AND subtipo='gasto' AND referencia_tipo='gasto' AND estado='pagado' THEN monto ELSE 0 END) as egresos")
+            ->activos()
             ->whereDate('fecha', '>=', now()->subDays(6))
             ->groupBy('dia')
             ->orderBy('dia')

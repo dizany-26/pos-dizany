@@ -159,16 +159,13 @@
 
     <div class="line"></div>
 
-    @php
-        $opGravadas = $venta->total / (1 + ($config->igv / 100));
-        $igv = $venta->total - $opGravadas;
-    @endphp
+    @php($opGravadas = (float) $venta->op_gravadas)
     <table class="totales">
         <tr>
             <td>Op. Gravadas: {{ number_format($opGravadas, 2) }}</td>
         </tr>
         <tr>
-            <td>IGV ({{ $config->igv }}%): {{ number_format($igv, 2) }}</td>
+            <td>IGV ({{ number_format($venta->igv_rate, 2) }}%): {{ number_format($venta->igv, 2) }}</td>
         </tr>
         <tr>
             <td><strong>Total: {{ number_format($venta->total, 2) }}</strong></td>

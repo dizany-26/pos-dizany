@@ -25,6 +25,9 @@ use App\Models\Lote;
 use App\Models\Caja;
 use App\Services\SaleLineCalculator;
 use App\Services\DocumentNumberService;
+use App\Jobs\SendElectronicInvoice;
+use App\Models\SunatSetting;
+use App\Services\Tax\TaxProfileService;
 
 
 class VentaController extends Controller
@@ -44,7 +47,10 @@ class VentaController extends Controller
             ->orderBy('nombre', 'ASC')
             ->get();
 
-        return view('ventas.index', compact('config', 'categorias', 'productos'));
+        $taxProfile = app(TaxProfileService::class)->current();
+        $taxCapabilities = $taxProfile?->capabilities->where('enabled', true)->pluck('capability')->all() ?? [];
+
+        return view('ventas.index', compact('config', 'categorias', 'productos', 'taxProfile', 'taxCapabilities'));
     }
 
 
@@ -74,6 +80,7 @@ public function registrarVenta(Request $request)
             'monto_pagado'     => 'required|numeric|min:0',
             'metodo_pago'      => 'nullable|string',
             'formato'          => 'nullable|string',
+            'credit_due_date'  => 'nullable|date|after_or_equal:fecha',
         ]);
 
         if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
@@ -97,20 +104,36 @@ public function registrarVenta(Request $request)
 
             /* ================= SERIE ================= */
             $tipo = $request->tipo_comprobante;
+            $taxProfiles = app(TaxProfileService::class);
+            $taxProfile = $taxProfiles->current();
+            if ($tipo === 'factura' && $taxProfile && !$taxProfiles->has($taxProfile, 'issue_factura')) {
+                throw new \Exception('El perfil tributario activo no permite emitir facturas.');
+            }
+            if ($tipo === 'boleta' && $taxProfile && !$taxProfiles->has($taxProfile, 'issue_boleta')) {
+                throw new \Exception('El perfil tributario activo no permite emitir boletas.');
+            }
             $numbering = app(DocumentNumberService::class);
             $serie = $numbering->seriesFor($tipo);
             $correlativo = $numbering->next($serie);
 
             /* ================= CONFIG ================= */
             $config = Configuracion::first();
-            $igvPercent = $config->igv ?? 0;
+            if (! $taxProfile) {
+                throw new \Exception('No existe un perfil tributario activo. Configúralo antes de registrar nuevas ventas.');
+            }
+            $taxTreatment = $taxProfile->default_tax_treatment;
+            $igvPercent = $taxTreatment === 'gravada' ? (float) $taxProfile->igv_rate : 0;
 
             /* ================= VENTA BASE ================= */
             $venta = Venta::create([
                 'cliente_id'       => $cliente->id,
                 'usuario_id'       => auth()->id(),
+                'tax_profile_id'   => $taxProfile?->id,
                 'fecha'            => $fechaHora,
                 'tipo_comprobante' => $tipo,
+                'emission_system'  => $taxProfile?->emission_system,
+                'tax_treatment'    => $taxTreatment,
+                'igv_rate'         => $igvPercent,
                 'serie'            => $serie,
                 'correlativo'      => $correlativo,
 
@@ -119,6 +142,7 @@ public function registrarVenta(Request $request)
 
                 'estado_sunat'     => 'pendiente',
                 'op_gravadas'      => 0,
+                'op_nrus'          => 0,
                 'igv'              => 0,
                 'total'            => 0,
                 'saldo'            => 0,
@@ -126,7 +150,7 @@ public function registrarVenta(Request $request)
             ]);
 
             /* ================= DETALLE + STOCK (POR LOTES) ================= */
-            $opGravadas = 0;
+            $operationBase = 0;
             \Log::info($request->productos);
 
             $calculator = app(SaleLineCalculator::class);
@@ -167,7 +191,7 @@ public function registrarVenta(Request $request)
 
                 $unidadesAfectadas = $calculation['required_units'];
                 $subtotal = $calculation['subtotal'];
-                $opGravadas += $subtotal;
+                $operationBase += $subtotal;
 
                 $detalle = DetalleVenta::create([
                     'venta_id'            => $venta->id,
@@ -200,9 +224,13 @@ public function registrarVenta(Request $request)
             }
 
             /* ================= IGV + TOTAL ================= */
-            $opGravadas = round($opGravadas, 2);
+            $operationBase = round($operationBase, 2);
+            $opGravadas = $taxTreatment === 'gravada' ? $operationBase : 0;
+            $opExoneradas = $taxTreatment === 'exonerada' ? $operationBase : 0;
+            $opInafectas = $taxTreatment === 'inafecta' ? $operationBase : 0;
+            $opNrus = $taxTreatment === 'nrus_no_desglosado' ? $operationBase : 0;
             $igvMonto = round($opGravadas * ($igvPercent / 100), 2);
-            $total    = round($opGravadas + $igvMonto, 2);
+            $total    = round($operationBase + $igvMonto, 2);
 
             /* ================= PAGO / ESTADO ================= */
             $montoPagado = round((float) $request->monto_pagado, 2);
@@ -231,13 +259,21 @@ public function registrarVenta(Request $request)
                 $metodoPagoVenta = $request->metodo_pago;
             }
 
+            if (in_array($estado, ['credito', 'pendiente'], true) && ! $request->filled('credit_due_date')) {
+                throw new \Exception('Una venta al crédito requiere la fecha de vencimiento de la cuota.');
+            }
+
             $venta->update([
                 'op_gravadas' => $opGravadas,
+                'op_exoneradas' => $opExoneradas,
+                'op_inafectas' => $opInafectas,
+                'op_nrus' => $opNrus,
                 'igv'         => $igvMonto,
                 'total'       => $total,
                 'saldo'       => $saldo,
                 'estado'      => $estado,
                 'metodo_pago' => $metodoPagoVenta,
+                'credit_due_date' => in_array($estado, ['credito', 'pendiente'], true) ? $request->credit_due_date : null,
             ]);
 
             if ($montoPagado > 0) {
@@ -289,7 +325,21 @@ public function registrarVenta(Request $request)
             //]);
 //.........................
 // QR en SVG: no depende de Imagick
-$qrData = "{$config->ruc}|{$tipo}|{$serie}|{$correlativo}|{$venta->total}|{$venta->igv}|{$venta->fecha->format('d/m/Y')}";
+$sunatSetting = SunatSetting::current();
+$tipoSunat = $tipo === 'factura' ? '01' : ($tipo === 'boleta' ? '03' : '00');
+$documentoCliente = $cliente->ruc ?: $cliente->dni;
+$tipoDocumentoCliente = $cliente->ruc ? '6' : ($cliente->dni ? '1' : '-');
+$qrData = implode('|', [
+    $sunatSetting->fiscal_ruc ?: ($config->ruc ?? ''),
+    $tipoSunat,
+    $serie,
+    $correlativo,
+    number_format($venta->igv, 2, '.', ''),
+    number_format($venta->total, 2, '.', ''),
+    $venta->fecha->format('Y-m-d'),
+    $tipoDocumentoCliente,
+    $documentoCliente,
+]);
 
 $qr = base64_encode(
     QrCode::format('svg')
@@ -306,7 +356,7 @@ $pdf = Pdf::setOptions([
     'config'     => $config,
     'qr'         => $qr,
     'logoBase64' => $logoBase64,
-    'subtotal'   => $venta->op_gravadas,
+    'subtotal'   => $venta->op_gravadas + $venta->op_exoneradas + $venta->op_inafectas + $venta->op_nrus,
     'igv'        => $venta->igv,
     'total'      => $venta->total,
 ]);
@@ -384,6 +434,17 @@ $pdf = Pdf::setOptions([
 
             DB::commit();
 
+            if (
+                in_array($tipo, ['factura', 'boleta'], true)
+                && in_array($estado, ['pagado', 'credito', 'pendiente'], true)
+                && (!$taxProfile || $taxProfiles->has($taxProfile, 'automatic_submission'))
+                && SunatSetting::current()->enabled
+            ) {
+                if ($tipo === 'factura') {
+                    SendElectronicInvoice::dispatchAfterResponse($venta->id);
+                }
+            }
+
             return response()->json([
                 'success'        => true,
                 'message'        => 'Venta registrada correctamente.',
@@ -434,7 +495,22 @@ $pdf = Pdf::setOptions([
 // VentaController.php
 public function detalle($id)
 {
-    $venta = Venta::with(['usuario', 'cliente', 'detalleVentas.producto'])->findOrFail($id);
+    $venta = Venta::with([
+        'usuario',
+        'cliente',
+        'detalleVentas.producto',
+        'manualTaxDocument',
+        'taxProfile.capabilities',
+    ])->findOrFail($id);
+
+    $taxProfiles = app(TaxProfileService::class);
+    $esBoletaSol = $venta->tipo_comprobante === 'boleta'
+        && $venta->emission_system === 'see_sol'
+        && $taxProfiles->has($venta->taxProfile, 'manual_sunat_link');
+    $saldo = max(0, (float) $venta->saldo);
+    $montoPagado = max(0, round((float) $venta->total - $saldo, 2));
+    $esVentaCredito = in_array($venta->estado, ['pendiente', 'credito'], true);
+    $vencimiento = $venta->credit_due_date;
 
     return response()->json([
         'id' => $venta->id,
@@ -450,10 +526,22 @@ public function detalle($id)
         'estado_sunat' => $venta->estado_sunat,  // aceptado | enviado | rechazado | pendiente | etc
 
         // === Totales FE ===
-        'subtotal' => (float) $venta->op_gravadas, // tu op_gravadas = subtotal
+        'subtotal' => (float) ($venta->op_gravadas + $venta->op_exoneradas + $venta->op_inafectas + $venta->op_nrus),
         'igv'      => (float) $venta->igv,
         'total'    => (float) $venta->total,
-        'saldo'    => (float) $venta->saldo,
+        'saldo'    => $saldo,
+        'monto_pagado' => $montoPagado,
+        'condicion_pago' => match ($venta->estado) {
+            'pendiente' => 'Fiado sin adelanto',
+            'credito' => 'Crédito con adelanto',
+            default => 'Contado',
+        },
+        'fecha_vencimiento' => $esVentaCredito && $vencimiento
+            ? $vencimiento->format('d/m/Y')
+            : null,
+        'credito_vencido' => $esVentaCredito && $vencimiento
+            ? $vencimiento->copy()->endOfDay()->isPast()
+            : false,
 
         // === Fecha ===
         'fecha_formato' => ucfirst(optional($venta->fecha)->locale('es')->translatedFormat('h:i A | d F Y')),
@@ -481,6 +569,24 @@ public function detalle($id)
         'pdf_url' => $venta->pdf_url ?? null,
         'xml_url' => $venta->xml_url ?? null,
         'cdr_url' => $venta->cdr_url ?? null,
+
+        // === Vinculación manual con la boleta oficial emitida en SEE-SOL ===
+        'sunat_sol' => [
+            'aplica' => $esBoletaSol,
+            'puede_vincular' => $esBoletaSol
+                && !$venta->manualTaxDocument
+                && auth()->user()->esAdmin(),
+            'link_url' => $esBoletaSol && !$venta->manualTaxDocument
+                ? route('sunat.sol.link', $venta)
+                : null,
+            'documento' => $venta->manualTaxDocument ? [
+                'serie' => $venta->manualTaxDocument->series,
+                'numero' => str_pad((string) $venta->manualTaxDocument->number, 8, '0', STR_PAD_LEFT),
+                'fecha' => optional($venta->manualTaxDocument->issued_at)->format('d/m/Y H:i'),
+                'total' => (float) $venta->manualTaxDocument->total,
+                'estado' => $venta->manualTaxDocument->status,
+            ] : null,
+        ],
 
         // === Productos ===
         'productos' => $venta->detalleVentas->map(function ($d) {

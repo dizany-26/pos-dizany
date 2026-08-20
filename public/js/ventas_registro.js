@@ -173,7 +173,8 @@ document.addEventListener("DOMContentLoaded", () => {
         monto_pagado: montoPagado,
         metodo_pago: metodoPago,
         productos: productosEnviar,
-        formato: formato
+        formato: formato,
+        credit_due_date: ["credito", "pendiente"].includes(estadoPago) ? document.getElementById("credito-vencimiento")?.value : null
     })
 })
 .then(async res => {

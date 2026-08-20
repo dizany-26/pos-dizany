@@ -239,13 +239,47 @@ public function registrarPagoCompra(Request $request, Lote $lote)
 
     DB::transaction(function () use ($lote, $datos) {
         $lotes = $this->lotesDeCompra($lote);
+
+        // Algunas compras históricas fueron registradas antes de que existiera
+        // el movimiento de deuda por lote. El historial puede calcular su saldo
+        // desde los lotes, pero el pago necesita esos movimientos para distribuir
+        // y auditar correctamente cada abono. Los reconstruimos de forma segura.
+        foreach ($lotes as $loteCompra) {
+            if ($loteCompra->condicion_pago !== 'credito') {
+                continue;
+            }
+
+            Movimiento::firstOrCreate(
+                [
+                    'referencia_id' => $loteCompra->id,
+                    'referencia_tipo' => 'lote',
+                    'subtipo' => 'compra_mercaderia',
+                ],
+                [
+                    'caja_id' => null,
+                    'usuario_id' => auth()->id(),
+                    'fecha' => $loteCompra->fecha_ingreso,
+                    'hora' => now()->format('H:i:s'),
+                    'tipo' => 'egreso',
+                    'concepto' => 'Compra por pagar · '.($loteCompra->producto->nombre ?? 'Producto')
+                        .($loteCompra->codigo_comprobante ? ' · '.$loteCompra->codigo_comprobante : ''),
+                    'monto' => round((float) $loteCompra->stock_inicial * (float) $loteCompra->precio_compra, 2),
+                    'metodo_pago' => 'credito',
+                    'estado' => 'pendiente',
+                ]
+            );
+        }
+
         $movimientos = Movimiento::whereIn('referencia_id', $lotes->pluck('id'))
             ->where('referencia_tipo', 'lote')->where('subtipo', 'compra_mercaderia')
             ->lockForUpdate()->orderBy('id')->get();
-        $saldoTotal = $movimientos->sum(fn ($m) => max(0, (float) $m->monto - (float) CompraPago::where('movimiento_id', $m->id)->sum('monto')));
-        abort_if((float) $datos['monto'] > round($saldoTotal, 2), 422, 'El pago no puede superar el saldo de la compra.');
+        $saldoTotal = round($movimientos->sum(
+            fn ($m) => max(0, (float) $m->monto - (float) CompraPago::where('movimiento_id', $m->id)->sum('monto'))
+        ), 2);
+        $montoSolicitado = round((float) $datos['monto'], 2);
+        abort_if($montoSolicitado > $saldoTotal, 422, 'El pago no puede superar el saldo de la compra.');
 
-        $restante = (float) $datos['monto'];
+        $restante = $montoSolicitado;
         foreach ($movimientos as $movimiento) {
             if ($restante <= 0) break;
             $pagado = (float) CompraPago::where('movimiento_id', $movimiento->id)->sum('monto');
