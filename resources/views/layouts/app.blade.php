@@ -5,7 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="google" content="notranslate">
-    <title>@yield('title', 'Vista - Panel')</title>
+    @php
+        $sectionTitle = trim($__env->yieldContent('title'));
+
+        if ($sectionTitle === '' || strcasecmp($sectionTitle, 'Vista - Panel') === 0) {
+            $sectionTitle = match (true) {
+                request()->is('admin/dashboard') => 'Dashboard',
+                request()->is('usuarios*') => 'Usuarios',
+                request()->is('clientes*') => 'Clientes',
+                request()->is('proveedores*') => 'Proveedores',
+                request()->is('productos/create') => 'Nuevo producto',
+                request()->is('productos/*/edit') => 'Editar producto',
+                request()->is('productos*') => 'Productos',
+                request()->is('ventas*') => 'Nueva venta',
+                request()->is('movimientos*') => 'Movimientos',
+                request()->is('gastos*') => 'Gastos',
+                request()->is('reportes*') => 'Reportes',
+                request()->is('inventario/resumen*') => 'Resumen de inventario',
+                request()->is('inventario/lote*') => 'Ingreso de inventario',
+                request()->is('inventario/lotes*') => 'Lotes registrados',
+                request()->is('inventario/compras*') => 'Historial de compras',
+                request()->is('configuracion/facturacion-electronica*') => 'Facturación electrónica',
+                request()->is('configuracion/copias-seguridad*') => 'Copias de seguridad',
+                request()->is('configuracion*') => 'Configuración general',
+                request()->is('catalogo/configuracion*') => 'Configurar catálogo',
+                request()->is('catalogo*') => 'Catálogo',
+                default => 'Panel',
+            };
+        }
+
+        $sectionTitle = trim((string) preg_replace('/^(?:DIZANY\s*\|\s*|Vista\s*-\s*)/i', '', $sectionTitle));
+        $browserTitle = 'DIZANY | '.($sectionTitle !== '' ? $sectionTitle : 'Panel');
+    @endphp
+    <title>{{ $browserTitle }}</title>
+    <link id="dizany-favicon" rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+    <script>
+        (() => {
+            const expectedTitle = @json($browserTitle);
+            document.title = expectedTitle;
+
+            const titleElement = document.querySelector('title');
+            if (titleElement) {
+                new MutationObserver(() => {
+                    if (document.title !== expectedTitle) {
+                        document.title = expectedTitle;
+                    }
+                }).observe(titleElement, { childList: true });
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const favicon = document.getElementById('dizany-favicon');
+                if (!favicon) return;
+
+                const companyLogo = [...document.images].find((image) => {
+                    const identity = `${image.alt || ''} ${image.className || ''} ${image.src || ''}`;
+                    return /(?:logo|dizany)/i.test(identity) && !/(?:producto|product)/i.test(identity);
+                }) || document.querySelector('header img');
+
+                const applyLogoAsFavicon = () => {
+                    const source = companyLogo?.currentSrc || companyLogo?.src;
+                    if (source) favicon.href = source;
+                };
+
+                if (companyLogo) {
+                    companyLogo.complete
+                        ? applyLogoAsFavicon()
+                        : companyLogo.addEventListener('load', applyLogoAsFavicon, { once: true });
+                }
+            });
+        })();
+    </script>
 
     <script>
         (function () {
