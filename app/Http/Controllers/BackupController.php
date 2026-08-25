@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Configuracion;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
@@ -21,6 +24,7 @@ class BackupController extends Controller
     {
         $directory = storage_path(self::DIRECTORY);
         File::ensureDirectoryExists($directory);
+        $emergencyBackups = $this->emergencyBackupNames();
 
         $backups = collect(File::files($directory))
             ->filter(fn ($file) => $file->getExtension() === 'sql')
@@ -29,6 +33,8 @@ class BackupController extends Controller
                 'size' => $file->getSize(),
                 'created_at' => $file->getMTime(),
                 'restorable' => $this->isPortableBackup($file->getPathname()),
+                'emergency' => str_contains($file->getFilename(), '_emergencia_')
+                    || $emergencyBackups->contains($file->getFilename()),
             ])
             ->sortByDesc('created_at')
             ->values();
@@ -36,20 +42,20 @@ class BackupController extends Controller
         return view('configuracion.backups', compact('backups'));
     }
 
-    public function store(): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $connection = config('database.connections.mysql');
         abort_unless(($connection['driver'] ?? null) === 'mysql', 422, 'La copia automática requiere una conexión MySQL.');
 
         $executable = $this->findMysqlDump();
         if (! $executable) {
-            return back()->withErrors('No se encontró mysqldump. Configura MYSQLDUMP_PATH en el archivo .env.');
+            return $this->storeResponse($request, false, 'No se encontró mysqldump. Configura MYSQLDUMP_PATH en el archivo .env.');
         }
 
         $directory = storage_path(self::DIRECTORY);
         File::ensureDirectoryExists($directory);
 
-        $filename = 'dizany_' . now()->format('Y-m-d_H-i-s') . '_' . Str::lower(Str::random(4)) . '.sql';
+        $filename = $this->backupPrefix() . '_' . now()->format('Y-m-d_H-i-s') . '_' . Str::lower(Str::random(4)) . '.sql';
         $temporaryPath = $directory . DIRECTORY_SEPARATOR . $filename . '.tmp';
         $finalPath = $directory . DIRECTORY_SEPARATOR . $filename;
         $credentialsPath = $directory . DIRECTORY_SEPARATOR . '.mysql-' . Str::random(12) . '.cnf';
@@ -85,7 +91,7 @@ class BackupController extends Controller
             File::delete($temporaryPath);
             report($exception);
 
-            return back()->withErrors('No se pudo iniciar la herramienta de respaldo. Revisa la configuración de mysqldump.');
+            return $this->storeResponse($request, false, 'No se pudo iniciar la herramienta de respaldo. Revisa la configuración de mysqldump.');
         } finally {
             File::delete($credentialsPath);
         }
@@ -103,13 +109,27 @@ class BackupController extends Controller
                     previous: $exception
                 ));
 
-                return back()->withErrors('No se pudo crear la copia. Revisa que MySQL esté iniciado e inténtalo nuevamente.');
+                return $this->storeResponse($request, false, 'No se pudo crear la copia. Revisa que MySQL esté iniciado e inténtalo nuevamente.');
             }
         }
 
         File::move($temporaryPath, $finalPath);
 
-        return back()->with('success', 'Copia de seguridad creada correctamente.');
+        return $this->storeResponse($request, true, 'Copia de seguridad creada correctamente.');
+    }
+
+    private function storeResponse(Request $request, bool $success, string $message): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(
+                ['success' => $success, 'message' => $message],
+                $success ? 200 : 422
+            );
+        }
+
+        return $success
+            ? back()->with('success', $message)
+            : back()->withErrors($message);
     }
 
     public function download(string $filename): BinaryFileResponse
@@ -129,7 +149,7 @@ class BackupController extends Controller
         return back()->with('success', 'Copia de seguridad eliminada.');
     }
 
-    public function restore(\Illuminate\Http\Request $request, string $filename): RedirectResponse
+    public function restore(Request $request, string $filename): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'password' => ['required', 'current_password'],
@@ -146,11 +166,11 @@ class BackupController extends Controller
 
         $lock = Cache::lock('dizany-database-restore', 600);
         if (! $lock->get()) {
-            return back()->withErrors('Ya hay una restauración en proceso. Espera unos minutos.');
+            return $this->restoreResponse($request, false, 'Ya hay una restauración en proceso. Espera unos minutos.');
         }
 
         $directory = storage_path(self::DIRECTORY);
-        $emergencyName = 'dizany_' . now()->format('Y-m-d_H-i-s') . '_' . Str::lower(Str::random(4)) . '.sql';
+        $emergencyName = $this->backupPrefix() . '_emergencia_' . now()->format('Y-m-d_H-i-s') . '_' . Str::lower(Str::random(4)) . '.sql';
         $emergencyPath = $directory . DIRECTORY_SEPARATOR . $emergencyName;
         $restored = false;
 
@@ -173,7 +193,11 @@ class BackupController extends Controller
             $this->writeRestoreAudit('failed', $filename, $emergencyName, $request, $exception->getMessage());
             report($exception);
 
-            return back()->withErrors('La restauración no pudo completarse. La base anterior fue protegida con una copia de emergencia.');
+            return $this->restoreResponse(
+                $request,
+                false,
+                'La restauración no pudo completarse. La base anterior fue protegida con una copia de emergencia.'
+            );
         } finally {
             Artisan::call('up');
             $lock->release();
@@ -183,13 +207,37 @@ class BackupController extends Controller
             $this->closeAllSessions($request);
         }
 
-        return redirect()->route('login', ['restored' => 1]);
+        return $this->restoreResponse(
+            $request,
+            true,
+            'Base de datos restaurada correctamente.',
+            route('login', ['restored' => 1])
+        );
+    }
+
+    private function restoreResponse(
+        Request $request,
+        bool $success,
+        string $message,
+        ?string $redirectTo = null
+    ): RedirectResponse|JsonResponse {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => $success,
+                'message' => $message,
+                'redirect_to' => $redirectTo,
+            ], $success ? 200 : 422);
+        }
+
+        return $success
+            ? redirect()->to($redirectTo ?? route('login'))
+            : back()->withErrors($message);
     }
 
     private function resolveBackup(string $filename): string
     {
         abort_unless(
-            preg_match('/^dizany_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_[a-z0-9]{4}\.sql$/', $filename),
+            preg_match('/^[a-z0-9]+(?:_[a-z0-9]+)*_(?:emergencia_)?\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_[a-z0-9]{4}\.sql$/', $filename),
             404
         );
 
@@ -469,5 +517,29 @@ class BackupController extends Controller
             'ip' => $request->ip(),
             'error' => $error,
         ]);
+    }
+
+    private function emergencyBackupNames(): \Illuminate\Support\Collection
+    {
+        $auditPath = storage_path('logs/backup-restores.log');
+        if (! File::exists($auditPath)) {
+            return collect();
+        }
+
+        preg_match_all(
+            '/"emergency_backup":"([^"]+\.sql)"/',
+            File::get($auditPath),
+            $matches
+        );
+
+        return collect($matches[1] ?? [])->unique()->values();
+    }
+
+    private function backupPrefix(): string
+    {
+        $companyName = Configuracion::query()->value('nombre_empresa');
+        $prefix = Str::slug((string) $companyName, '_');
+
+        return Str::limit($prefix !== '' ? $prefix : 'dizany', 60, '');
     }
 }

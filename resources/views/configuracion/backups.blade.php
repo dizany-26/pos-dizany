@@ -97,19 +97,24 @@
                                     ? number_format($bytes / 1048576, 2) . ' MB'
                                     : number_format(max($bytes / 1024, 0.01), 2) . ' KB';
                             @endphp
-                            <tr>
+                            <tr class="{{ $backup['emergency'] ? 'is-emergency' : '' }}">
                                 <td data-label="Archivo">
-                                    <div class="backup-file-cell">
-                                        <span><i class="fas fa-file-code"></i></span>
+                                    <div class="backup-file-cell {{ $backup['emergency'] ? 'is-emergency' : '' }}">
+                                        <span><i class="fas {{ $backup['emergency'] ? 'fa-shield-alt' : 'fa-file-code' }}"></i></span>
                                         <div>
                                             <strong>{{ $backup['name'] }}</strong>
-                                            <small>Base de datos MySQL</small>
+                                            <small>{{ $backup['emergency'] ? 'Estado anterior a una restauración' : 'Base de datos MySQL' }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td data-label="Fecha">{{ $createdAt->format('d/m/Y') }} <small>{{ $createdAt->format('H:i') }}</small></td>
                                 <td data-label="Tamaño">{{ $size }}</td>
-                                <td data-label="Estado"><span class="backup-status"><i class="fas fa-check"></i> Disponible</span></td>
+                                <td data-label="Estado">
+                                    <span class="backup-status {{ $backup['emergency'] ? 'is-emergency' : '' }}">
+                                        <i class="fas {{ $backup['emergency'] ? 'fa-shield-alt' : 'fa-check' }}"></i>
+                                        {{ $backup['emergency'] ? 'Copia de emergencia' : 'Disponible' }}
+                                    </span>
+                                </td>
                                 <td data-label="Acciones">
                                     <div class="backup-actions">
                                         <a href="{{ route('backups.download', $backup['name']) }}" title="Descargar copia">
@@ -152,11 +157,81 @@
 @push('scripts')
 <script>
 document.querySelectorAll('[data-backup-create]').forEach((button) => {
-    button.closest('form')?.addEventListener('submit', () => {
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span> Creando copia...</span>';
+    button.closest('form')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const buttons = document.querySelectorAll('[data-backup-create]');
+        buttons.forEach(item => item.disabled = true);
+
+        let progress = 8;
+        let timer;
+
+        const modal = Swal.fire({
+            title: 'Creando copia de seguridad',
+            html: `
+                <div class="backup-progress-modal">
+                    <div class="backup-progress-icon"><i class="fas fa-database"></i></div>
+                    <p id="backup-progress-message">Preparando la información del sistema…</p>
+                    <div class="backup-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
+                        <span id="backup-progress-bar" style="width:8%"></span>
+                    </div>
+                    <strong id="backup-progress-value">8%</strong>
+                    <small>No cierres esta ventana hasta que finalice el proceso.</small>
+                </div>`,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            keydownListenerCapture: true,
+            didOpen: () => {
+                timer = window.setInterval(() => {
+                    progress = Math.min(92, progress + (progress < 55 ? 7 : progress < 80 ? 4 : 1));
+                    updateBackupProgress(progress);
+                }, 450);
+            }
+        });
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo crear la copia.');
+
+            window.clearInterval(timer);
+            updateBackupProgress(100, '¡Copia completada correctamente!');
+            document.querySelector('.backup-progress-icon')?.classList.add('is-complete');
+            await new Promise(resolve => window.setTimeout(resolve, 900));
+            Swal.close();
+            await modal;
+            window.location.reload();
+        } catch (error) {
+            window.clearInterval(timer);
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo crear la copia',
+                text: error.message || 'Ocurrió un error inesperado.',
+                confirmButtonText: 'Entendido'
+            });
+            buttons.forEach(item => item.disabled = false);
+        }
     });
 });
+
+function updateBackupProgress(value, message = null) {
+    const bar = document.getElementById('backup-progress-bar');
+    const label = document.getElementById('backup-progress-value');
+    const track = document.querySelector('.backup-progress-track');
+    const messageElement = document.getElementById('backup-progress-message');
+    if (bar) bar.style.width = `${value}%`;
+    if (label) label.textContent = `${value}%`;
+    if (track) track.setAttribute('aria-valuenow', String(value));
+    if (message && messageElement) messageElement.textContent = message;
+}
 
 document.querySelectorAll('[data-backup-delete]').forEach((form) => {
     form.addEventListener('submit', async (event) => {
@@ -208,16 +283,72 @@ document.querySelectorAll('[data-backup-restore]').forEach((button) => {
 
         if (!result.isConfirmed) return;
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = button.dataset.url;
-        form.innerHTML = `
-            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="password">
-            <input type="hidden" name="confirmation" value="RESTAURAR">`;
-        form.querySelector('[name="password"]').value = result.value.password;
-        document.body.appendChild(form);
-        form.submit();
+        let progress = 6;
+        let timer;
+
+        const progressModal = Swal.fire({
+            title: 'Restaurando copia de seguridad',
+            html: `
+                <div class="backup-progress-modal">
+                    <div class="backup-progress-icon is-restore"><i class="fas fa-rotate-left"></i></div>
+                    <p id="backup-progress-message">Creando una copia de emergencia…</p>
+                    <div class="backup-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="6">
+                        <span id="backup-progress-bar" style="width:6%"></span>
+                    </div>
+                    <strong id="backup-progress-value">6%</strong>
+                    <small>No cierres ni recargues esta ventana durante la restauración.</small>
+                </div>`,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            keydownListenerCapture: true,
+            didOpen: () => {
+                timer = window.setInterval(() => {
+                    progress = Math.min(92, progress + (progress < 45 ? 6 : progress < 75 ? 3 : 1));
+                    const message = progress < 45
+                        ? 'Creando una copia de emergencia…'
+                        : progress < 82
+                            ? 'Restaurando la base de datos…'
+                            : 'Verificando la información restaurada…';
+                    updateBackupProgress(progress, message);
+                }, 550);
+            }
+        });
+
+        try {
+            const payload = new FormData();
+            payload.set('_token', '{{ csrf_token() }}');
+            payload.set('password', result.value.password);
+            payload.set('confirmation', result.value.confirmation);
+
+            const response = await fetch(button.dataset.url, {
+                method: 'POST',
+                body: payload,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo restaurar la copia.');
+
+            window.clearInterval(timer);
+            updateBackupProgress(100, '¡Restauración completada! Cerrando sesiones…');
+            document.querySelector('.backup-progress-icon')?.classList.add('is-complete');
+            await new Promise(resolve => window.setTimeout(resolve, 1100));
+            Swal.close();
+            await progressModal;
+            window.location.href = data.redirect_to || '{{ route('login', [], false) }}?restored=1';
+        } catch (error) {
+            window.clearInterval(timer);
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo restaurar la copia',
+                text: error.message || 'La base anterior fue protegida con una copia de emergencia.',
+                confirmButtonText: 'Entendido',
+                allowOutsideClick: false
+            });
+        }
     });
 });
 </script>
