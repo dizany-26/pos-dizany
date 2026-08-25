@@ -48,10 +48,6 @@ class BackupController extends Controller
         abort_unless(($connection['driver'] ?? null) === 'mysql', 422, 'La copia automática requiere una conexión MySQL.');
 
         $executable = $this->findMysqlDump();
-        if (! $executable) {
-            return $this->storeResponse($request, false, 'No se encontró mysqldump. Configura MYSQLDUMP_PATH en el archivo .env.');
-        }
-
         $directory = storage_path(self::DIRECTORY);
         File::ensureDirectoryExists($directory);
 
@@ -59,44 +55,45 @@ class BackupController extends Controller
         $temporaryPath = $directory . DIRECTORY_SEPARATOR . $filename . '.tmp';
         $finalPath = $directory . DIRECTORY_SEPARATOR . $filename;
         $credentialsPath = $directory . DIRECTORY_SEPARATOR . '.mysql-' . Str::random(12) . '.cnf';
+        $process = null;
 
-        try {
-            $password = str_replace(
-                ["\\", '"', "\n", "\r"],
-                ["\\\\", '\\"', '\\n', '\\r'],
-                (string) ($connection['password'] ?? '')
-            );
-            File::put($credentialsPath, "[client]\npassword=\"{$password}\"\n");
+        if ($executable) {
+            try {
+                $password = str_replace(
+                    ["\\", '"', "\n", "\r"],
+                    ["\\\\", '\\"', '\\n', '\\r'],
+                    (string) ($connection['password'] ?? '')
+                );
+                File::put($credentialsPath, "[client]\npassword=\"{$password}\"\n");
 
-            $process = new Process([
-                $executable,
-                // MySQL exige que defaults-extra-file sea la primera opción.
-                '--defaults-extra-file=' . $credentialsPath,
-                '--host=' . ($connection['host'] ?? '127.0.0.1'),
-                '--port=' . ($connection['port'] ?? '3306'),
-                '--user=' . ($connection['username'] ?? 'root'),
-                '--default-character-set=utf8mb4',
-                '--single-transaction',
-                '--quick',
-                '--routines',
-                '--triggers',
-                '--events',
-                '--hex-blob',
-                '--result-file=' . $temporaryPath,
-                (string) ($connection['database'] ?? ''),
-            ], base_path());
-            $process->setTimeout(300);
-            $process->run();
-        } catch (\Throwable $exception) {
-            File::delete($temporaryPath);
-            report($exception);
-
-            return $this->storeResponse($request, false, 'No se pudo iniciar la herramienta de respaldo. Revisa la configuración de mysqldump.');
-        } finally {
-            File::delete($credentialsPath);
+                $process = new Process([
+                    $executable,
+                    // MySQL exige que defaults-extra-file sea la primera opción.
+                    '--defaults-extra-file=' . $credentialsPath,
+                    '--host=' . ($connection['host'] ?? '127.0.0.1'),
+                    '--port=' . ($connection['port'] ?? '3306'),
+                    '--user=' . ($connection['username'] ?? 'root'),
+                    '--default-character-set=utf8mb4',
+                    '--single-transaction',
+                    '--quick',
+                    '--routines',
+                    '--triggers',
+                    '--events',
+                    '--hex-blob',
+                    '--result-file=' . $temporaryPath,
+                    (string) ($connection['database'] ?? ''),
+                ], base_path());
+                $process->setTimeout(300);
+                $process->run();
+            } catch (\Throwable $exception) {
+                report($exception);
+                $process = null;
+            } finally {
+                File::delete($credentialsPath);
+            }
         }
 
-        if (! $process->isSuccessful() || ! File::exists($temporaryPath) || File::size($temporaryPath) === 0) {
+        if ($process === null || ! $process->isSuccessful() || ! File::exists($temporaryPath) || File::size($temporaryPath) === 0) {
             File::delete($temporaryPath);
 
             try {
@@ -105,7 +102,7 @@ class BackupController extends Controller
                 File::delete($temporaryPath);
                 report(new \RuntimeException(
                     'Fallaron mysqldump y el respaldo alternativo. mysqldump: '
-                    . $process->getErrorOutput(),
+                    . ($process?->getErrorOutput() ?: 'no disponible o no pudo iniciarse'),
                     previous: $exception
                 ));
 
