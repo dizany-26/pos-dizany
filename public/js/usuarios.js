@@ -18,6 +18,54 @@ document.addEventListener('DOMContentLoaded', function () {
     const changePasswordForm = document.querySelector('#modalCambiarClave form');
     const adminRoleId = String(window.rolesUsuarios?.Administrador ?? '');
     const roleTemplates = window.plantillasRolesUsuarios || {};
+    const dniNuevo = document.getElementById('nuevo-usuario-dni');
+    const nombreNuevo = document.getElementById('nuevo-usuario-nombre');
+    const estadoDniNuevo = document.getElementById('nuevo-usuario-dni-estado');
+    const consultarDniButton = document.getElementById('consultarDniUsuario');
+    let consultaDniTimer;
+
+    const consultarDni = async () => {
+        const dni = (dniNuevo?.value || '').replace(/\D/g, '');
+        if (dni.length !== 8 || !estadoDniNuevo || !consultarDniButton) {
+            if (estadoDniNuevo) estadoDniNuevo.textContent = 'El DNI debe contener 8 dígitos.';
+            return;
+        }
+
+        consultarDniButton.disabled = true;
+        estadoDniNuevo.className = 'usuario-dni-estado mt-2 is-loading';
+        estadoDniNuevo.textContent = 'Consultando RENIEC…';
+
+        try {
+            const response = await fetch(`/consulta-documento/dni/${dni}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'DNI no encontrado.');
+
+            if (nombreNuevo) nombreNuevo.value = (data.nombre || '').toLocaleUpperCase('es-PE');
+            estadoDniNuevo.className = 'usuario-dni-estado mt-2 is-success';
+            estadoDniNuevo.textContent = 'Datos encontrados correctamente.';
+        } catch (error) {
+            estadoDniNuevo.className = 'usuario-dni-estado mt-2 is-error';
+            estadoDniNuevo.textContent = error.message || 'No se pudo consultar RENIEC.';
+        } finally {
+            consultarDniButton.disabled = false;
+        }
+    };
+
+    dniNuevo?.addEventListener('input', () => {
+        dniNuevo.value = dniNuevo.value.replace(/\D/g, '').slice(0, 8);
+        clearTimeout(consultaDniTimer);
+        if (estadoDniNuevo) {
+            estadoDniNuevo.className = 'usuario-dni-estado mt-2';
+            estadoDniNuevo.textContent = dniNuevo.value.length === 8
+                ? 'Listo para consultar.'
+                : 'Ingresa el DNI para completar el nombre.';
+        }
+        if (dniNuevo.value.length === 8) consultaDniTimer = setTimeout(consultarDni, 350);
+    });
+
+    consultarDniButton?.addEventListener('click', consultarDni);
 
     const setCheckedPermissions = (checkboxes, permissions) => {
         const selected = new Set(permissions);
@@ -152,12 +200,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 formNuevoUsuario.reset();
             }
 
-            const usuarioInput = formNuevoUsuario?.querySelector('input[name="usuario"]');
             const passwordInput = document.getElementById('nuevo-password-visible');
 
-            if (usuarioInput) {
-                usuarioInput.value = '';
-                usuarioInput.setAttribute('autocomplete', 'off');
+            if (estadoDniNuevo) {
+                estadoDniNuevo.className = 'usuario-dni-estado mt-2';
+                estadoDniNuevo.textContent = 'Ingresa el DNI para completar el nombre.';
             }
 
             if (passwordInput) {
@@ -213,14 +260,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
-            const usuario = button.getAttribute('data-usuario');
+            const dni = button.getAttribute('data-dni');
             const email = button.getAttribute('data-email');
             const rol = button.getAttribute('data-rol');
             const permisos = JSON.parse(button.getAttribute('data-permisos') || '[]');
 
             modalEditarUsuario.querySelector('#editar-id').value = id;
             modalEditarUsuario.querySelector('#editar-nombre').value = nombre;
-            modalEditarUsuario.querySelector('#editar-usuario').value = usuario;
+            modalEditarUsuario.querySelector('#editar-dni').value = dni;
             modalEditarUsuario.querySelector('#editar-email').value = email;
             if (editarRolSelect) {
                 editarRolSelect.value = rol;

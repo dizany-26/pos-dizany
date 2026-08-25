@@ -164,7 +164,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::get('/consulta-documento/{tipo}/{numero}', [ConsultaDocumentoController::class, 'show'])
         ->whereIn('tipo', ['dni', 'ruc'])
         ->whereNumber('numero')
-        ->middleware(['permission:proveedores,ventas,configuracion', 'throttle:30,1'])
+        ->middleware(['permission:proveedores,ventas,configuracion,usuarios', 'throttle:30,1'])
         ->name('documentos.consultar');
 
     /*

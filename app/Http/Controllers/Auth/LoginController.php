@@ -31,18 +31,18 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'usuario' => ['required', 'string'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        if (Auth::attempt(['usuario' => $credentials['usuario'], 'password' => $credentials['password']])) {
+        if (Auth::attempt(['email' => mb_strtolower(trim($credentials['email'])), 'password' => $credentials['password']])) {
             $request->session()->regenerate();
 
             return redirect()->intended(route($request->user()->rutaInicio()));
         }
 
         return back()->withErrors([
-            'usuario' => 'Las credenciales no coinciden.',
+            'email' => 'El correo o la contraseña no coinciden.',
         ]);
     }
 
@@ -60,11 +60,11 @@ class LoginController extends Controller
 public function loginAjax(Request $request)
 {
     $credentials = $request->validate([
-        'usuario' => ['required', 'string'],
+        'email' => ['required', 'email'],
         'password' => ['required', 'string'],
     ]);
 
-    if (Auth::attempt(['usuario' => $credentials['usuario'], 'password' => $credentials['password']])) {
+    if (Auth::attempt(['email' => mb_strtolower(trim($credentials['email'])), 'password' => $credentials['password']])) {
         $request->session()->regenerate();
 
         return response()->json([
@@ -73,7 +73,7 @@ public function loginAjax(Request $request)
         ]);
     }
 
-    return response()->json(['success' => false, 'message' => 'Usuario o contraseña incorrectos.']);
+    return response()->json(['success' => false, 'message' => 'Correo o contraseña incorrectos.']);
 }
 
 }

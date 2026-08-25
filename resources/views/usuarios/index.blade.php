@@ -70,7 +70,7 @@ Usuarios
                 <input type="text"
                     id="buscadorUsuarios"
                     class="form-control ui-input ui-search-input"
-                    placeholder="Buscar por nombre, usuario o rol...">
+                    placeholder="Buscar por nombre, correo, DNI o rol...">
             </div>
 
             <a href="{{ route('usuarios.exportarExcel') }}"
@@ -87,7 +87,8 @@ Usuarios
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
-                        <th>Usuario</th>
+                        <th>DNI</th>
+                        <th>Correo</th>
                         <th>Rol</th>
                         <th class="text-center">Acciones</th>
                     </tr>
@@ -98,7 +99,8 @@ Usuarios
                     <tr>
                         <td data-label="ID">{{ $usuario->id }}</td>
                         <td data-label="Nombre" class="fw-semibold">{{ $usuario->nombre }}</td>
-                        <td data-label="Usuario">{{ $usuario->usuario }}</td>
+                        <td data-label="DNI">{{ $usuario->dni ?: '—' }}</td>
+                        <td data-label="Correo">{{ $usuario->email }}</td>
                         <td data-label="Rol">
                             <span class="badge bg-light text-dark border">
                                 {{ $usuario->rol->nombre ?? 'Sin rol' }}
@@ -112,7 +114,7 @@ Usuarios
                                     data-bs-target="#modalEditarUsuario"
                                     data-id="{{ $usuario->id }}"
                                     data-nombre="{{ $usuario->nombre }}"
-                                    data-usuario="{{ $usuario->usuario }}"
+                                    data-dni="{{ $usuario->dni }}"
                                     data-email="{{ $usuario->email }}"
                                     data-rol="{{ $usuario->rol_id }}"
                                     data-permisos='@json($usuario->permisos->pluck("permiso")->values())'>
@@ -164,13 +166,21 @@ Usuarios
                             <h6 class="usuario-modal-section-title">Datos del usuario</h6>
 
                             <div class="mb-3">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" name="nombre" class="form-control ui-input" required>
+                                <label class="form-label">DNI</label>
+                                <div class="usuario-dni-group">
+                                    <input type="text" name="dni" id="nuevo-usuario-dni" class="form-control ui-input"
+                                           inputmode="numeric" maxlength="8" autocomplete="off" placeholder="8 dígitos" required>
+                                    <button type="button" class="btn-soft btn-soft-primary usuario-dni-consultar" id="consultarDniUsuario" title="Consultar en RENIEC">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        <span>Consultar</span>
+                                    </button>
+                                </div>
+                                <div class="usuario-dni-estado mt-2" id="nuevo-usuario-dni-estado" aria-live="polite">Ingresa el DNI para completar el nombre.</div>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Usuario</label>
-                                <input type="text" name="usuario" class="form-control ui-input" autocomplete="off" value="" required data-lpignore="true" data-1p-ignore>
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" id="nuevo-usuario-nombre" class="form-control ui-input" required>
                             </div>
 
                             <div class="mb-3">
@@ -280,13 +290,13 @@ Usuarios
                     <div class="col-12 col-lg-5">
                         <div class="usuario-modal-panel h-100">
                             <div class="mb-3">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" name="nombre" id="editar-nombre" class="form-control ui-input" required>
+                                <label class="form-label">DNI</label>
+                                <input type="text" name="dni" id="editar-dni" class="form-control ui-input" inputmode="numeric" maxlength="8" required>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Usuario</label>
-                                <input type="text" name="usuario" id="editar-usuario" class="form-control ui-input" required>
+                                <label class="form-label">Nombre</label>
+                                <input type="text" name="nombre" id="editar-nombre" class="form-control ui-input" required>
                             </div>
 
                             <div class="mb-3">

@@ -13,6 +13,7 @@ use App\Models\UsuarioPermiso;
 use App\Exports\UsuariosExport;
 use App\Support\SecurePassword;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str;
 
 class UsuarioController extends Controller
 {
@@ -35,7 +36,7 @@ class UsuarioController extends Controller
     {
         $request->validate([
             'nombre' => 'required',
-            'usuario' => 'required|unique:usuarios,usuario',
+            'dni' => 'required|digits:8|unique:usuarios,dni',
             'email' => 'required|email|unique:usuarios,email',
             'password' => ['required', SecurePassword::rule()],
             'rol_id' => 'required|exists:roles,id',
@@ -52,8 +53,9 @@ class UsuarioController extends Controller
 
             $usuario = User::create([
                 'nombre' => $request->nombre,
-                'usuario' => $request->usuario,
-                'email' => $request->email,
+                'dni' => $request->dni,
+                'usuario' => $this->crearIdentificadorInterno($request->email),
+                'email' => mb_strtolower(trim($request->email)),
                 'clave' => Hash::make($request->password),
                 'rol_id' => $request->rol_id,
             ]);
@@ -74,7 +76,7 @@ class UsuarioController extends Controller
     {
         $request->validate([
             'nombre' => 'required',
-            'usuario' => 'required|unique:usuarios,usuario,' . $id,
+            'dni' => 'required|digits:8|unique:usuarios,dni,' . $id,
             'email' => 'required|email|unique:usuarios,email,' . $id,
             'rol_id' => 'required|exists:roles,id',
             'permisos' => 'nullable|array',
@@ -97,8 +99,8 @@ class UsuarioController extends Controller
 
             $usuario->update([
                 'nombre' => $request->nombre,
-                'usuario' => $request->usuario,
-                'email' => $request->email,
+                'dni' => $request->dni,
+                'email' => mb_strtolower(trim($request->email)),
                 'rol_id' => $request->rol_id,
             ]);
 
@@ -194,5 +196,19 @@ class UsuarioController extends Controller
     private function cantidadAdministradores(): int
     {
         return User::whereHas('rol', fn ($query) => $query->where('nombre', 'Administrador'))->count();
+    }
+
+    private function crearIdentificadorInterno(string $email): string
+    {
+        $base = Str::limit(Str::slug(Str::before($email, '@'), '_'), 38, '');
+        $base = $base !== '' ? $base : 'usuario';
+        $candidato = $base;
+        $secuencia = 1;
+
+        while (User::where('usuario', $candidato)->exists()) {
+            $candidato = Str::limit($base, 44, '') . '_' . $secuencia++;
+        }
+
+        return $candidato;
     }
 }

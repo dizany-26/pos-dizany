@@ -422,9 +422,9 @@ body::after {
             @csrf
             <div class="mb-3">
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-user"></i></span>
-                    <input type="text" class="form-control" name="usuario" required placeholder="Usuario"
-                           autocomplete="off" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore>
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" class="form-control" name="email" required placeholder="Correo electrónico"
+                           autocomplete="email" autocapitalize="none" spellcheck="false">
                 </div>
             </div>
 
@@ -461,7 +461,7 @@ body::after {
         window.addEventListener('pageshow', function () {
             const form = document.getElementById('loginForm');
             if (!form) return;
-            form.querySelectorAll('input[name="usuario"], input[name="access_key"]').forEach(input => {
+            form.querySelectorAll('input[name="email"], input[name="access_key"]').forEach(input => {
                 input.value = '';
             });
         });
