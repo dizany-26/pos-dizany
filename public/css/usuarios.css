@@ -67,6 +67,53 @@
     justify-content: center;
 }
 
+.usuario-role-group {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 46px 46px;
+    gap: .6rem;
+}
+
+.usuario-role-add,
+.usuario-role-edit {
+    width: 46px;
+    min-width: 46px;
+    padding: 0;
+    justify-content: center;
+}
+
+.usuario-role-edit:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+
+.usuario-role-create-modal {
+    text-align: left;
+}
+
+.usuario-role-create-modal label {
+    display: block;
+    margin-bottom: .45rem;
+    font-size: .84rem;
+    font-weight: 700;
+}
+
+.usuario-role-create-modal .swal2-input {
+    width: 100%;
+    height: 46px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.usuario-role-create-modal small {
+    display: block;
+    margin-top: .65rem;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+:root[data-theme='dark'] .usuario-role-create-modal label { color: #f8fafc; }
+:root[data-theme='dark'] .usuario-role-create-modal small { color: #94a3b8; }
+
 .usuario-dni-estado {
     min-height: 1.2rem;
     color: #64748b;
@@ -169,89 +216,89 @@
     outline: none;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .modal-content {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .modal-content {
     background: #0f172a;
     border: 1px solid #334155;
     color: #e2e8f0;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .modal-header,
-:root[data-theme='dark'] #modalNuevoUsuario .modal-footer {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .modal-header,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .modal-footer {
     background: #0f172a;
     border-color: #334155;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .modal-title,
-:root[data-theme='dark'] #modalNuevoUsuario .form-label,
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-modal-section-title,
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-permisos-card-title,
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-permiso-item .form-check-label {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .modal-title,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-label,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-modal-section-title,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-permisos-card-title,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-permiso-item .form-check-label {
     color: #f8fafc;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-modal-section-help {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-modal-section-help {
     color: #94a3b8;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-modal-panel,
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-permisos-card {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-modal-panel,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-permisos-card {
     background: #111c34;
     border-color: #334155;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .ui-input,
-:root[data-theme='dark'] #modalNuevoUsuario .form-select,
-:root[data-theme='dark'] #modalNuevoUsuario .form-control {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .ui-input,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-select,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-control {
     background: #0b1220;
     border-color: #475569;
     color: #f8fafc;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .ui-input::placeholder,
-:root[data-theme='dark'] #modalNuevoUsuario .form-control::placeholder {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .ui-input::placeholder,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-control::placeholder {
     color: #94a3b8;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .ui-input:focus,
-:root[data-theme='dark'] #modalNuevoUsuario .form-select:focus,
-:root[data-theme='dark'] #modalNuevoUsuario .form-control:focus {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .ui-input:focus,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-select:focus,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-control:focus {
     border-color: #60a5fa;
     box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2);
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-permisos-action {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-permisos-action {
     background: #1e293b;
     border-color: #334155;
     color: #e2e8f0;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-permisos-action:hover,
-:root[data-theme='dark'] #modalNuevoUsuario .usuario-permisos-action:focus {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-permisos-action:hover,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .usuario-permisos-action:focus {
     background: #334155;
     color: #fff;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .form-check-input {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-check-input {
     background-color: #0b1220;
     border-color: #64748b;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .form-check-input:checked {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .form-check-input:checked {
     background-color: #2563eb;
     border-color: #2563eb;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .toggle-password-btn {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .toggle-password-btn {
     color: #94a3b8;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .toggle-password-btn:hover,
-:root[data-theme='dark'] #modalNuevoUsuario .toggle-password-btn:focus {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .toggle-password-btn:hover,
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .toggle-password-btn:focus {
     color: #bfdbfe;
 }
 
-:root[data-theme='dark'] #modalNuevoUsuario .btn-close {
+:root[data-theme='dark'] :is(#modalNuevoUsuario, #modalEditarUsuario) .btn-close {
     filter: invert(1) grayscale(100%) brightness(180%);
 }
 

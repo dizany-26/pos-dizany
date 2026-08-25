@@ -1,5 +1,6 @@
 /* Controles modernos compartidos por las pantallas del panel. */
 .select2-container{max-width:100%}
+.select2-container--open{z-index:1080}
 .select2-container--default .select2-selection--single{min-height:44px;display:flex;align-items:center;border:1px solid #cbd8e8;border-radius:14px!important;background:#fff;transition:border-color .2s ease,box-shadow .2s ease}
 .select2-container--default .select2-selection--single .select2-selection__rendered{width:100%;padding:0 42px 0 14px;color:#172033;line-height:normal}
 .select2-container--default .select2-selection--single .select2-selection__placeholder{color:#64748b}

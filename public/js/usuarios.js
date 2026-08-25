@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const nombreNuevo = document.getElementById('nuevo-usuario-nombre');
     const estadoDniNuevo = document.getElementById('nuevo-usuario-dni-estado');
     const consultarDniButton = document.getElementById('consultarDniUsuario');
+    const crearRolButton = document.getElementById('crearRolUsuario');
+    const editarRolButton = document.getElementById('editarRolUsuario');
+    const systemRoleNames = new Set(['Administrador', 'Encargado', 'Cajero', 'Almacén', 'Empleado']);
     let consultaDniTimer;
 
     const consultarDni = async () => {
@@ -67,6 +70,266 @@ document.addEventListener('DOMContentLoaded', function () {
 
     consultarDniButton?.addEventListener('click', consultarDni);
 
+    const selectedRoleOption = () => rolSelect?.selectedOptions?.[0] || null;
+    const updateRoleManagementState = () => {
+        if (!editarRolButton) return;
+        const option = selectedRoleOption();
+        const roleName = option?.textContent?.trim() || '';
+        editarRolButton.disabled = !option?.value || systemRoleNames.has(roleName);
+        editarRolButton.title = !option?.value
+            ? 'Selecciona un rol personalizado para editarlo'
+            : systemRoleNames.has(roleName)
+                ? 'Este es un rol interno protegido'
+                : 'Editar rol seleccionado';
+    };
+
+    const rebuildRoleSelect = (select) => {
+        if (!select || !window.jQuery?.fn?.select2) return;
+        const jquerySelect = window.jQuery(select);
+        const selectedValue = select.value;
+
+        if (select.classList.contains('select2-hidden-accessible')) {
+            jquerySelect.select2('destroy');
+        }
+
+        jquerySelect.select2({
+            width: '100%',
+            placeholder: select.querySelector('option[value=""]')?.textContent?.trim() || 'Seleccionar...',
+            allowClear: Boolean(select.querySelector('option[value=""]')),
+            minimumResultsForSearch: Infinity,
+            dropdownCssClass: 'ui-modern-select-dropdown',
+            dropdownParent: window.jQuery(document.body)
+        });
+        jquerySelect.val(selectedValue).trigger('change.select2');
+    };
+
+    crearRolButton?.addEventListener('click', async () => {
+        if (window.jQuery?.fn?.select2 && rolSelect?.classList.contains('select2-hidden-accessible')) {
+            window.jQuery(rolSelect).select2('close');
+        }
+
+        const parentModal = window.bootstrap?.Modal?.getInstance(modalNuevoUsuario);
+        parentModal?._focustrap?.deactivate();
+
+        const result = await Swal.fire({
+            title: 'Crear nuevo rol',
+            html: `
+                <div class="usuario-role-create-modal">
+                    <label for="nuevo-rol-nombre">Nombre del rol</label>
+                    <input id="nuevo-rol-nombre" class="swal2-input" type="text"
+                           maxlength="50" autocomplete="off" placeholder="Ej. Supervisor">
+                    <small>Después de crearlo, selecciona los permisos que tendrá este rol.</small>
+                </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Crear rol',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#64748b',
+            reverseButtons: true,
+            focusConfirm: false,
+            didOpen: () => document.getElementById('nuevo-rol-nombre')?.focus(),
+            preConfirm: () => {
+                const name = document.getElementById('nuevo-rol-nombre')?.value.trim();
+                if (!name) {
+                    Swal.showValidationMessage('Escribe el nombre del nuevo rol.');
+                    return false;
+                }
+                return name;
+            }
+        });
+
+        if (!result.isConfirmed) {
+            parentModal?._focustrap?.activate();
+            return;
+        }
+
+        crearRolButton.disabled = true;
+        try {
+            const token = formNuevoUsuario?.querySelector('[name="_token"]')?.value || '';
+            const response = await fetch(crearRolButton.dataset.url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ nombre: result.value })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                const validationMessage = data.errors?.nombre?.[0];
+                throw new Error(validationMessage || data.message || 'No se pudo crear el rol.');
+            }
+
+            const role = data.role;
+            [rolSelect, editarRolSelect].forEach((select) => {
+                if (!select || select.querySelector(`option[value="${role.id}"]`)) return;
+                const option = new Option(role.name, role.id, false, select === rolSelect);
+                option.dataset.description = role.description;
+                option.dataset.protected = 'false';
+                option.dataset.usersCount = '0';
+                select.add(option);
+            });
+            window.rolesUsuarios[role.name] = role.id;
+            roleTemplates[role.name] = [];
+            rolSelect.value = String(role.id);
+            rolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Rol creado',
+                text: `${role.name} está seleccionado. Ahora marca sus permisos.`,
+                timer: 1700,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'No se pudo crear el rol',
+                text: error.message || 'Ocurrió un error inesperado.',
+                confirmButtonText: 'Entendido'
+            });
+        } finally {
+            crearRolButton.disabled = false;
+            parentModal?._focustrap?.activate();
+        }
+    });
+
+    editarRolButton?.addEventListener('click', async () => {
+        const option = selectedRoleOption();
+        if (!option?.value || systemRoleNames.has(option.textContent.trim())) return;
+
+        if (window.jQuery?.fn?.select2 && rolSelect.classList.contains('select2-hidden-accessible')) {
+            window.jQuery(rolSelect).select2('close');
+        }
+        const parentModal = window.bootstrap?.Modal?.getInstance(modalNuevoUsuario);
+        parentModal?._focustrap?.deactivate();
+
+        try {
+            const result = await Swal.fire({
+                title: 'Editar rol',
+                html: `
+                    <div class="usuario-role-create-modal">
+                        <label for="editar-rol-nombre">Nombre del rol</label>
+                        <input id="editar-rol-nombre" class="swal2-input" type="text"
+                               maxlength="50" autocomplete="off">
+                        <small>Puedes corregir el nombre o eliminar el rol si no está asignado.</small>
+                    </div>`,
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Guardar cambio',
+                denyButtonText: 'Eliminar rol',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#2563eb',
+                denyButtonColor: '#dc3545',
+                cancelButtonColor: '#64748b',
+                focusConfirm: false,
+                didOpen: () => {
+                    const input = document.getElementById('editar-rol-nombre');
+                    input.value = option.textContent.trim();
+                    input.focus();
+                    input.select();
+                },
+                preConfirm: () => {
+                    const name = document.getElementById('editar-rol-nombre')?.value.trim();
+                    if (!name) {
+                        Swal.showValidationMessage('Escribe el nombre del rol.');
+                        return false;
+                    }
+                    return name;
+                }
+            });
+
+            const token = formNuevoUsuario?.querySelector('[name="_token"]')?.value || '';
+            const url = `${editarRolButton.dataset.url}/${option.value}`;
+
+            if (result.isConfirmed) {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Accept': 'application/json', 'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ nombre: result.value })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.errors?.nombre?.[0] || data.errors?.rol?.[0] || data.message || 'No se pudo actualizar el rol.');
+                }
+
+                const checkedPermissionsBeforeRename = permisoCheckboxes
+                    .filter((checkbox) => checkbox.checked)
+                    .map((checkbox) => checkbox.value);
+                [rolSelect, editarRolSelect].forEach((select) => {
+                    const roleOption = select?.querySelector(`option[value="${data.role.id}"]`);
+                    if (!roleOption) return;
+
+                    const replacement = new Option(
+                        data.role.name,
+                        String(data.role.id),
+                        roleOption.defaultSelected,
+                        roleOption.selected
+                    );
+                    Object.entries(roleOption.dataset).forEach(([key, value]) => {
+                        replacement.dataset[key] = value;
+                    });
+                    roleOption.replaceWith(replacement);
+                });
+                delete window.rolesUsuarios[data.role.old_name];
+                window.rolesUsuarios[data.role.name] = data.role.id;
+                delete roleTemplates[data.role.old_name];
+                roleTemplates[data.role.name] = [];
+                rolSelect.value = String(data.role.id);
+                if (window.jQuery?.fn?.select2) {
+                    rebuildRoleSelect(rolSelect);
+                    rebuildRoleSelect(editarRolSelect);
+                } else {
+                    rolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                setCheckedPermissions(permisoCheckboxes, checkedPermissionsBeforeRename);
+                updateRoleManagementState();
+                await Swal.fire({ icon: 'success', title: 'Rol actualizado', timer: 1400, showConfirmButton: false });
+            } else if (result.isDenied) {
+                const confirmation = await Swal.fire({
+                    icon: 'warning',
+                    title: '¿Eliminar este rol?',
+                    text: Number(option.dataset.usersCount || 0) > 0
+                        ? 'Este rol está asignado y no podrá eliminarse hasta cambiar esos usuarios.'
+                        : 'Esta acción no se puede deshacer.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc3545'
+                });
+                if (!confirmation.isConfirmed) return;
+
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.errors?.rol?.[0] || data.message || 'No se pudo eliminar el rol.');
+                }
+
+                [rolSelect, editarRolSelect].forEach((select) => select?.querySelector(`option[value="${option.value}"]`)?.remove());
+                delete window.rolesUsuarios[option.textContent.trim()];
+                rolSelect.value = '';
+                rolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                window.jQuery?.(rolSelect).trigger('change.select2');
+                await Swal.fire({ icon: 'success', title: 'Rol eliminado', timer: 1400, showConfirmButton: false });
+            }
+        } catch (error) {
+            await Swal.fire({
+                icon: 'error', title: 'No se pudo gestionar el rol',
+                text: error.message || 'Ocurrió un error inesperado.', confirmButtonText: 'Entendido'
+            });
+        } finally {
+            parentModal?._focustrap?.activate();
+        }
+    });
+
     const setCheckedPermissions = (checkboxes, permissions) => {
         const selected = new Set(permissions);
         checkboxes.forEach((checkbox) => {
@@ -91,16 +354,29 @@ document.addEventListener('DOMContentLoaded', function () {
         if (clearButton) clearButton.disabled = isAdmin;
     };
 
-    const applyRoleTemplate = (select, checkboxes, helpId, markButton, clearButton) => {
+    const applyRoleTemplate = (select, checkboxes, helpId, markButton, clearButton, preserveUnknown = false) => {
         if (!select) return;
-        const permissions = roleTemplates[selectedRoleName(select)] || [];
-        setCheckedPermissions(checkboxes, permissions);
+        const roleName = selectedRoleName(select);
+        const hasTemplate = Object.prototype.hasOwnProperty.call(roleTemplates, roleName);
+        if (hasTemplate || !preserveUnknown) {
+            setCheckedPermissions(checkboxes, roleTemplates[roleName] || []);
+        }
         updateRoleHelp(select, helpId);
         setAdminPermissionState(select, checkboxes, markButton, clearButton);
     };
 
     const applyRoleDefaults = () => {
         applyRoleTemplate(rolSelect, permisoCheckboxes, 'nuevo-rol-ayuda', btnMarcarTodos, btnLimpiar);
+    };
+
+    const applyEditRoleDefaults = () => {
+        applyRoleTemplate(
+            editarRolSelect,
+            editarPermisoCheckboxes,
+            'editar-rol-ayuda',
+            btnEditarMarcarTodos,
+            btnEditarLimpiar
+        );
     };
 
     if (buscador) {
@@ -147,19 +423,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (rolSelect) {
-        rolSelect.addEventListener('change', applyRoleDefaults);
+        rolSelect.addEventListener('change', () => {
+            applyRoleDefaults();
+            updateRoleManagementState();
+        });
+        if (window.jQuery?.fn?.select2) {
+            window.jQuery(rolSelect).on('select2:select select2:clear', updateRoleManagementState);
+        }
+        updateRoleManagementState();
     }
 
     if (editarRolSelect) {
-        editarRolSelect.addEventListener('change', () => {
-            applyRoleTemplate(
-                editarRolSelect,
-                editarPermisoCheckboxes,
-                'editar-rol-ayuda',
-                btnEditarMarcarTodos,
-                btnEditarLimpiar
-            );
-        });
+        editarRolSelect.addEventListener('change', applyEditRoleDefaults);
+        if (window.jQuery?.fn?.select2) {
+            window.jQuery(editarRolSelect).on('select2:select select2:clear', applyEditRoleDefaults);
+        }
     }
 
     if (btnMarcarTodos) {
@@ -271,6 +549,9 @@ document.addEventListener('DOMContentLoaded', function () {
             modalEditarUsuario.querySelector('#editar-email').value = email;
             if (editarRolSelect) {
                 editarRolSelect.value = rol;
+                if (window.jQuery?.fn?.select2 && editarRolSelect.classList.contains('select2-hidden-accessible')) {
+                    window.jQuery(editarRolSelect).trigger('change.select2');
+                }
             }
             setCheckedPermissions(editarPermisoCheckboxes, permisos);
             updateRoleHelp(editarRolSelect, 'editar-rol-ayuda');

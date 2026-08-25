@@ -31,7 +31,7 @@
 @endphp
 
 @push('styles')
-    <link href="{{ asset('css/usuarios.css') }}" rel="stylesheet" />
+    <link href="{{ asset('css/usuarios.css') }}?v={{ filemtime(public_path('css/usuarios.css')) }}" rel="stylesheet" />
 @endpush
 
 @section('header-back')
@@ -205,15 +205,32 @@ Usuarios
 
                             <div class="mb-0">
                                 <label class="form-label">Rol</label>
-                                <select name="rol_id" id="nuevo-rol-id" class="form-select ui-input" required>
-                                    <option value="" disabled selected>Seleccione un rol</option>
-                                    @foreach($roles as $rol)
-                                        <option value="{{ $rol->id }}"
-                                                data-description="{{ $descripcionesRol[$rol->nombre] ?? '' }}">
-                                            {{ $rol->nombre }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <div class="usuario-role-group">
+                                    <select name="rol_id" id="nuevo-rol-id" class="form-select ui-input"
+                                            data-select-dropdown-parent="body" required>
+                                        <option value="" disabled selected>Seleccione un rol</option>
+                                        @foreach($roles as $rol)
+                                            <option value="{{ $rol->id }}"
+                                                    data-description="{{ $descripcionesRol[$rol->nombre] ?? '' }}"
+                                                    data-protected="{{ in_array($rol->nombre, ['Administrador', 'Encargado', 'Cajero', 'Almacén', 'Empleado'], true) ? 'true' : 'false' }}"
+                                                    data-users-count="{{ $rol->usuarios_count }}">
+                                                {{ $rol->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn-soft btn-soft-primary usuario-role-add"
+                                            id="crearRolUsuario"
+                                            data-url="{{ route('usuarios.roles.store') }}"
+                                            title="Crear nuevo rol" aria-label="Crear nuevo rol">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn-soft btn-soft-warning usuario-role-edit"
+                                            id="editarRolUsuario"
+                                            data-url="{{ url('/usuarios/roles') }}"
+                                            title="Editar rol seleccionado" aria-label="Editar rol seleccionado" disabled>
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                </div>
                                 <div id="nuevo-rol-ayuda" class="usuario-modal-section-help mt-2" aria-live="polite"></div>
                             </div>
                         </div>
@@ -306,10 +323,13 @@ Usuarios
 
                             <div class="mb-0">
                                 <label class="form-label">Rol</label>
-                                <select name="rol_id" id="editar-rol" class="form-select ui-input" required>
+                                <select name="rol_id" id="editar-rol" class="form-select ui-input"
+                                        data-select-dropdown-parent="body" required>
                                     @foreach($roles as $rol)
                                         <option value="{{ $rol->id }}"
-                                                data-description="{{ $descripcionesRol[$rol->nombre] ?? '' }}">
+                                                data-description="{{ $descripcionesRol[$rol->nombre] ?? '' }}"
+                                                data-protected="{{ in_array($rol->nombre, ['Administrador', 'Encargado', 'Cajero', 'Almacén', 'Empleado'], true) ? 'true' : 'false' }}"
+                                                data-users-count="{{ $rol->usuarios_count }}">
                                             {{ $rol->nombre }}
                                         </option>
                                     @endforeach
@@ -404,5 +424,5 @@ Usuarios
     window.rolesUsuarios = @json($roles->pluck('id', 'nombre'));
     window.plantillasRolesUsuarios = @json($plantillasRol);
 </script>
-<script src="{{ asset('js/usuarios.js') }}"></script>
+<script src="{{ asset('js/usuarios.js') }}?v={{ filemtime(public_path('js/usuarios.js')) }}"></script>
 @endpush

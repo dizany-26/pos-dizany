@@ -18,6 +18,10 @@
         const searchable = select.dataset.selectSearch === 'true'
             || (select.dataset.selectSearch !== 'false' && (options.length > 8 || searchableNames.test(identity)));
         const modal = select.closest('.modal');
+        const configuredParent = select.dataset.selectDropdownParent;
+        const dropdownParent = configuredParent === 'body'
+            ? document.body
+            : (configuredParent ? document.querySelector(configuredParent) : null) || modal || document.body;
 
         window.jQuery(select).select2({
             width: '100%',
@@ -25,7 +29,7 @@
             allowClear: Boolean(firstEmpty),
             minimumResultsForSearch: searchable ? 0 : Infinity,
             dropdownCssClass: 'ui-modern-select-dropdown',
-            dropdownParent: modal ? window.jQuery(modal) : window.jQuery(document.body)
+            dropdownParent: window.jQuery(dropdownParent)
         });
 
         if (searchable) {

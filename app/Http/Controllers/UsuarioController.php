@@ -14,14 +14,18 @@ use App\Exports\UsuariosExport;
 use App\Support\SecurePassword;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class UsuarioController extends Controller
 {
+    private const SYSTEM_ROLES = ['Administrador', 'Encargado', 'Cajero', 'Almacén', 'Empleado'];
+
     // Muestra la lista de usuarios y los roles para el formulario
     public function index()
     {
         $usuarios = User::with(['rol', 'permisos'])->get();
-        $roles = Role::orderByRaw("CASE WHEN nombre = 'Administrador' THEN 0 WHEN nombre = 'Encargado' THEN 1 WHEN nombre = 'Cajero' THEN 2 WHEN nombre = 'Almacén' THEN 3 ELSE 4 END")
+        $roles = Role::withCount('usuarios')
+            ->orderByRaw("CASE WHEN nombre = 'Administrador' THEN 0 WHEN nombre = 'Encargado' THEN 1 WHEN nombre = 'Cajero' THEN 2 WHEN nombre = 'Almacén' THEN 3 ELSE 4 END")
             ->orderBy('nombre')
             ->get();
 
@@ -69,6 +73,75 @@ class UsuarioController extends Controller
         });
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
+    }
+
+    public function storeRole(Request $request)
+    {
+        $request->merge([
+            'nombre' => Str::title(mb_strtolower(trim((string) $request->input('nombre')), 'UTF-8')),
+        ]);
+
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:50', 'unique:roles,nombre'],
+        ], [
+            'nombre.required' => 'Escribe el nombre del nuevo rol.',
+            'nombre.max' => 'El nombre del rol no puede superar 50 caracteres.',
+            'nombre.unique' => 'Ya existe un rol con ese nombre.',
+        ]);
+
+        $role = Role::create(['nombre' => $validated['nombre']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rol creado correctamente.',
+            'role' => [
+                'id' => $role->id,
+                'name' => $role->nombre,
+                'description' => 'Rol personalizado: selecciona manualmente sus permisos.',
+            ],
+        ], 201);
+    }
+
+    public function updateRole(Request $request, Role $role)
+    {
+        $this->ensureCustomRole($role);
+        $oldName = $role->nombre;
+        $request->merge([
+            'nombre' => Str::title(mb_strtolower(trim((string) $request->input('nombre')), 'UTF-8')),
+        ]);
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:50', Rule::unique('roles', 'nombre')->ignore($role->id)],
+        ], [
+            'nombre.required' => 'Escribe el nombre del rol.',
+            'nombre.max' => 'El nombre del rol no puede superar 50 caracteres.',
+            'nombre.unique' => 'Ya existe un rol con ese nombre.',
+        ]);
+
+        $role->update(['nombre' => $validated['nombre']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rol actualizado correctamente.',
+            'role' => ['id' => $role->id, 'name' => $role->nombre, 'old_name' => $oldName],
+        ]);
+    }
+
+    public function destroyRole(Role $role)
+    {
+        $this->ensureCustomRole($role);
+
+        if ($role->usuarios()->exists()) {
+            throw ValidationException::withMessages([
+                'rol' => 'No puedes eliminar este rol porque está asignado a uno o más usuarios.',
+            ]);
+        }
+
+        $role->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rol eliminado correctamente.',
+        ]);
     }
 
 
@@ -210,5 +283,14 @@ class UsuarioController extends Controller
         }
 
         return $candidato;
+    }
+
+    private function ensureCustomRole(Role $role): void
+    {
+        if (in_array($role->nombre, self::SYSTEM_ROLES, true)) {
+            throw ValidationException::withMessages([
+                'rol' => 'Los roles internos del sistema no se pueden editar ni eliminar.',
+            ]);
+        }
     }
 }

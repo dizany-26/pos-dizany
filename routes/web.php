@@ -124,6 +124,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::middleware('permission:usuarios')->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
         Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
+        Route::post('/usuarios/roles', [UsuarioController::class, 'storeRole'])->name('usuarios.roles.store');
+        Route::put('/usuarios/roles/{role}', [UsuarioController::class, 'updateRole'])->name('usuarios.roles.update');
+        Route::delete('/usuarios/roles/{role}', [UsuarioController::class, 'destroyRole'])->name('usuarios.roles.destroy');
         Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
         Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
         Route::post('/usuarios/cambiar-clave', [UsuarioController::class, 'cambiarClave'])
