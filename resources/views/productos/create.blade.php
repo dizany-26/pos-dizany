@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="{{ asset('css/crear_productos.css') }}?v={{ filemtime(public_path('css/crear_productos.css')) }}" rel="stylesheet" />
 @endpush
 
@@ -57,7 +58,7 @@ Nuevo Producto
             </div>
         @endif
 
-        <form action="{{ route('productos.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="form-nuevo-producto" action="{{ route('productos.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             <div class="row g-3">
@@ -113,6 +114,7 @@ Nuevo Producto
                 <div class="col-12">
                     <label class="form-label">Descripción</label>
                     <textarea name="descripcion"
+                        id="descripcion"
                         class="form-control ui-input"
                         rows="2">{{ old('descripcion') }}</textarea>
                 </div>
@@ -435,6 +437,65 @@ Nuevo Producto
     <script src="{{ asset('js/validarCodigoBarras.js') }}"></script>
     <script src="{{ asset('js/productoScanner.js') }}?v={{ filemtime(public_path('js/productoScanner.js')) }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(function () {
+        $('#categoria_id').select2({
+            width: '100%',
+            placeholder: 'Seleccione...',
+            minimumResultsForSearch: 0,
+            dropdownCssClass: 'producto-select2-dropdown'
+        });
+
+        $('#marca_id').select2({
+            width: '100%',
+            placeholder: 'Seleccione...',
+            allowClear: true,
+            minimumResultsForSearch: 0,
+            dropdownCssClass: 'producto-select2-dropdown'
+        });
+
+        $('#categoria_id, #marca_id').on('select2:open', function () {
+            const buscador = document.querySelector('.select2-container--open .select2-search__field');
+            if (buscador) {
+                buscador.placeholder = 'Buscar...';
+                buscador.focus();
+            }
+        });
+
+        $('#nueva_categoria_nombre, #nueva_marca_nombre').on('input', function () {
+            this.value = this.value.toLocaleUpperCase('es-PE');
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('form-nuevo-producto');
+        const nombre = document.getElementById('nombre');
+        const descripcion = document.getElementById('descripcion');
+
+        const normalizarNombre = function () {
+            nombre.value = nombre.value.toLocaleUpperCase('es-PE');
+        };
+
+        const normalizarDescripcion = function () {
+            const texto = descripcion.value.toLocaleLowerCase('es-PE');
+            descripcion.value = texto.replace(/\p{L}/u, function (letra) {
+                return letra.toLocaleUpperCase('es-PE');
+            });
+        };
+
+        nombre.addEventListener('input', normalizarNombre);
+        descripcion.addEventListener('input', normalizarDescripcion);
+
+        form.addEventListener('submit', function () {
+            normalizarNombre();
+            normalizarDescripcion();
+        });
+    });
+</script>
 
     
 <script>
@@ -535,7 +596,8 @@ Nuevo Producto
     // GUARDAR CATEGORÍA
     $("#btnGuardarCategoria").click(function () {
 
-        let nombre = $("#nueva_categoria_nombre").val().trim();
+        let nombre = $("#nueva_categoria_nombre").val().trim().toLocaleUpperCase('es-PE');
+        $("#nueva_categoria_nombre").val(nombre);
         if (!nombre) {
             $("#error_categoria").text("El nombre es obligatorio.").removeClass("d-none");
             return;
@@ -570,7 +632,8 @@ Nuevo Producto
     // GUARDAR MARCA
     $("#btnGuardarMarca").click(function () {
 
-        let nombre = $("#nueva_marca_nombre").val().trim();
+        let nombre = $("#nueva_marca_nombre").val().trim().toLocaleUpperCase('es-PE');
+        $("#nueva_marca_nombre").val(nombre);
         if (!nombre) {
             $("#error_marca").text("El nombre es obligatorio.").removeClass("d-none");
             return;

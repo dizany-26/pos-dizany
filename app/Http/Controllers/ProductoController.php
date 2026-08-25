@@ -109,6 +109,18 @@ class ProductoController extends Controller
         'marca_id'             => 'nullable|exists:marcas,id',
     ]);
 
+    $validated['nombre'] = mb_strtoupper($validated['nombre'], 'UTF-8');
+
+    if (!empty($validated['descripcion'])) {
+        $descripcion = mb_strtolower($validated['descripcion'], 'UTF-8');
+        $validated['descripcion'] = preg_replace_callback(
+            '/\p{L}/u',
+            fn (array $coincidencia) => mb_strtoupper($coincidencia[0], 'UTF-8'),
+            $descripcion,
+            1
+        );
+    }
+
     /* =====================
        VALIDACIONES LÓGICAS
     ===================== */
@@ -192,6 +204,18 @@ class ProductoController extends Controller
         'eliminar_imagenes_catalogo'   => 'nullable|array',
         'eliminar_imagenes_catalogo.*' => 'integer',
     ]);
+
+    $validated['nombre'] = mb_strtoupper($validated['nombre'], 'UTF-8');
+
+    if (!empty($validated['descripcion'])) {
+        $descripcion = mb_strtolower($validated['descripcion'], 'UTF-8');
+        $validated['descripcion'] = preg_replace_callback(
+            '/\p{L}/u',
+            fn (array $coincidencia) => mb_strtoupper($coincidencia[0], 'UTF-8'),
+            $descripcion,
+            1
+        );
+    }
 
     $idsEliminar = collect($request->input('eliminar_imagenes_catalogo', []))
         ->map(fn ($id) => (int) $id)

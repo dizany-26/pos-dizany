@@ -2,6 +2,7 @@
 
 @push('styles')
 <link href="{{ asset('css/edit_productos.css') }}" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="{{ asset('css/crear_productos.css') }}?v={{ filemtime(public_path('css/crear_productos.css')) }}" rel="stylesheet" />
 @endpush
 
@@ -46,7 +47,8 @@ Editar Producto
 
         <input type="hidden" id="producto_id" value="{{ $producto->id }}">
 
-        <form action="{{ route('productos.update', $producto->id) }}"
+        <form id="form-editar-producto"
+              action="{{ route('productos.update', $producto->id) }}"
               method="POST"
               enctype="multipart/form-data">
             @csrf
@@ -106,6 +108,7 @@ Editar Producto
             <div class="col-12">
                 <label class="form-label">Descripción</label>
                 <textarea name="descripcion"
+                          id="descripcion"
                           class="form-control ui-input"
                           rows="2">{{ old('descripcion', $producto->descripcion) }}</textarea>
             </div>
@@ -231,6 +234,7 @@ Editar Producto
                 <select name="marca_id"
                         id="marca_id"
                         class="form-select ui-input">
+                    <option value="">Seleccione</option>
                     @foreach($marcas as $marca)
                         <option value="{{ $marca->id }}"
                             {{ old('marca_id', $producto->marca_id) == $marca->id ? 'selected' : '' }}>
@@ -480,6 +484,65 @@ Editar Producto
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="{{ asset('js/productoScanner.js') }}?v={{ filemtime(public_path('js/productoScanner.js')) }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(function () {
+        $('#categoria_id').select2({
+            width: '100%',
+            placeholder: 'Seleccione...',
+            minimumResultsForSearch: 0,
+            dropdownCssClass: 'producto-select2-dropdown'
+        });
+
+        $('#marca_id').select2({
+            width: '100%',
+            placeholder: 'Seleccione...',
+            allowClear: true,
+            minimumResultsForSearch: 0,
+            dropdownCssClass: 'producto-select2-dropdown'
+        });
+
+        $('#categoria_id, #marca_id').on('select2:open', function () {
+            const buscador = document.querySelector('.select2-container--open .select2-search__field');
+            if (buscador) {
+                buscador.placeholder = 'Buscar...';
+                buscador.focus();
+            }
+        });
+
+        $('#nueva_categoria_nombre, #nueva_marca_nombre').on('input', function () {
+            this.value = this.value.toLocaleUpperCase('es-PE');
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('form-editar-producto');
+        const nombre = document.getElementById('nombre');
+        const descripcion = document.getElementById('descripcion');
+
+        const normalizarNombre = function () {
+            nombre.value = nombre.value.toLocaleUpperCase('es-PE');
+        };
+
+        const normalizarDescripcion = function () {
+            const texto = descripcion.value.toLocaleLowerCase('es-PE');
+            descripcion.value = texto.replace(/\p{L}/u, function (letra) {
+                return letra.toLocaleUpperCase('es-PE');
+            });
+        };
+
+        nombre.addEventListener('input', normalizarNombre);
+        descripcion.addEventListener('input', normalizarDescripcion);
+
+        form.addEventListener('submit', function () {
+            normalizarNombre();
+            normalizarDescripcion();
+        });
+    });
+</script>
 
 <script>
     /* ==========================
@@ -597,7 +660,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
     $(document).on('click', '#btnGuardarCategoria', function () {
 
-        let nombre = $("#nueva_categoria_nombre").val().trim();
+        let nombre = $("#nueva_categoria_nombre").val().trim().toLocaleUpperCase('es-PE');
+        $("#nueva_categoria_nombre").val(nombre);
 
         if (!nombre) {
             $("#error_categoria").text("El nombre es obligatorio.").removeClass("d-none");
@@ -630,7 +694,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $(document).on('click', '#btnGuardarMarca', function () {
 
-        let nombre = $("#nueva_marca_nombre").val().trim();
+        let nombre = $("#nueva_marca_nombre").val().trim().toLocaleUpperCase('es-PE');
+        $("#nueva_marca_nombre").val(nombre);
 
         if (!nombre) {
             $("#error_marca").text("El nombre es obligatorio.").removeClass("d-none");

@@ -14,7 +14,9 @@ class CategoriaController extends Controller
         ]);
 
         // Verificar si ya existe
-        if (Categoria::where('nombre', strtoupper($request->nombre))->exists()) {
+        $nombre = mb_strtoupper(trim($request->nombre), 'UTF-8');
+
+        if (Categoria::where('nombre', $nombre)->exists()) {
             return response()->json([
                 'error' => true,
                 'message' => 'La categoría ya existe.'
@@ -23,7 +25,7 @@ class CategoriaController extends Controller
 
         // Crear si no existe
         $categoria = Categoria::create([
-            'nombre' => strtoupper($request->nombre)
+            'nombre' => $nombre
         ]);
 
         return response()->json([

@@ -313,6 +313,14 @@ document.addEventListener('DOMContentLoaded', () => {
         templateSelection: formatOption, escapeMarkup: markup => markup
     });
 
+    $('#producto-select, #proveedor-select').on('select2:open', function () {
+        const buscador = document.querySelector('.select2-container--open .select2-search__field');
+        if (buscador) {
+            buscador.placeholder = 'Buscar...';
+            buscador.focus();
+        }
+    });
+
     $(document).on('mousedown', '.select2-selection__clear', function (event) {
         event.preventDefault();
         event.stopImmediatePropagation();

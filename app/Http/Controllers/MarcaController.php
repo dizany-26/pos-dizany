@@ -14,7 +14,9 @@ class MarcaController extends Controller
         ]);
 
         // Verificar si ya existe
-        if (Marca::where('nombre', strtoupper($request->nombre))->exists()) {
+        $nombre = mb_strtoupper(trim($request->nombre), 'UTF-8');
+
+        if (Marca::where('nombre', $nombre)->exists()) {
             return response()->json([
                 'error' => true,
                 'message' => 'La marca ya existe.'
@@ -23,7 +25,7 @@ class MarcaController extends Controller
 
         // Crear marca
         $marca = Marca::create([
-            'nombre' => strtoupper($request->nombre)
+            'nombre' => $nombre
         ]);
 
         return response()->json([
