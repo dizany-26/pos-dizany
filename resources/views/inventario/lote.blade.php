@@ -313,6 +313,13 @@ document.addEventListener('DOMContentLoaded', () => {
         templateSelection: formatOption, escapeMarkup: markup => markup
     });
 
+    $('#metodo_pago').select2({
+        width: '100%',
+        allowClear: true,
+        placeholder: 'Seleccionar...',
+        minimumResultsForSearch: Infinity
+    });
+
     $('#producto-select, #proveedor-select').on('select2:open', function () {
         const buscador = document.querySelector('.select2-container--open .select2-search__field');
         if (buscador) {

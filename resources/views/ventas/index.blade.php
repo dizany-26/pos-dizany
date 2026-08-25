@@ -190,7 +190,7 @@ Nueva venta
                                 <!-- TIPO COMPROBANTE -->
                                 <div class="input-group input-group-sm mb-2">
                                     <span class="input-group-text"><i class="fas fa-file-invoice"></i></span>
-                                    <select id="tipo_comprobante" class="form-select">
+                                    <select id="tipo_comprobante" class="form-select" data-native-select>
                                         @if(!$taxProfile || in_array('issue_boleta', $taxCapabilities, true))<option value="boleta">Boleta</option>@endif
                                         @if(!$taxProfile || in_array('issue_factura', $taxCapabilities, true))<option value="factura">Factura</option>@endif
                                         <option value="nota_venta">Nota de Venta</option>
@@ -211,7 +211,7 @@ Nueva venta
                                 <!-- ESTADO DE PAGO -->
                                 <div class="input-group input-group-sm mb-2">
                                     <span class="input-group-text"><i class="fas fa-money-bill-wave"></i></span>
-                                    <select id="estado_pago" class="form-select">
+                                    <select id="estado_pago" class="form-select" data-native-select>
                                         <option value="pagado">Pagado</option>
                                         <option value="pendiente">Pendiente</option>
                                         <option value="credito">Credito</option>
@@ -338,7 +338,7 @@ Nueva venta
                         </div>
 
                         <label class="form-label">Formato de impresión</label>
-                        <select id="formato_pdf" class="form-select">
+                        <select id="formato_pdf" class="form-select" data-native-select>
                             <option value="a4">A4</option>
                             <option value="ticket">Ticket</option>
                         </select>

@@ -78,7 +78,7 @@ Panel de Editar
                             <label class="form-label">Fecha de vencimiento</label>
                             <input type="date"
                                 name="fecha_vencimiento"
-                                class="form-control"
+                                class="form-control fecha-vencimiento-edit"
                                 value="{{ $lote->fecha_vencimiento }}">
                         </div>
 
@@ -230,11 +230,29 @@ Panel de Editar
 {{-- ===================== STYLES ===================== --}}
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+<link rel="stylesheet" href="{{ asset('css/calendar-theme.css') }}?v={{ filemtime(public_path('css/calendar-theme.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/ajuste_lote.css') }}">
 @endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        flatpickr('.fecha-vencimiento-edit', {
+            locale: 'es',
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd F Y',
+            allowInput: true,
+            disableMobile: true
+        });
+    });
+</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {

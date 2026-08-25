@@ -21,11 +21,11 @@ Parametros
 
 @section('content')
 <div class="container py-4">
-    <div class="row g-4">
+    <div class="row g-4 parametros-grid">
         
     <!-- Sección Categorías -->
-        <div class="col-md-6">
-            <div class="card ui-card container-card my-4">
+        <div class="col-md-6 d-flex">
+            <div class="card ui-card container-card my-4 w-100 parametros-card">
                 <div class="card-header bg-white border-0 pb-3">
                     <div class="d-flex align-items-center justify-content-between">
 
@@ -58,7 +58,7 @@ Parametros
                     </div>
                 </div>
                 <div  class="card-body">
-                    <div class="table-responsive ui-scroll" style="max-height: 500px; overflow-y:auto;">
+                    <div class="table-responsive ui-scroll parametros-table-scroll">
                         <div id="table-content">
 
                             <table class="table table-hover align-middle mb-0 ui-table text-nowrap">   
@@ -119,8 +119,8 @@ Parametros
         </div>
 
         <!-- Sección Marcas -->
-        <div class="col-md-6">
-            <div class="card ui-card container-card my-4">
+        <div class="col-md-6 d-flex">
+            <div class="card ui-card container-card my-4 w-100 parametros-card">
                 <div class="card-header bg-white border-0 pb-3">
                     <div class="d-flex align-items-center justify-content-between">
 
@@ -153,7 +153,7 @@ Parametros
                     </div>
                 </div>
                 <div  class="card-body">
-                    <div class="table-responsive ui-scroll" style="max-height: 400px; overflow-y:auto;">
+                    <div class="table-responsive ui-scroll parametros-table-scroll">
                         <div id="table-content">
 
                             <table class="table table-hover align-middle mb-0 ui-table text-nowrap">

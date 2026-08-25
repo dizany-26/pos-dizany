@@ -96,6 +96,11 @@
     <link href="{{ asset('css/ui/ui-variables.css') }}" rel="stylesheet" />
     <link href="{{ asset('css/ui/ui-search.css') }}" rel="stylesheet" />
     <link href="{{ asset('css/ui/ui-responsive.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <link rel="stylesheet" href="{{ asset('css/calendar-theme.css') }}?v={{ filemtime(public_path('css/calendar-theme.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/modern-controls.css') }}?v={{ filemtime(public_path('css/modern-controls.css')) }}">
 
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -205,6 +210,10 @@
 
     {{-- ✅ Cada vista inyecta sus scripts --}}
     @stack('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="{{ asset('js/modern-controls.js') }}?v={{ filemtime(public_path('js/modern-controls.js')) }}"></script>
 
 </body>
 </html>
