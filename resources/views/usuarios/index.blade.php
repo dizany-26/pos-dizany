@@ -191,15 +191,21 @@ Usuarios
                             <div class="mb-3">
                                 <label class="form-label">Contraseña</label>
                                 <div class="usuario-password-group position-relative">
-                                    <input type="text" id="nuevo-password-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida pe-5" autocomplete="one-time-code" value="" required data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Contraseña nueva">
+                                    <input type="text" id="nuevo-password-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida pe-5" autocomplete="one-time-code" value="" required data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Contraseña nueva" aria-describedby="nuevo-password-requisitos">
                                     <input type="hidden" name="password" id="nuevo-password-payload" value="">
                                     <button type="button" class="toggle-password-btn" data-target="password" aria-label="Mostrar contraseña">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
                                 </div>
-                                <div class="password-security-help mt-2">
-                                    <i class="fa-solid fa-shield-halved"></i>
-                                    Usa 8 caracteres o más e incluye mayúscula, minúscula, número y símbolo.
+                                <div id="nuevo-password-requisitos" class="password-requirements mt-3" aria-live="polite">
+                                    <p class="password-requirements-title"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> La contraseña debe incluir:</p>
+                                    <ul class="password-requirements-list">
+                                        <li data-password-rule="length"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>8 caracteres como mínimo</span></li>
+                                        <li data-password-rule="uppercase"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Una letra mayúscula</span></li>
+                                        <li data-password-rule="lowercase"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Una letra minúscula</span></li>
+                                        <li data-password-rule="number"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Un número</span></li>
+                                        <li data-password-rule="symbol"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Un símbolo</span></li>
+                                    </ul>
                                 </div>
                             </div>
 
@@ -283,7 +289,7 @@ Usuarios
                     Cerrar
                 </button>
 
-                <button type="submit" class="btn-soft btn-soft-success">
+                <button type="submit" id="nuevo-usuario-submit" class="btn-soft btn-soft-success" disabled>
                     Guardar
                 </button>
             </div>
@@ -402,17 +408,28 @@ Usuarios
             <div class="modal-body">
                 <p id="nombre_usuario_label"></p>
                 <div class="mb-3">
-                    <label class="form-label">Nueva Contraseña</label>
-                    <input type="text" id="cambiar-clave-visible" class="form-control ui-input usuario-clave-protegida" required autocomplete="one-time-code" data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Nueva contraseña">
+                    <label class="form-label" for="cambiar-clave-visible">Nueva Contraseña</label>
+                    <div class="usuario-password-group">
+                        <input type="text" id="cambiar-clave-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida" required autocomplete="one-time-code" data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Nueva contraseña" aria-describedby="cambiar-clave-requisitos">
+                        <button type="button" class="toggle-password-btn" aria-label="Mostrar contraseña" aria-controls="cambiar-clave-visible">
+                            <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
                     <input type="hidden" name="nueva_clave" id="cambiar-clave-payload" value="">
-                    <div class="password-security-help mt-2">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        Usa 8 caracteres o más e incluye mayúscula, minúscula, número y símbolo.
+                    <div id="cambiar-clave-requisitos" class="password-requirements mt-3" aria-live="polite">
+                        <p class="password-requirements-title"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> La contraseña debe incluir:</p>
+                        <ul class="password-requirements-list">
+                            <li data-password-rule="length"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>8 caracteres como mínimo</span></li>
+                            <li data-password-rule="uppercase"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Una letra mayúscula</span></li>
+                            <li data-password-rule="lowercase"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Una letra minúscula</span></li>
+                            <li data-password-rule="number"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Un número</span></li>
+                            <li data-password-rule="symbol"><i class="fa-solid fa-circle" aria-hidden="true"></i><span>Un símbolo</span></li>
+                        </ul>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn-soft btn-soft-primary">Actualizar</button>
+                <button type="submit" id="cambiar-clave-submit" class="btn-soft btn-soft-primary" disabled>Actualizar</button>
             </div>
         </form>
     </div>

@@ -8,6 +8,9 @@
         if (!window.jQuery?.fn?.select2 || !select.matches('select')) return;
         if (select.classList.contains('select2-hidden-accessible')) return;
         if (select.classList.contains('swal2-select') || select.closest('.swal2-popup')) return;
+        // Flatpickr usa un <select> propio para el mes. Convertirlo a Select2
+        // rompe el encabezado del calendario y termina ocultando el año.
+        if (select.closest('.flatpickr-calendar')) return;
         if (select.dataset.nativeSelect !== undefined || excludedSelects.test(select.id || '')) return;
         if (select.closest('[data-native-controls]')) return;
         select.classList.add('form-select');

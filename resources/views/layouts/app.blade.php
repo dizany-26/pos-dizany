@@ -108,7 +108,7 @@
     {{-- ✅ Cada vista inyecta su CSS --}}
     @stack('styles')
 
-    <link rel="stylesheet" href="{{ asset('css/theme-global.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/theme-global.css') }}?v={{ filemtime(public_path('css/theme-global.css')) }}">
 </head>
 
 <body class="theme-shell">

@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const togglePasswordButtons = document.querySelectorAll('.toggle-password-btn');
     const deleteUserForms = document.querySelectorAll('.eliminar-usuario-form');
     const changePasswordForm = document.querySelector('#modalCambiarClave form');
+    const changePasswordInput = document.getElementById('cambiar-clave-visible');
+    const changePasswordSubmit = document.getElementById('cambiar-clave-submit');
+    const newUserPasswordInput = document.getElementById('nuevo-password-visible');
+    const newUserSubmit = document.getElementById('nuevo-usuario-submit');
     const adminRoleId = String(window.rolesUsuarios?.Administrador ?? '');
     const roleTemplates = window.plantillasRolesUsuarios || {};
     const dniNuevo = document.getElementById('nuevo-usuario-dni');
@@ -348,7 +352,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const setAdminPermissionState = (select, checkboxes, markButton, clearButton) => {
         const isAdmin = String(select?.value || '') === adminRoleId;
         checkboxes.forEach((checkbox) => {
-            checkbox.disabled = isAdmin;
+            const isAdminDashboard = checkbox.value === 'dashboard.admin';
+            checkbox.disabled = isAdmin || isAdminDashboard;
+            if (!isAdmin && isAdminDashboard) checkbox.checked = false;
         });
         if (markButton) markButton.disabled = isAdmin;
         if (clearButton) clearButton.disabled = isAdmin;
@@ -422,13 +428,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    const handleNewUserRoleChange = () => {
+        applyRoleDefaults();
+        updateRoleManagementState();
+    };
+
     if (rolSelect) {
-        rolSelect.addEventListener('change', () => {
-            applyRoleDefaults();
-            updateRoleManagementState();
-        });
+        rolSelect.addEventListener('change', handleNewUserRoleChange);
         if (window.jQuery?.fn?.select2) {
-            window.jQuery(rolSelect).on('select2:select select2:clear', updateRoleManagementState);
+            window.jQuery(rolSelect).on(
+                'select2:select.usuarios select2:clear.usuarios',
+                handleNewUserRoleChange
+            );
         }
         updateRoleManagementState();
     }
@@ -443,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnMarcarTodos) {
         btnMarcarTodos.addEventListener('click', () => {
             permisoCheckboxes.forEach((checkbox) => {
-                checkbox.checked = true;
+                if (!checkbox.disabled) checkbox.checked = true;
             });
         });
     }
@@ -459,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnEditarMarcarTodos) {
         btnEditarMarcarTodos.addEventListener('click', () => {
             editarPermisoCheckboxes.forEach((checkbox) => {
-                checkbox.checked = true;
+                if (!checkbox.disabled) checkbox.checked = true;
             });
         });
     }
@@ -491,6 +502,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 passwordInput.setAttribute('autocomplete', 'one-time-code');
             }
 
+            updateNewUserPasswordRequirements();
+
             togglePasswordButtons.forEach((button) => {
                 const icon = button.querySelector('i');
                 if (icon) {
@@ -512,7 +525,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         formNuevoUsuario.addEventListener('reset', () => {
-            window.setTimeout(() => applyRoleDefaults(), 0);
+            window.setTimeout(() => {
+                applyRoleDefaults();
+                updateNewUserPasswordRequirements();
+            }, 0);
         });
     }
 
@@ -526,10 +542,54 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('modalCambiarClave')?.addEventListener('show.bs.modal', () => {
             const visible = document.getElementById('cambiar-clave-visible');
             const payload = document.getElementById('cambiar-clave-payload');
-            if (visible) visible.value = '';
+            if (visible) {
+                visible.value = '';
+                visible.classList.remove('clave-visible');
+            }
             if (payload) payload.value = '';
+            updateChangePasswordRequirements();
         });
     }
+
+    const changePasswordRules = {
+        length: (value) => value.length >= 8,
+        uppercase: (value) => /[A-Z]/.test(value),
+        lowercase: (value) => /[a-z]/.test(value),
+        number: (value) => /\d/.test(value),
+        symbol: (value) => /[^A-Za-z0-9\s]/.test(value)
+    };
+
+    function updateChangePasswordRequirements() {
+        updatePasswordRequirements(changePasswordInput, '#cambiar-clave-requisitos', changePasswordSubmit);
+    }
+
+    function updateNewUserPasswordRequirements() {
+        updatePasswordRequirements(newUserPasswordInput, '#nuevo-password-requisitos', newUserSubmit);
+    }
+
+    function updatePasswordRequirements(input, requirementsSelector, submitButton) {
+        if (!input) return;
+
+        const value = input.value;
+        let allValid = true;
+
+        Object.entries(changePasswordRules).forEach(([rule, validate]) => {
+            const item = document.querySelector(`${requirementsSelector} [data-password-rule="${rule}"]`);
+            const isValid = validate(value);
+            allValid = allValid && isValid;
+            if (!item) return;
+
+            item.classList.toggle('is-valid', isValid);
+            const icon = item.querySelector('i');
+            icon?.classList.toggle('fa-circle', !isValid);
+            icon?.classList.toggle('fa-circle-check', isValid);
+        });
+
+        if (submitButton) submitButton.disabled = !allValid;
+    }
+
+    changePasswordInput?.addEventListener('input', updateChangePasswordRequirements);
+    newUserPasswordInput?.addEventListener('input', updateNewUserPasswordRequirements);
 
     if (modalEditarUsuario) {
         modalEditarUsuario.addEventListener('show.bs.modal', function (event) {

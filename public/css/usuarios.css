@@ -138,7 +138,8 @@
     display: grid;
     flex: 1 1 auto;
     gap: 0.9rem;
-    max-height: 56vh;
+    height: 0;
+    max-height: none;
     min-height: 0;
     overflow-y: auto;
     padding-right: 0.45rem;
@@ -308,6 +309,7 @@
     }
 
     .usuario-permisos-grid {
+        height: auto;
         max-height: none;
     }
 }
@@ -333,4 +335,89 @@
 
 :root[data-theme='dark'] .password-security-help {
     color: #a8b5c9;
+}
+
+.password-requirements {
+    padding: .85rem 1rem;
+    border: 1px solid #dbe3ee;
+    border-radius: .75rem;
+    background: #f8fafc;
+}
+
+.password-requirements-title {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: 0 0 .55rem;
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 600;
+}
+
+.password-requirements-title i {
+    color: #2563eb;
+}
+
+.password-requirements-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .42rem .8rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.password-requirements-list li {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    color: #64748b;
+    font-size: .78rem;
+    transition: color .2s ease;
+}
+
+.password-requirements-list li i {
+    width: .85rem;
+    color: #94a3b8;
+    font-size: .62rem;
+    text-align: center;
+    transition: color .2s ease, transform .2s ease;
+}
+
+.password-requirements-list li.is-valid {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.password-requirements-list li.is-valid i {
+    color: #22c55e;
+    font-size: .78rem;
+    transform: scale(1.08);
+}
+
+:root[data-theme='dark'] #modalCambiarClave .toggle-password-btn {
+    color: #94a3b8;
+}
+
+:root[data-theme='dark'] :is(#modalCambiarClave, #modalNuevoUsuario) .password-requirements {
+    background: #0b1220;
+    border-color: #334155;
+}
+
+:root[data-theme='dark'] :is(#modalCambiarClave, #modalNuevoUsuario) .password-requirements-title {
+    color: #cbd5e1;
+}
+
+:root[data-theme='dark'] :is(#modalCambiarClave, #modalNuevoUsuario) .password-requirements-list li {
+    color: #94a3b8;
+}
+
+:root[data-theme='dark'] :is(#modalCambiarClave, #modalNuevoUsuario) .password-requirements-list li.is-valid {
+    color: #86efac;
+}
+
+@media (max-width: 575.98px) {
+    .password-requirements-list {
+        grid-template-columns: 1fr;
+    }
 }

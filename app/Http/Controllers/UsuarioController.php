@@ -68,7 +68,8 @@ class UsuarioController extends Controller
                 $usuario->id,
                 $rol->nombre === 'Administrador'
                     ? config('user_roles.permissions', [])
-                    : $request->input('permisos', [])
+                    : $request->input('permisos', []),
+                $rol->nombre
             );
         });
 
@@ -181,7 +182,8 @@ class UsuarioController extends Controller
                 $usuario->id,
                 $rolNuevo->nombre === 'Administrador'
                     ? config('user_roles.permissions', [])
-                    : $request->input('permisos', [])
+                    : $request->input('permisos', []),
+                $rolNuevo->nombre
             );
         });
 
@@ -243,12 +245,15 @@ class UsuarioController extends Controller
         return Excel::download(new UsuariosExport, 'usuarios.xlsx');
     }
 
-    private function syncPermisos(int $usuarioId, array $permisos): void
+    private function syncPermisos(int $usuarioId, array $permisos, string $roleName): void
     {
         $permitidos = config('user_roles.permissions', []);
         $permisosNormalizados = collect($permisos)
             ->filter()
             ->intersect($permitidos)
+            ->when($roleName !== 'Administrador', fn ($items) => $items->reject(
+                fn ($permiso) => $permiso === 'dashboard.admin'
+            ))
             ->unique()
             ->values();
 
