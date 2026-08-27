@@ -260,6 +260,8 @@ Nuevo Producto
                         accept="image/*"
                         multiple
                         data-catalog-images>
+                    <div class="catalog-images-preview d-none" data-catalog-previews aria-live="polite"></div>
+                    <div class="catalog-images-error d-none" data-catalog-images-error role="alert"></div>
                     <small class="form-text text-muted">Opcional. Elige hasta 2 imágenes; sólo aparecerán en el catálogo público.</small>
                 </div>
 
@@ -433,6 +435,7 @@ Nuevo Producto
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/product-catalog-image-previews.js') }}?v={{ filemtime(public_path('js/product-catalog-image-previews.js')) }}"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="{{ asset('js/validarCodigoBarras.js') }}"></script>
     <script src="{{ asset('js/productoScanner.js') }}?v={{ filemtime(public_path('js/productoScanner.js')) }}"></script>

@@ -283,6 +283,8 @@ Editar Producto
                        accept="image/*"
                        multiple
                        data-catalog-images>
+                <div class="catalog-images-preview d-none" data-catalog-previews aria-live="polite"></div>
+                <div class="catalog-images-error d-none" data-catalog-images-error role="alert"></div>
                 <small class="form-text text-muted">Máximo 2 adicionales y 3 imágenes en total. Sólo se usan en el catálogo público.</small>
             </div>
 
@@ -480,6 +482,7 @@ Editar Producto
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/product-catalog-image-previews.js') }}?v={{ filemtime(public_path('js/product-catalog-image-previews.js')) }}"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
