@@ -286,6 +286,16 @@ Nueva venta
                         </div>
 
                         <input type="hidden" id="metodo_pago" name="metodo_pago" value="">
+
+                        <div class="mt-3">
+                            <label class="form-label fw-bold" for="formato_pdf">Formato de impresión:</label>
+                            <select id="formato_pdf" class="form-select" data-native-select>
+                                <option value="a4">A4</option>
+                                <option value="ticket_80">Ticket 80 mm</option>
+                                <option value="ticket_58">Ticket 58 mm</option>
+                            </select>
+                            <small class="text-muted d-block mt-1">Elige el tamaño antes de confirmar la venta.</small>
+                        </div>
                     </div>
 
                     <div class="card-footer d-flex justify-content-between">
@@ -336,12 +346,6 @@ Nueva venta
                             <input type="date" id="credito-vencimiento" class="form-control mb-3" min="{{ date('Y-m-d') }}">
                             <small class="text-muted d-block mb-3">Solo se solicita cuando la venta queda fiada o con saldo pendiente.</small>
                         </div>
-
-                        <label class="form-label">Formato de impresión</label>
-                        <select id="formato_pdf" class="form-select" data-native-select>
-                            <option value="a4">A4</option>
-                            <option value="ticket">Ticket</option>
-                        </select>
 
                     </div>
 

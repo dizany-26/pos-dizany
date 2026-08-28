@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 mostrarIconoAgregar();
 
                 setClienteVenta({
+                    id: res.id,
                     tipo: valor.length === 8 ? 'DNI' : 'RUC',
                     documento: valor,
                     razon: res.nombre,
@@ -256,6 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const v = window.ventaActiva?.();
                 if (v) {
                     if (!v.cliente) v.cliente = {};
+                    v.cliente.id = res.cliente?.id || null;
                     v.cliente.documento = dniRuc;
                     v.cliente.razon = razon;
                     v.cliente.direccion = direccion;

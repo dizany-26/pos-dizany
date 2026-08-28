@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use App\Models\Venta;
 use App\Models\User; 
 use Carbon\Carbon;
@@ -69,6 +71,7 @@ public function registrarVenta(Request $request)
     {
         $request->validate([
             'tipo_comprobante' => 'required|in:boleta,factura,nota_venta',
+            'cliente_id'       => 'nullable|integer',
             'documento'        => 'required|string',
             'fecha'            => 'required|date',
             'hora'             => 'required',
@@ -79,7 +82,7 @@ public function registrarVenta(Request $request)
 
             'monto_pagado'     => 'required|numeric|min:0',
             'metodo_pago'      => 'nullable|string',
-            'formato'          => 'nullable|string',
+            'formato'          => 'nullable|in:a4,ticket,ticket_80,ticket_58',
             'credit_due_date'  => 'nullable|date|after_or_equal:fecha',
         ]);
 
@@ -94,9 +97,35 @@ public function registrarVenta(Request $request)
 
         try {
             /* ================= CLIENTE ================= */
-            $cliente = Cliente::where('ruc', $request->documento)
-                ->orWhere('dni', $request->documento)
-                ->firstOrFail();
+            $documento = trim((string) $request->documento);
+            $cliente = Cliente::query()
+                ->when($request->filled('cliente_id'), function ($query) use ($request) {
+                    $query->whereKey($request->integer('cliente_id'));
+                }, function ($query) use ($documento) {
+                    $query->where(function ($documentQuery) use ($documento) {
+                        $documentQuery->where('ruc', $documento)
+                            ->orWhere('dni', $documento);
+                    });
+                })
+                ->first();
+
+            // Si el ID guardado en una venta en espera quedó desactualizado,
+            // todavía intentamos localizar al cliente por su documento.
+            if (! $cliente && $request->filled('cliente_id')) {
+                $cliente = Cliente::where('ruc', $documento)
+                    ->orWhere('dni', $documento)
+                    ->first();
+            }
+
+            if (! $cliente) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'type' => 'client_not_found',
+                    'message' => 'No pudimos vincular el cliente seleccionado. Regresa al paso anterior, vuelve a buscarlo por su DNI o RUC y confirma nuevamente.',
+                ], 422);
+            }
 
             /* ================= FECHA ================= */
             $hora = strlen($request->hora) === 5 ? $request->hora . ':00' : $request->hora;
@@ -288,7 +317,7 @@ public function registrarVenta(Request $request)
             // ============================== GENERAR PDF ==============================
             $formato = $request->input('formato', 'a4');
             $vista = match ($formato) {
-                'ticket' => "comprobantes.{$tipo}_ticket",
+                'ticket', 'ticket_80', 'ticket_58' => "comprobantes.{$tipo}_ticket",
                 default  => "comprobantes.{$tipo}_a4",
             };
 
@@ -296,7 +325,7 @@ public function registrarVenta(Request $request)
                 throw new \Exception("La vista [$vista] no existe.");
             }
 
-            $venta->load(['cliente', 'detalleVentas.producto']);
+            $venta->load(['cliente', 'usuario', 'detalleVentas.producto']);
 
             // LOGO
             $logoBase64 = null;
@@ -359,12 +388,17 @@ $pdf = Pdf::setOptions([
     'subtotal'   => $venta->op_gravadas + $venta->op_exoneradas + $venta->op_inafectas + $venta->op_nrus,
     'igv'        => $venta->igv,
     'total'      => $venta->total,
+    'ticketWidth'=> $formato === 'ticket_58' ? 58 : 80,
 ]);
 
 
-            if ($formato === 'ticket') {
-                $alto = max(400, count($venta->detalleVentas) * 35 + 400);
-                $pdf->setPaper([0, 0, 226.77, $alto]);
+            if (in_array($formato, ['ticket', 'ticket_80', 'ticket_58'], true)) {
+                $ticketWidth = $formato === 'ticket_58' ? 58 : 80;
+                $paperWidth = $ticketWidth === 58 ? 164.41 : 226.77;
+                $lineHeight = $ticketWidth === 58 ? 14 : 20;
+                $baseHeight = $ticketWidth === 58 ? 310 : 350;
+                $alto = $baseHeight + count($venta->detalleVentas) * $lineHeight;
+                $pdf->setPaper([0, 0, $paperWidth, $alto]);
             } else {
                 $pdf->setPaper('A4');
             }
@@ -482,11 +516,49 @@ $pdf = Pdf::setOptions([
             }
 
 
-            \Log::error("Error registrarVenta: " . $msg);
+            \Log::error('Error registrarVenta', [
+                'exception' => get_class($e),
+                'message' => $msg,
+                'usuario_id' => auth()->id(),
+            ]);
+
+            if ($e instanceof ModelNotFoundException) {
+                return response()->json([
+                    'success' => false,
+                    'type' => 'product_not_found',
+                    'message' => 'Uno de los productos del carrito ya no está disponible. Actualiza el listado y vuelve a agregarlo.',
+                ], 422);
+            }
+
+            $businessMessages = [
+                'El perfil tributario activo no permite emitir facturas.',
+                'El perfil tributario activo no permite emitir boletas.',
+                'No existe un perfil tributario activo. Configúralo antes de registrar nuevas ventas.',
+                'Debe seleccionar un método de pago.',
+                'Una venta al crédito requiere la fecha de vencimiento de la cuota.',
+            ];
+
+            if (
+                in_array($msg, $businessMessages, true)
+                || str_starts_with($msg, 'Cantidad inválida para ')
+                || str_starts_with($msg, 'No hay precio público de ')
+                || str_starts_with($msg, 'La presentación ')
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'type' => 'business_rule',
+                    'message' => $msg,
+                ], 422);
+            }
+
+            $publicMessage = $e instanceof QueryException
+                ? 'No se pudo guardar la venta en este momento. No se realizó ningún cobro ni movimiento de stock; inténtalo nuevamente.'
+                : 'Ocurrió un problema al procesar la venta. No se guardaron cambios; inténtalo nuevamente o comunícate con el administrador.';
 
             return response()->json([
                 'success' => false,
-                'message' => $msg
+                'type' => 'server_error',
+                'message' => $publicMessage,
             ], 500);
         }
     }

@@ -167,6 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     body: JSON.stringify({
         tipo_comprobante: tipoComprobante,
+        cliente_id: v.cliente?.id || null,
         documento: documento,
         fecha: fecha,
         hora: hora,
@@ -230,7 +231,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 👇 si vino como string o Error normal, normalizamos
   const type = error?.type;
-  const msg  = error?.message || "Error inesperado";
+  const validationMessage = error?.errors
+      ? Object.values(error.errors).flat().find(Boolean)
+      : null;
+  const msg = validationMessage || error?.message || "No se pudo registrar la venta. Inténtalo nuevamente.";
 
  if (type === "stock") {
     Swal.fire({
@@ -267,6 +271,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return;
 }
+
+  if (type === "client_not_found") {
+    Swal.fire({
+        icon: "warning",
+        title: "Revisa el cliente",
+        text: msg,
+        confirmButtonText: "Volver y revisar",
+        confirmButtonColor: "#2563eb"
+    }).then(() => {
+        if (typeof showStep === "function") showStep(2);
+        document.getElementById("documento")?.focus();
+    });
+
+    return;
+  }
+
+  if (validationMessage) {
+    Swal.fire({
+        icon: "warning",
+        title: "Completa los datos requeridos",
+        text: msg,
+        confirmButtonText: "Revisar venta",
+        confirmButtonColor: "#2563eb"
+    });
+
+    return;
+  }
+
+  const alertasVenta = {
+    product_not_found: {
+        icon: "warning",
+        title: "Producto no disponible",
+        confirmButtonText: "Actualizar productos"
+    },
+    business_rule: {
+        icon: "warning",
+        title: "Revisa los datos de la venta",
+        confirmButtonText: "Corregir"
+    },
+    server_error: {
+        icon: "error",
+        title: "No se pudo registrar la venta",
+        confirmButtonText: "Entendido"
+    }
+  };
+
+  if (alertasVenta[type]) {
+    const alerta = alertasVenta[type];
+    Swal.fire({
+        icon: alerta.icon,
+        title: alerta.title,
+        text: msg,
+        confirmButtonText: alerta.confirmButtonText,
+        confirmButtonColor: type === "server_error" ? "#dc3545" : "#2563eb"
+    }).then(() => {
+        if (type === "product_not_found" && typeof actualizarProductosStock === "function") {
+            actualizarProductosStock();
+        }
+    });
+
+    return;
+  }
 
 
   // otros errores

@@ -85,6 +85,14 @@ Panel General
                     </div>
 
                     <div class="mb-3">
+                        <label for="lema" class="form-label">Lema comercial:</label>
+                        <input type="text" name="lema" id="lema" class="form-control" maxlength="120"
+                               value="{{ old('lema', $config->lema ?? 'Variedad, calidad y buen servicio') }}"
+                               placeholder="Variedad, calidad y buen servicio">
+                        <div class="form-text">Se mostrará debajo del nombre de la empresa en los comprobantes. No modifica el header del sistema.</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Logo actual:</label><br>
                         @if($config->logo)
                             <img src="{{ asset($config->logo) }}" alt="Logo" width="100" class="mb-2">

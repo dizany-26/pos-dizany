@@ -50,6 +50,7 @@ class ClienteController extends Controller
 
         return response()->json($cliente ? [
             'encontrado' => true,
+            'id' => $cliente->id,
             'nombre' => $cliente->nombre,
             'direccion' => $cliente->direccion,
             'telefono' => $cliente->telefono,
