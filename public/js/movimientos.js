@@ -352,6 +352,19 @@ const documentoSol = sol.documento || null;
                         <strong>${v.condicion_pago ?? (esVentaCredito ? 'Crédito' : 'Contado')}</strong>
                     </div>
 
+                    ${v.metodo_pago === 'efectivo' && v.efectivo_recibido !== null ? `
+                        <div class="detalle-item">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Efectivo recibido</span>
+                            <strong>${money(v.efectivo_recibido)}</strong>
+                        </div>
+                        <div class="detalle-item">
+                            <i class="fas fa-coins"></i>
+                            <span>Vuelto</span>
+                            <strong>${money(v.vuelto)}</strong>
+                        </div>
+                    ` : ''}
+
                     ${esVentaCredito ? `
                         <div class="detalle-item">
                             <i class="fas fa-money-check-dollar"></i>

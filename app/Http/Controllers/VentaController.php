@@ -84,6 +84,7 @@ public function registrarVenta(Request $request)
             'productos.*.presentacion' => 'required|in:unidad,paquete,caja',
 
             'monto_pagado'     => 'required|numeric|min:0',
+            'efectivo_recibido'=> 'nullable|numeric|min:0',
             'metodo_pago'      => 'nullable|string',
             'formato'          => 'nullable|in:a4,ticket,ticket_80,ticket_58',
             'credit_due_date'  => 'nullable|date|after_or_equal:fecha',
@@ -303,14 +304,20 @@ public function registrarVenta(Request $request)
             /* ================= PAGO / ESTADO ================= */
             $montoPagado = round((float) $request->monto_pagado, 2);
 
+            if ($request->metodo_pago === 'efectivo' && $request->filled('efectivo_recibido')) {
+                $montoPagado = round((float) $request->efectivo_recibido, 2);
+            }
+
             if ($montoPagado > 0 && empty($request->metodo_pago)) {
                 throw new \Exception("Debe seleccionar un método de pago.");
             }
 
             $esPagoEfectivo = $request->metodo_pago === 'efectivo' && $montoPagado > 0;
-            $efectivoRecibido = $esPagoEfectivo ? $montoPagado : null;
-            $vuelto = $esPagoEfectivo && $montoPagado > $total
-                ? round($montoPagado - $total, 2)
+            $efectivoRecibido = $esPagoEfectivo
+                ? round((float) ($request->efectivo_recibido ?? $montoPagado), 2)
+                : null;
+            $vuelto = $esPagoEfectivo
+                ? max(0, round($efectivoRecibido - $total, 2))
                 : null;
 
             if ($montoPagado > $total) {

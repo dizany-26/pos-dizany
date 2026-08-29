@@ -620,21 +620,21 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
   window.USUARIO_ES_ADMIN = @json(Auth::user()->rol_id == 1);
 </script>
 
-<script src="js/ventas_core.js"></script>
-<script src="js/ventas_state.js"></script>
+<script src="{{ asset('js/ventas_core.js') }}?v={{ filemtime(public_path('js/ventas_core.js')) }}"></script>
+<script src="{{ asset('js/ventas_state.js') }}?v={{ filemtime(public_path('js/ventas_state.js')) }}"></script>
 <script src="{{ asset('js/ventas_stock.js') }}?v={{ filemtime(public_path('js/ventas_stock.js')) }}"></script>
 
-<script src="js/ventas_productos.js"></script>
+<script src="{{ asset('js/ventas_productos.js') }}?v={{ filemtime(public_path('js/ventas_productos.js')) }}"></script>
 <script src="{{ asset('js/ventas_carrito.js') }}?v={{ filemtime(public_path('js/ventas_carrito.js')) }}"></script>
 <script src="{{ asset('js/ventas_scanner.js') }}?v={{ filemtime(public_path('js/ventas_scanner.js')) }}"></script>
 
-<script src="js/ventas_ui.js"></script>
-<script src="js/ventas_mobile_cart.js"></script>
-<script src="js/ventas_espera.js"></script>
-<script src="js/ventas_ordenar.js"></script>
-<script src="js/ventas_registro.js"></script>
+<script src="{{ asset('js/ventas_ui.js') }}?v={{ filemtime(public_path('js/ventas_ui.js')) }}"></script>
+<script src="{{ asset('js/ventas_mobile_cart.js') }}?v={{ filemtime(public_path('js/ventas_mobile_cart.js')) }}"></script>
+<script src="{{ asset('js/ventas_espera.js') }}?v={{ filemtime(public_path('js/ventas_espera.js')) }}"></script>
+<script src="{{ asset('js/ventas_ordenar.js') }}?v={{ filemtime(public_path('js/ventas_ordenar.js')) }}"></script>
+<script src="{{ asset('js/ventas_registro.js') }}?v={{ filemtime(public_path('js/ventas_registro.js')) }}"></script>
 
-<script src="js/ventas_bootstrap.js"></script>
+<script src="{{ asset('js/ventas_bootstrap.js') }}?v={{ filemtime(public_path('js/ventas_bootstrap.js')) }}"></script>
 
 
 <script>

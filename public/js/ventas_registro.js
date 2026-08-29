@@ -195,6 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fecha: fecha,
         hora: hora,
         monto_pagado: montoPagado,
+        efectivo_recibido: metodoPago === "efectivo" && montoPagado > 0 ? montoPagado : null,
         metodo_pago: metodoPago,
         productos: productosEnviar,
         formato: formato,
