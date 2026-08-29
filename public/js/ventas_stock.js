@@ -12,6 +12,9 @@ function unidadesRealesDeItem(item) {
     }
 
     if (item.tipo_venta === "caja") {
+        const unidadesCaja = parseInt(item.unidades_por_caja) || 0;
+        if (unidadesCaja > 0) return cantidad * unidadesCaja;
+
         const pxc = parseInt(item.paquetes_por_caja) || 0;
         const upp = parseInt(item.unidades_por_paquete) || 0;
         if (pxc > 0 && upp > 0) return cantidad * pxc * upp;
@@ -22,10 +25,10 @@ function unidadesRealesDeItem(item) {
 }
 
 function stockRealProducto(it) {
-    const prod = productosCache.get(Number(it.id));
+    const prod = productosCache.get(Number(it.producto_id || it.id));
     return prod
         ? (parseInt(prod.stock) || 0)
-        : (parseInt(it.stock) || 0);
+        : (parseInt(it.stock_lote || it.stock) || 0);
 }
 
 function stockDisponible(prod) {

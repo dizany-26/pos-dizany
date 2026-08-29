@@ -31,7 +31,10 @@ class Venta extends Model
         'igv',
         'total',
         'credit_due_date',
-        'saldo',        // ✅ FALTABA
+        'informacion_adicional',
+        'saldo',
+        'efectivo_recibido',
+        'vuelto',
         'activo'
     ];
     
@@ -47,6 +50,8 @@ class Venta extends Model
     protected $casts = [
         'fecha' => 'datetime',
         'credit_due_date' => 'date',
+        'efectivo_recibido' => 'decimal:2',
+        'vuelto' => 'decimal:2',
     ];
 
     public function usuario()

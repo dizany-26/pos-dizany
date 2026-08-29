@@ -51,11 +51,16 @@ class ElectronicDocumentPreparer
                             'address' => $establishment->address,
                         ],
                     ],
-                    'customer' => [
+                    'customer' => $venta->cliente ? [
                         'document_type' => filled($venta->cliente->ruc) ? '6' : '1',
                         'document_number' => $venta->cliente->ruc ?: $venta->cliente->dni,
                         'name' => $venta->cliente->nombre,
                         'address' => $venta->cliente->direccion,
+                    ] : [
+                        'document_type' => '0',
+                        'document_number' => '',
+                        'name' => 'PÚBLICO GENERAL',
+                        'address' => '',
                     ],
                     'document' => [
                         'type' => $type,

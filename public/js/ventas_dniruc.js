@@ -1,280 +1,247 @@
-// ===============================
-// ESTADO GLOBAL DEL CLIENTE
-// ===============================
+// Flujo de cliente del POS: Público General, DNI y RUC.
 window.estadoCliente = "ninguno";
-// ninguno | nuevo_no_guardado | ok
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener("DOMContentLoaded", () => {
+    const tipoComprobante = document.getElementById("tipo_comprobante");
+    const modoSin = document.getElementById("cliente-sin-documento");
+    const modoCon = document.getElementById("cliente-con-documento");
+    const tipoDocumento = document.getElementById("tipo_documento_cliente");
+    const documento = document.getElementById("documento");
+    const razon = document.getElementById("razon_social");
+    const direccion = document.getElementById("direccion");
+    const estado = document.getElementById("estado_ruc");
+    const btnAccion = document.getElementById("btn-cliente-accion");
+    const iconoPlus = document.getElementById("icono-plus");
+    const iconoSave = document.getElementById("icono-save");
+    const informacion = document.getElementById("informacion_adicional");
+    const modalEl = document.getElementById("clientModal");
+    const modalCliente = modalEl && window.bootstrap ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
 
-    // ===============================
-    // ELEMENTOS DOM
-    // ===============================
-    const inputDocumento  = document.getElementById('documento');
-    const inputRazon      = document.getElementById('razon_social');
-    const inputDireccion  = document.getElementById('direccion');
-    const estadoRUC       = document.getElementById('estado_ruc');
+    if (!tipoComprobante || !tipoDocumento || !documento || !razon || !direccion) return;
 
-    const btnAccion  = document.getElementById('btn-cliente-accion');
-    const iconoPlus  = document.getElementById('icono-plus');
-    const iconoSave  = document.getElementById('icono-save');
+    let ultimaConsulta = null;
+    let consultaToken = 0;
+    const ventaActual = () => typeof window.ventaActiva === "function" ? window.ventaActiva() : null;
+    const modoActual = () => modoCon?.checked ? "con_documento" : "sin_documento";
 
-    const modalEl = document.getElementById('clientModal');
-    const modalCliente = (modalEl && window.bootstrap)
-        ? new bootstrap.Modal(modalEl)
-        : null;
-
-    if (!inputDocumento || !inputRazon || !inputDireccion || !btnAccion || !iconoPlus || !iconoSave) {
-        console.warn("[ventas_dniruc] Faltan elementos del DOM");
-        return;
+    function iconoGuardar(guardar) {
+        iconoPlus?.classList.toggle("d-none", guardar);
+        iconoSave?.classList.toggle("d-none", !guardar);
     }
 
-    // ===============================
-    // HELPERS VISUALES
-    // ===============================
-    function mostrarIconoGuardar() {
-        iconoPlus.classList.add("d-none");
-        iconoSave.classList.remove("d-none");
-
-        iconoSave.classList.add("icono-animado");
-        setTimeout(() => iconoSave.classList.remove("icono-animado"), 600);
+    function sincronizar(cliente = null) {
+        const venta = ventaActual();
+        if (!venta) return;
+        venta.tipo_comprobante = tipoComprobante.value;
+        venta.cliente_modo = modoActual();
+        venta.tipo_documento = tipoDocumento.value;
+        venta.informacion_adicional = (informacion?.value || "").trim();
+        if (cliente) venta.cliente = cliente;
+        window.actualizarAliasVentaDesdeCliente?.();
+        if (typeof window.snapshotPOS === "function") posSaveDebounced(snapshotPOS, 30);
     }
 
-    function mostrarIconoAgregar() {
-        iconoSave.classList.add("d-none");
-        iconoPlus.classList.remove("d-none");
+    function clienteBase(valores = {}) {
+        return {
+            id: null,
+            tipo: tipoDocumento.value.toUpperCase(),
+            documento: "",
+            razon: "",
+            direccion: "",
+            no_guardado: false,
+            sin_documento: false,
+            ...valores
+        };
+    }
 
-        iconoPlus.classList.add("icono-animado");
-        setTimeout(() => iconoPlus.classList.remove("icono-animado"), 600);
+    function establecerPublicoGeneral() {
+        consultaToken++;
+        ultimaConsulta = null;
+        documento.value = "";
+        razon.value = "Público General";
+        direccion.value = "";
+        estado.textContent = "Venta sin documento";
+        estado.className = "text-muted small mb-1";
+        window.estadoCliente = "ok";
+        iconoGuardar(false);
+        sincronizar(clienteBase({ razon: "Público General", sin_documento: true }));
     }
 
     function limpiarCliente() {
-        inputRazon.value = "";
-        inputDireccion.value = "";
-        estadoRUC.textContent = "";
-
+        consultaToken++;
+        ultimaConsulta = null;
+        documento.value = "";
+        razon.value = "";
+        direccion.value = "";
+        estado.textContent = "";
+        estado.className = "text-success small mb-1";
         window.estadoCliente = "ninguno";
-        mostrarIconoAgregar();
-
-        // 🧠 limpiar cliente de la venta activa
-        const v = window.ventaActiva?.();
-        if (v) v.cliente = null;
+        iconoGuardar(false);
+        sincronizar(clienteBase());
     }
 
-    // ===============================
-    // SINCRONIZAR CLIENTE → VENTA
-    // ===============================
-    function setClienteVenta(cliente) {
-        const v = window.ventaActiva?.();
-        if (!v) return;
-
-        v.cliente = cliente;
-
-        if (window.actualizarAliasVentaDesdeCliente) {
-            actualizarAliasVentaDesdeCliente();
-        }
+    function configurarDocumento() {
+        const esRuc = tipoDocumento.value === "ruc";
+        documento.maxLength = esRuc ? 11 : 8;
+        documento.placeholder = esRuc ? "RUC (11 dígitos)" : "DNI (8 dígitos)";
     }
 
-    // ===============================
-    // CONSULTAS
-    // ===============================
-    function buscarEnBD(dniRuc) {
-        return fetch(`/buscar-cliente/${dniRuc}`).then(r => r.json());
-    }
-
-    function consultarDNI(dni) {
-        return fetch(`/consulta-documento/dni/${dni}`).then(async response => {
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'DNI no encontrado');
-            return data;
-        });
-    }
-
-    function consultarRUC(ruc) {
-        return fetch(`/consulta-documento/ruc/${ruc}`).then(async response => {
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'RUC no encontrado');
-            return data;
-        });
-    }
-
-    // ===============================
-    // INPUT DNI / RUC
-    // ===============================
-    let ultimaConsulta = null;
-    let apiFallida = false;
-
-    inputDocumento.addEventListener('input', () => {
-
-        const valor = inputDocumento.value.trim();
-
-        if (valor !== ultimaConsulta) apiFallida = false;
-
-        if (valor.length < 8) {
-            limpiarCliente();
-            ultimaConsulta = null;
-            return;
+    function aplicarFlujo(preservar = false) {
+        const comprobante = tipoComprobante.value;
+        if (comprobante === "factura") {
+            modoCon.checked = true;
+            modoSin.disabled = true;
+            tipoDocumento.value = "ruc";
+            tipoDocumento.disabled = true;
+        } else {
+            modoSin.disabled = false;
+            if (comprobante === "boleta") {
+                tipoDocumento.value = "dni";
+                tipoDocumento.disabled = true;
+            } else {
+                tipoDocumento.disabled = modoActual() === "sin_documento";
+            }
         }
 
-        if (valor === ultimaConsulta) return;
-        ultimaConsulta = valor;
+        const conDocumento = modoActual() === "con_documento";
+        documento.disabled = !conDocumento;
+        btnAccion.disabled = !conDocumento;
+        configurarDocumento();
 
-        // 1️⃣ BUSCAR EN BD
-        buscarEnBD(valor).then(res => {
+        if (!preservar) conDocumento ? limpiarCliente() : establecerPublicoGeneral();
+        else if (!conDocumento) establecerPublicoGeneral();
+        else sincronizar();
+    }
 
-            if (res.encontrado) {
+    window.actualizarFlujoClienteComprobante = aplicarFlujo;
+    window.setClienteVentaPOS = cliente => {
+        const numero = cliente?.documento || "";
+        modoCon.checked = true;
+        tipoDocumento.value = numero.length === 11 ? "ruc" : "dni";
+        documento.value = numero;
+        razon.value = cliente?.razon || cliente?.nombre || "";
+        direccion.value = cliente?.direccion || "";
+        window.estadoCliente = "ok";
+        iconoGuardar(false);
+        aplicarFlujo(true);
+        sincronizar(clienteBase({
+            id: cliente?.id || null,
+            documento: numero,
+            razon: razon.value,
+            direccion: direccion.value
+        }));
+    };
 
-                inputRazon.value = res.nombre;
-                inputDireccion.value = res.direccion;
-                estadoRUC.textContent = "";
+    async function buscarLocal(numero) {
+        const response = await fetch(`/buscar-cliente/${encodeURIComponent(numero)}`);
+        if (!response.ok) throw new Error("No se pudo consultar la base de clientes.");
+        return response.json();
+    }
 
+    async function buscarApi(numero) {
+        const response = await fetch(`/consulta-documento/${tipoDocumento.value}/${encodeURIComponent(numero)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Documento no encontrado");
+        return data;
+    }
+
+    async function resolverDocumento(numero) {
+        const token = ++consultaToken;
+        estado.textContent = "Buscando cliente...";
+        estado.className = "text-muted small mb-1";
+        try {
+            const local = await buscarLocal(numero);
+            if (token !== consultaToken) return;
+            if (local.encontrado) {
+                razon.value = local.nombre || "";
+                direccion.value = local.direccion || "";
+                estado.textContent = "Cliente registrado";
+                estado.className = "text-success small mb-1";
                 window.estadoCliente = "ok";
-                mostrarIconoAgregar();
-
-                setClienteVenta({
-                    id: res.id,
-                    tipo: valor.length === 8 ? 'DNI' : 'RUC',
-                    documento: valor,
-                    razon: res.nombre,
-                    direccion: res.direccion
-                });
-
+                iconoGuardar(false);
+                sincronizar(clienteBase({ id: local.id, documento: numero, razon: razon.value, direccion: direccion.value }));
                 return;
             }
 
-            if (apiFallida) {
-                estadoRUC.textContent = "❌ Documento no encontrado";
-                return;
-            }
+            const remoto = await buscarApi(numero);
+            if (token !== consultaToken) return;
+            razon.value = remoto.nombre || "";
+            direccion.value = remoto.direccion || (tipoDocumento.value === "dni" ? "No disponible" : "Sin dirección");
+            estado.textContent = "Cliente encontrado. Guárdalo antes de continuar.";
+            estado.className = "text-warning small mb-1";
+            window.estadoCliente = "nuevo_no_guardado";
+            iconoGuardar(true);
+            sincronizar(clienteBase({ documento: numero, razon: razon.value, direccion: direccion.value, no_guardado: true }));
+        } catch (error) {
+            if (token !== consultaToken) return;
+            razon.value = "";
+            direccion.value = "";
+            estado.textContent = error.message || "Documento no encontrado";
+            estado.className = "text-danger small mb-1";
+            window.estadoCliente = "ninguno";
+            iconoGuardar(false);
+            sincronizar(clienteBase({ documento: numero }));
+        }
+    }
 
-            // 2️⃣ DNI API
-            if (valor.length === 8) {
-                consultarDNI(valor)
-                    .then(data => {
-                        const razon = data.nombre || "";
-
-                        inputRazon.value = razon;
-                        inputDireccion.value = "No disponible";
-                        estadoRUC.textContent = "";
-
-                        window.estadoCliente = "nuevo_no_guardado";
-                        mostrarIconoGuardar();
-
-                        setClienteVenta({
-                            tipo: 'DNI',
-                            documento: valor,
-                            razon: razon,
-                            direccion: "No disponible"
-                        });
-                    })
-                    .catch(() => {
-                        apiFallida = true;
-                        limpiarCliente();
-                        estadoRUC.textContent = "❌ DNI no encontrado";
-                    });
-            }
-
-            // 3️⃣ RUC API
-            if (valor.length === 11) {
-                consultarRUC(valor)
-                    .then(data => {
-                        const razon = data.nombre || "";
-                        const direccion = data.direccion || "Sin dirección";
-
-                        inputRazon.value = razon;
-                        inputDireccion.value = direccion;
-                        estadoRUC.textContent = `✔️ ${data.estado || ""}`;
-
-                        window.estadoCliente = "nuevo_no_guardado";
-                        mostrarIconoGuardar();
-
-                        setClienteVenta({
-                            tipo: 'RUC',
-                            documento: valor,
-                            razon: razon,
-                            direccion: direccion
-                        });
-                    })
-                    .catch(() => {
-                        apiFallida = true;
-                        limpiarCliente();
-                        estadoRUC.textContent = "❌ RUC no encontrado";
-                    });
-            }
-
-        });
+    tipoComprobante.addEventListener("change", () => aplicarFlujo(false));
+    modoSin?.addEventListener("change", () => aplicarFlujo(false));
+    modoCon?.addEventListener("change", () => aplicarFlujo(false));
+    tipoDocumento.addEventListener("change", () => {
+        configurarDocumento();
+        limpiarCliente();
+        documento.focus();
     });
 
-    // ===============================
-    // BOTÓN + / 💾
-    // ===============================
-    btnAccion.addEventListener("click", () => {
-
-        // 💾 GUARDAR CLIENTE
-        if (!iconoSave.classList.contains("d-none")) {
-
-            const dniRuc    = inputDocumento.value.trim();
-            const razon     = inputRazon.value.trim();
-            const direccion = inputDireccion.value.trim();
-
-            if (!dniRuc || !razon) {
-                Swal.fire("Error", "No hay datos para guardar", "error");
-                return;
-            }
-
-            fetch('/guardar-cliente', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document
-                        .querySelector('meta[name="csrf-token"]')
-                        .content
-                },
-                body: JSON.stringify({
-                    dni_ruc: dniRuc,
-                    razon_social: razon,
-                    direccion: direccion
-                })
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (!res.exito) {
-                    Swal.fire("Error", res.mensaje || "Error al guardar", "error");
-                    return;
-                }
-
-                // ✅ alerta OK
-                Swal.fire({
-                    icon: "success",
-                    title: "Cliente guardado",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-
-                window.estadoCliente = "ok";
-                mostrarIconoAgregar();
-
-                // 🔥🔥🔥 LO IMPORTANTE (SIN ALIAS, SIN EVENTOS, SIN MAGIA)
-                const v = window.ventaActiva?.();
-                if (v) {
-                    if (!v.cliente) v.cliente = {};
-                    v.cliente.id = res.cliente?.id || null;
-                    v.cliente.documento = dniRuc;
-                    v.cliente.razon = razon;
-                    v.cliente.direccion = direccion;
-                    v.cliente.no_guardado = false;
-                }
-
-                // 🔄 refrescar panel de ventas en espera
-                if (window.renderVentasEsperaPanel) {
-                    window.renderVentasEsperaPanel();
-                }
-            });
-
-            return;
+    documento.addEventListener("input", () => {
+        const maximo = tipoDocumento.value === "ruc" ? 11 : 8;
+        const numero = documento.value.replace(/\D/g, "").slice(0, maximo);
+        documento.value = numero;
+        if (numero !== ultimaConsulta) {
+            razon.value = "";
+            direccion.value = "";
+            estado.textContent = numero.length < maximo ? `Completa los ${maximo} dígitos.` : "";
+            window.estadoCliente = "ninguno";
+            iconoGuardar(false);
         }
-
-        // ➕ MODAL MANUAL
-        if (modalCliente) modalCliente.show();
+        sincronizar(clienteBase({ documento: numero }));
+        if (numero.length === maximo && numero !== ultimaConsulta) {
+            ultimaConsulta = numero;
+            resolverDocumento(numero);
+        }
     });
 
+    informacion?.addEventListener("input", () => sincronizar());
+
+    btnAccion?.addEventListener("click", async () => {
+        if (modoActual() !== "con_documento") return;
+        if (!iconoSave?.classList.contains("d-none")) {
+            const numero = documento.value.trim();
+            if (!numero || !razon.value.trim()) {
+                Swal.fire("Datos incompletos", "Primero consulta un DNI o RUC válido.", "warning");
+                return;
+            }
+            try {
+                const response = await fetch("/guardar-cliente", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": window.document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({ dni_ruc: numero, razon_social: razon.value.trim(), direccion: direccion.value.trim() })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.exito) throw new Error(data.mensaje || "No se pudo guardar el cliente.");
+                window.estadoCliente = "ok";
+                iconoGuardar(false);
+                estado.textContent = "Cliente guardado";
+                estado.className = "text-success small mb-1";
+                sincronizar(clienteBase({ id: data.cliente?.id || null, documento: numero, razon: razon.value.trim(), direccion: direccion.value.trim() }));
+                Swal.fire({ icon: "success", title: "Cliente guardado", timer: 1400, showConfirmButton: false });
+            } catch (error) {
+                Swal.fire("No se pudo guardar", error.message, "error");
+            }
+            return;
+        }
+        modalCliente?.show();
+    });
+
+    aplicarFlujo(false);
 });

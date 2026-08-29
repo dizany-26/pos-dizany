@@ -339,6 +339,7 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
   // insertar el grupo recalculado
   const insertAt = Math.min(...grupo.idxs);
   items.splice(insertAt, 0, ...nuevosItems);
+  posSaveDebounced(snapshotPOS, 10);
 }
 
     // ============================
@@ -527,16 +528,25 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
     // ============================
     if (carritoLista) {
 
-       carritoLista.addEventListener("change", async (e) => {
-            if (!e.target.classList.contains("tipo-venta")) return;
+        async function cambiarPresentacion(select) {
+            if (!select || select.dataset.procesandoPresentacion === "1") return;
+            select.dataset.procesandoPresentacion = "1";
 
             const v = ventaActiva();
-            const i = Number(e.target.dataset.index);
+            const i = Number(select.dataset.index);
             const it = v.productos[i];
-            if (!it) return;
+            if (!it) {
+                delete select.dataset.procesandoPresentacion;
+                return;
+            }
 
             const tipoAnterior = it.tipo_venta;
-            const nuevoTipo = e.target.value;
+            const nuevoTipo = select.value;
+
+            if (nuevoTipo === tipoAnterior) {
+                delete select.dataset.procesandoPresentacion;
+                return;
+            }
 
             try {
                 // 🔢 calcular factor de presentación
@@ -559,12 +569,27 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
 
             } catch (err) {
                 mostrarAlerta(err.message || "Stock insuficiente para esta presentación");
-                e.target.value = tipoAnterior;
                 it.tipo_venta = tipoAnterior;
+                it.cantidad = 1;
+                posSaveDebounced(snapshotPOS, 10);
                 renderCarritoTreinta();
             }
-        });
+        }
 
+        if (window.jQuery?.fn?.select2) {
+            window.jQuery(carritoLista).on(
+                "change.ventasCarrito select2:select.ventasCarrito",
+                "select.tipo-venta",
+                function () {
+                    cambiarPresentacion(this);
+                }
+            );
+        } else {
+            carritoLista.addEventListener("change", (e) => {
+                if (!e.target.classList.contains("tipo-venta")) return;
+                cambiarPresentacion(e.target);
+            });
+        }
 
         carritoLista.addEventListener("input", async (e) => {
 
@@ -584,6 +609,7 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
 
     // 🔥 actualizar modelo inmediatamente
     it.cantidad = cant;
+    posSaveDebounced(snapshotPOS, 50);
 
 });
 carritoLista.addEventListener("blur", async (e) => {
@@ -699,6 +725,7 @@ carritoLista.addEventListener("blur", async (e) => {
             if (btnEliminar) {
                 const i = Number(btnEliminar.dataset.index);
                 v.productos.splice(i, 1);
+                posSaveDebounced(snapshotPOS, 10);
                 actualizarContadorVentasEspera();
                 renderCarritoTreinta();
 

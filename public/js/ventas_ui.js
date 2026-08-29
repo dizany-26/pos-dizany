@@ -58,6 +58,10 @@ function volcarUIaVentaActiva() {
     const razonInput     = document.getElementById("razon_social");
     const direccionInput = document.getElementById("direccion");
     const hiddenMetodoPago = document.getElementById("metodo_pago");
+    const tipoComprobante = document.getElementById("tipo_comprobante");
+    const tipoDocumento = document.getElementById("tipo_documento_cliente");
+    const informacionAdicional = document.getElementById("informacion_adicional");
+    const clienteModo = document.querySelector('input[name="cliente_documento_modo"]:checked');
 
     if (!v.cliente) {
         v.cliente = { documento: "", razon: "", direccion: "", no_guardado: false };
@@ -67,6 +71,12 @@ function volcarUIaVentaActiva() {
     v.cliente.razon       = razonInput?.value || "";
     v.cliente.direccion   = direccionInput?.value || "";
     v.cliente.no_guardado = leerEstadoClienteNoGuardado();
+    v.cliente.sin_documento = clienteModo?.value === "sin_documento";
+
+    v.tipo_comprobante = tipoComprobante?.value || "boleta";
+    v.cliente_modo = clienteModo?.value || "sin_documento";
+    v.tipo_documento = tipoDocumento?.value || "dni";
+    v.informacion_adicional = informacionAdicional?.value || "";
 
     v.metodo_pago = hiddenMetodoPago?.value || "";
 
@@ -94,10 +104,28 @@ function restaurarVentaActivaEnUI() {
     const razonInput     = document.getElementById("razon_social");
     const direccionInput = document.getElementById("direccion");
     const hiddenMetodoPago = document.getElementById("metodo_pago");
+    const tipoComprobante = document.getElementById("tipo_comprobante");
+    const tipoDocumento = document.getElementById("tipo_documento_cliente");
+    const informacionAdicional = document.getElementById("informacion_adicional");
+
+    v.tipo_comprobante = v.tipo_comprobante || "boleta";
+    v.cliente_modo = v.cliente_modo || (v.cliente?.documento ? "con_documento" : "sin_documento");
+    v.tipo_documento = v.tipo_documento || (v.cliente?.documento?.length === 11 ? "ruc" : "dni");
+    v.informacion_adicional = v.informacion_adicional || "";
+
+    if (tipoComprobante) tipoComprobante.value = v.tipo_comprobante;
+    if (tipoDocumento) tipoDocumento.value = v.tipo_documento;
+    const modoRadio = document.querySelector(`input[name="cliente_documento_modo"][value="${v.cliente_modo}"]`);
+    if (modoRadio) modoRadio.checked = true;
 
     if (documentoInput) documentoInput.value = v.cliente?.documento || "";
     if (razonInput)     razonInput.value     = v.cliente?.razon || "";
     if (direccionInput) direccionInput.value = v.cliente?.direccion || "";
+    if (informacionAdicional) informacionAdicional.value = v.informacion_adicional;
+
+    if (typeof window.actualizarFlujoClienteComprobante === "function") {
+        window.actualizarFlujoClienteComprobante(true);
+    }
 
     if (hiddenMetodoPago) hiddenMetodoPago.value = v.metodo_pago || "";
 
@@ -402,25 +430,6 @@ if (estado === "pagado") {
 // ============================
 document.addEventListener("DOMContentLoaded", () => {
 
-    // Serie/correlativo
-    const tipoComprobanteSelect = document.getElementById("tipo_comprobante");
-    const inputSerieCorrelativo = document.getElementById("serie_correlativo");
-
-    if (tipoComprobanteSelect && inputSerieCorrelativo) {
-        tipoComprobanteSelect.addEventListener("change", () => {
-            fetch(`/ventas/obtener-serie-correlativo?tipo=${tipoComprobanteSelect.value}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.serie && data.correlativo != null) {
-                        inputSerieCorrelativo.value =
-                            `${data.serie}-${String(data.correlativo).padStart(6, "0")}`;
-                    }
-                })
-                .catch(() => console.error("Error al obtener serie y correlativo"));
-        });
-        tipoComprobanteSelect.dispatchEvent(new Event("change"));
-    }
-
     // Estado pago dinámica
     const estadoPagoSelect = document.getElementById("estado_pago");
     estadoPagoSelect?.addEventListener("change", manejarEstadoVenta);
@@ -503,9 +512,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const razon      = (v.cliente?.razon || "").trim();
         const noGuardado = !!v.cliente?.no_guardado;
         const metodo     = (v.metodo_pago || "").trim();
+        const comprobante = document.getElementById("tipo_comprobante")?.value || "boleta";
+        const modoCliente = v.cliente_modo || "sin_documento";
+        const tipoDoc = v.tipo_documento || "dni";
 
-        if (!documento || !razon) {
-            Swal.fire("Cliente requerido", "Debes ingresar el cliente.", "warning");
+        if (comprobante === "factura" && (tipoDoc !== "ruc" || documento.length !== 11 || !razon)) {
+            Swal.fire("RUC requerido", "La factura requiere seleccionar un cliente registrado con RUC de 11 dígitos.", "warning");
+            return;
+        }
+
+        if (modoCliente === "con_documento" && (!documento || !razon)) {
+            Swal.fire("Cliente requerido", "Consulta y selecciona un cliente antes de continuar.", "warning");
             return;
         }
 

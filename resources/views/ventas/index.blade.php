@@ -144,14 +144,42 @@ Nueva venta
                     <div class="card-body small">
                         <div class="row g-3">
 
+                            <div class="col-12">
+                                <label class="form-label fw-bold mb-1" for="tipo_comprobante">Tipo de comprobante</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="fas fa-file-invoice"></i></span>
+                                    <select id="tipo_comprobante" class="form-select" data-native-select>
+                                        @if(!$taxProfile || in_array('issue_boleta', $taxCapabilities, true))<option value="boleta">Boleta</option>@endif
+                                        @if(!$taxProfile || in_array('issue_factura', $taxCapabilities, true))<option value="factura">Factura</option>@endif
+                                        <option value="nota_venta">Nota de Venta</option>
+                                    </select>
+                                </div>
+                                @if($taxProfile)
+                                    <small class="text-muted d-block mt-1">
+                                        {{ strtoupper(str_replace('_',' ', $taxProfile->emission_system)) }} · {{ $taxProfile->default_tax_treatment === 'nrus_no_desglosado' ? 'Nuevo RUS · IGV no desglosado' : ucfirst($taxProfile->default_tax_treatment) }}
+                                    </small>
+                                @endif
+                            </div>
+
                             <!-- ========= COLUMNA IZQUIERDA: CLIENTE ========= -->
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <h6 class="fw-bold text-secondary mb-2">Cliente</h6>
+
+                                <div class="cliente-documento-modo mb-2" role="group" aria-label="Identificación del cliente">
+                                    <input type="radio" class="btn-check" name="cliente_documento_modo" id="cliente-sin-documento" value="sin_documento" checked>
+                                    <label class="btn btn-sm btn-outline-primary" for="cliente-sin-documento">Sin documento</label>
+                                    <input type="radio" class="btn-check" name="cliente_documento_modo" id="cliente-con-documento" value="con_documento">
+                                    <label class="btn btn-sm btn-outline-primary" for="cliente-con-documento">Con documento</label>
+                                </div>
 
                                 <!-- DOCUMENTO -->
                                 <div class="input-group input-group-sm mb-2">
                                     <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                    <input type="text" id="documento" class="form-control" placeholder="DNI / RUC">
+                                    <select id="tipo_documento_cliente" class="form-select cliente-tipo-documento" data-native-select aria-label="Tipo de documento">
+                                        <option value="dni">DNI</option>
+                                        <option value="ruc">RUC</option>
+                                    </select>
+                                    <input type="text" id="documento" class="form-control" placeholder="DNI" inputmode="numeric" autocomplete="off">
                                     <button id="btn-cliente-accion" class="btn btn-outline-secondary" type="button">
                                         <i class="fas fa-plus-circle" id="icono-plus"></i>
                                         <i class="fas fa-save d-none" id="icono-save"></i>
@@ -160,73 +188,60 @@ Nueva venta
 
                                 <p id="estado_ruc" class="text-success small mb-1"></p>
 
-                                <!-- RAZÓN SOCIAL -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                    <input type="text" id="razon_social" class="form-control" placeholder="Razón Social" readonly>
-                                </div>
-
-                                <!-- DIRECCIÓN -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                    <input type="text" id="direccion" class="form-control" placeholder="Dirección" readonly>
-                                </div>
-
-                                <!-- FECHA (debajo de dirección) -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                    <input type="date"
-                                        id="fecha_emision"
-                                        class="form-control"
-                                        value="{{ date('Y-m-d') }}"
-                                        readonly>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                            <input type="text" id="razon_social" class="form-control" placeholder="Razón Social" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                            <input type="text" id="direccion" class="form-control" placeholder="Dirección" readonly>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- ========= COLUMNA DERECHA: COMPROBANTE ========= -->
-                            <div class="col-md-6">
-                                <h6 class="fw-bold text-secondary mb-2">Comprobante</h6>
+                            <div class="col-12">
+                                <h6 class="fw-bold text-secondary mb-2">Datos de la venta</h6>
 
-                                <!-- TIPO COMPROBANTE -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-file-invoice"></i></span>
-                                    <select id="tipo_comprobante" class="form-select" data-native-select>
-                                        @if(!$taxProfile || in_array('issue_boleta', $taxCapabilities, true))<option value="boleta">Boleta</option>@endif
-                                        @if(!$taxProfile || in_array('issue_factura', $taxCapabilities, true))<option value="factura">Factura</option>@endif
-                                        <option value="nota_venta">Nota de Venta</option>
-                                    </select>
-                                    @if($taxProfile)
-                                        <small class="text-muted d-block mt-1">
-                                            {{ strtoupper(str_replace('_',' ', $taxProfile->emission_system)) }} · {{ $taxProfile->default_tax_treatment === 'nrus_no_desglosado' ? 'Nuevo RUS · IGV no desglosado' : ucfirst($taxProfile->default_tax_treatment) }}
-                                        </small>
-                                    @endif
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-money-bill-wave"></i></span>
+                                            <select id="estado_pago" class="form-select" data-native-select>
+                                                <option value="pagado">Pagado</option>
+                                                <option value="pendiente">Pendiente</option>
+                                                <option value="credito">Credito</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                            <input type="text" class="form-control" value="{{ date('d/m/Y') }}" aria-label="Fecha de emisión" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                            <input type="time"
+                                                id="hora_actual"
+                                                class="form-control"
+                                                value="{{ date('H:i') }}"
+                                                readonly>
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <!-- SERIE - CORRELATIVO -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-receipt"></i></span>
-                                    <input type="text" id="serie_correlativo" class="form-control" readonly>
-                                </div>
-
-                                <!-- ESTADO DE PAGO -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-money-bill-wave"></i></span>
-                                    <select id="estado_pago" class="form-select" data-native-select>
-                                        <option value="pagado">Pagado</option>
-                                        <option value="pendiente">Pendiente</option>
-                                        <option value="credito">Credito</option>
-                                    </select>
-                                </div>
-
-                                <!-- HORA (debajo de estado pago) -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                    <input type="time"
-                                        id="hora_actual"
-                                        class="form-control"
-                                        value="{{ date('H:i') }}"
-                                        readonly>
-                                </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold mb-1" for="informacion_adicional">Información adicional <span class="text-muted fw-normal">(opcional)</span></label>
+                                <textarea id="informacion_adicional" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Referencia, indicaciones de entrega u otra observación para el comprobante"></textarea>
+                                <small class="text-muted">Solo aparecerá en el comprobante cuando escribas algo.</small>
                             </div>
 
                         </div>
@@ -294,7 +309,6 @@ Nueva venta
                                 <option value="ticket_80">Ticket 80 mm</option>
                                 <option value="ticket_58">Ticket 58 mm</option>
                             </select>
-                            <small class="text-muted d-block mt-1">Elige el tamaño antes de confirmar la venta.</small>
                         </div>
                     </div>
 
@@ -447,50 +461,52 @@ Nueva venta
 
 <!-- Modal para registrar un cliente -->
 <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content client-quick-modal">
+            <form id="clientForm">
             <div class="modal-header">
-                <h5 class="modal-title" id="clientModalLabel">Registrar Cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div>
+                    <h5 class="modal-title" id="clientModalLabel"><i class="fas fa-user-plus me-2"></i>Registrar cliente</h5>
+                    <small class="text-muted">Registro manual cuando la consulta no esté disponible.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <form id="clientForm">
-                    <!-- Campo Nombre -->
-                    <div class="mb-3">
-                        <label for="client_name" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="client_name" name="client_name" required>
-                    </div>
-                    
-                    <!-- Campo Dirección -->
-                    <div class="mb-3">
-                        <label for="client_address" class="form-label">Dirección</label>
-                        <input type="text" class="form-control" id="client_address" name="client_address">
-                    </div>
-
-                    <!-- Campo Teléfono -->
-                    <div class="mb-3">
-                        <label for="client_phone" class="form-label">Teléfono</label>
-                        <input type="text" class="form-control" id="client_phone" name="client_phone">
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <label for="client_document_type" class="form-label">Tipo</label>
+                            <select class="form-select" id="client_document_type" data-native-select>
+                                <option value="DNI">DNI</option>
+                                <option value="RUC">RUC</option>
+                            </select>
+                        </div>
+                        <div class="col-8">
+                            <label for="client_document" class="form-label">Documento</label>
+                            <input type="text" class="form-control" id="client_document" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="8 dígitos" required>
+                        </div>
                     </div>
 
-                    <!-- Campo DNI -->
-                    <div class="mb-3">
-                        <label for="client_dni" class="form-label">DNI</label>
-                        <input type="text" class="form-control" id="client_dni" name="client_dni">
+                    <div class="mb-2">
+                        <label for="client_name" class="form-label">Nombre o razón social</label>
+                        <input type="text" class="form-control" id="client_name" autocomplete="off" required>
                     </div>
 
-                    <!-- Campo RUC -->
-                    <div class="mb-3">
-                        <label for="client_ruc" class="form-label">RUC</label>
-                        <input type="text" class="form-control" id="client_ruc" name="client_ruc">
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label for="client_address" class="form-label">Dirección <span class="text-muted fw-normal">(opcional)</span></label>
+                            <input type="text" class="form-control" id="client_address" autocomplete="off">
+                        </div>
+                        <div class="col-5">
+                            <label for="client_phone" class="form-label">Teléfono <span class="text-muted fw-normal">(opcional)</span></label>
+                            <input type="tel" class="form-control" id="client_phone" inputmode="tel" autocomplete="off">
+                        </div>
                     </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="submit" class="btn btn-primary">Registrar Cliente</button>
-                    </div>
-                </form>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Guardar cliente</button>
+            </div>
+            </form>
         </div>
     </div>
 </div>
@@ -606,10 +622,10 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 
 <script src="js/ventas_core.js"></script>
 <script src="js/ventas_state.js"></script>
-<script src="js/ventas_stock.js"></script>
+<script src="{{ asset('js/ventas_stock.js') }}?v={{ filemtime(public_path('js/ventas_stock.js')) }}"></script>
 
 <script src="js/ventas_productos.js"></script>
-<script src="js/ventas_carrito.js"></script>
+<script src="{{ asset('js/ventas_carrito.js') }}?v={{ filemtime(public_path('js/ventas_carrito.js')) }}"></script>
 <script src="{{ asset('js/ventas_scanner.js') }}?v={{ filemtime(public_path('js/ventas_scanner.js')) }}"></script>
 
 <script src="js/ventas_ui.js"></script>
@@ -660,6 +676,29 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 <script>
 $(document).ready(function () {
 
+    const clientModalElement = document.getElementById('clientModal');
+    const clientDocumentType = document.getElementById('client_document_type');
+    const clientDocument = document.getElementById('client_document');
+
+    function configureManualDocument() {
+        const isRuc = clientDocumentType.value === 'RUC';
+        clientDocument.maxLength = isRuc ? 11 : 8;
+        clientDocument.placeholder = isRuc ? '11 dígitos' : '8 dígitos';
+        clientDocument.value = clientDocument.value.replace(/\D/g, '').slice(0, clientDocument.maxLength);
+    }
+
+    clientDocumentType?.addEventListener('change', configureManualDocument);
+    clientDocument?.addEventListener('input', configureManualDocument);
+
+    clientModalElement?.addEventListener('show.bs.modal', function () {
+        const mainType = document.getElementById('tipo_documento_cliente')?.value || 'dni';
+        clientDocumentType.value = mainType.toUpperCase();
+        clientDocument.value = document.getElementById('documento')?.value || '';
+        $('#client_name').val($('#razon_social').val() || '');
+        $('#client_address').val($('#direccion').val() || '');
+        configureManualDocument();
+    });
+
     // abrir modal
     $(document).on('click', '#open-modal-btn', function () {
         $('#clientModal').modal('show');
@@ -669,30 +708,47 @@ $(document).ready(function () {
     $('#clientForm').on('submit', function (e) {
         e.preventDefault();
 
+        const tipoDocumento = clientDocumentType.value;
+        const numeroDocumento = clientDocument.value.trim();
+        const longitudEsperada = tipoDocumento === 'RUC' ? 11 : 8;
+
+        if (numeroDocumento.length !== longitudEsperada) {
+            Swal.fire('Documento incompleto', `El ${tipoDocumento} debe contener ${longitudEsperada} dígitos.`, 'warning');
+            clientDocument.focus();
+            return;
+        }
+
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
         $.ajax({
             url: '/clientes',
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
-                client_name: $('#client_name').val(),
-                client_address: $('#client_address').val(),
-                client_phone: $('#client_phone').val(),
-                client_dni: $('#client_dni').val(),
-                client_ruc: $('#client_ruc').val()
+                tipo_documento: tipoDocumento,
+                numero_documento: numeroDocumento,
+                nombre: $('#client_name').val(),
+                direccion: $('#client_address').val(),
+                telefono: $('#client_phone').val()
             },
             success: function (response) {
 
+                const cliente = response.cliente;
+
                 // llenar inputs visuales
-                $('#razon_social').val(response.nombre);
-                $('#direccion').val(response.direccion);
-                $('#documento').val(response.dni || response.ruc);
+                $('#razon_social').val(cliente.nombre);
+                $('#direccion').val(cliente.direccion || '');
+                $('#documento').val(cliente.dni || cliente.ruc);
 
                 // 🔥 sincronizar con POS
                 if (window.setClienteVentaPOS) {
                     window.setClienteVentaPOS({
-                        documento: response.dni || response.ruc,
-                        razon: response.nombre,
-                        direccion: response.direccion
+                        id: cliente.id,
+                        documento: cliente.dni || cliente.ruc,
+                        razon: cliente.nombre,
+                        direccion: cliente.direccion || ''
                     });
                 }
 
@@ -703,15 +759,19 @@ $(document).ready(function () {
                     confirmButtonText: 'Aceptar'
                 }).then(() => {
                     $('#clientForm')[0].reset();
-                    $('#clientModal').modal('hide');
+                    bootstrap.Modal.getOrCreateInstance(clientModalElement).hide();
                 });
             },
-            error: function () {
-                Swal.fire(
-                    'Error',
-                    'Error al registrar el cliente. Inténtalo nuevamente.',
-                    'error'
-                );
+            error: function (xhr) {
+                const errores = xhr.responseJSON?.errors;
+                const mensaje = errores
+                    ? Object.values(errores).flat()[0]
+                    : (xhr.responseJSON?.message || 'No se pudo registrar el cliente.');
+                Swal.fire('No se pudo guardar', mensaje, 'error');
+            },
+            complete: function () {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save me-1"></i> Guardar cliente';
             }
         });
     });

@@ -72,7 +72,10 @@ public function registrarVenta(Request $request)
         $request->validate([
             'tipo_comprobante' => 'required|in:boleta,factura,nota_venta',
             'cliente_id'       => 'nullable|integer',
-            'documento'        => 'required|string',
+            'cliente_modo'     => 'required|in:sin_documento,con_documento',
+            'tipo_documento'   => 'nullable|required_if:cliente_modo,con_documento|in:dni,ruc',
+            'documento'        => 'nullable|string|max:11',
+            'informacion_adicional' => 'nullable|string|max:500',
             'fecha'            => 'required|date',
             'hora'             => 'required',
             'productos'        => 'required|array|min:1',
@@ -97,34 +100,71 @@ public function registrarVenta(Request $request)
 
         try {
             /* ================= CLIENTE ================= */
-            $documento = trim((string) $request->documento);
-            $cliente = Cliente::query()
-                ->when($request->filled('cliente_id'), function ($query) use ($request) {
-                    $query->whereKey($request->integer('cliente_id'));
-                }, function ($query) use ($documento) {
-                    $query->where(function ($documentQuery) use ($documento) {
-                        $documentQuery->where('ruc', $documento)
-                            ->orWhere('dni', $documento);
-                    });
-                })
-                ->first();
+            $tipo = $request->tipo_comprobante;
+            $sinDocumento = $request->cliente_modo === 'sin_documento';
+            $documento = preg_replace('/\D+/', '', (string) $request->documento);
 
-            // Si el ID guardado en una venta en espera quedó desactualizado,
-            // todavía intentamos localizar al cliente por su documento.
-            if (! $cliente && $request->filled('cliente_id')) {
-                $cliente = Cliente::where('ruc', $documento)
-                    ->orWhere('dni', $documento)
-                    ->first();
-            }
-
-            if (! $cliente) {
+            if ($tipo === 'factura' && ($sinDocumento || $request->tipo_documento !== 'ruc' || strlen($documento) !== 11)) {
                 DB::rollBack();
-
                 return response()->json([
                     'success' => false,
                     'type' => 'client_not_found',
-                    'message' => 'No pudimos vincular el cliente seleccionado. Regresa al paso anterior, vuelve a buscarlo por su DNI o RUC y confirma nuevamente.',
+                    'message' => 'La factura requiere seleccionar un cliente registrado con RUC de 11 dígitos.',
                 ], 422);
+            }
+
+            if ($tipo === 'boleta' && ! $sinDocumento && $request->tipo_documento !== 'dni') {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'type' => 'invalid_document_type',
+                    'message' => 'La boleta permite identificar al cliente únicamente con DNI.',
+                ], 422);
+            }
+
+            if ($sinDocumento && ! in_array($tipo, ['boleta', 'nota_venta'], true)) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'type' => 'client_not_found',
+                    'message' => 'Este comprobante requiere identificar al cliente.',
+                ], 422);
+            }
+
+            $cliente = null;
+            if (! $sinDocumento) {
+                $longitudEsperada = $request->tipo_documento === 'ruc' ? 11 : 8;
+                if (strlen($documento) !== $longitudEsperada) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'type' => 'client_not_found',
+                        'message' => $request->tipo_documento === 'ruc'
+                            ? 'Ingresa un RUC válido de 11 dígitos.'
+                            : 'Ingresa un DNI válido de 8 dígitos.',
+                    ], 422);
+                }
+
+                $cliente = $request->filled('cliente_id')
+                    ? Cliente::find($request->integer('cliente_id'))
+                    : null;
+
+                if ($cliente && (string) $cliente->{$request->tipo_documento} !== $documento) {
+                    $cliente = null;
+                }
+
+                if (! $cliente) {
+                    $cliente = Cliente::where($request->tipo_documento, $documento)->first();
+                }
+
+                if (! $cliente) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'type' => 'client_not_found',
+                        'message' => 'El cliente todavía no está registrado. Guárdalo antes de confirmar la venta.',
+                    ], 422);
+                }
             }
 
             /* ================= FECHA ================= */
@@ -132,7 +172,6 @@ public function registrarVenta(Request $request)
             $fechaHora = Carbon::createFromFormat('Y-m-d H:i:s', "{$request->fecha} {$hora}");
 
             /* ================= SERIE ================= */
-            $tipo = $request->tipo_comprobante;
             $taxProfiles = app(TaxProfileService::class);
             $taxProfile = $taxProfiles->current();
             if ($tipo === 'factura' && $taxProfile && !$taxProfiles->has($taxProfile, 'issue_factura')) {
@@ -155,7 +194,7 @@ public function registrarVenta(Request $request)
 
             /* ================= VENTA BASE ================= */
             $venta = Venta::create([
-                'cliente_id'       => $cliente->id,
+                'cliente_id'       => $cliente?->id,
                 'usuario_id'       => auth()->id(),
                 'tax_profile_id'   => $taxProfile?->id,
                 'fecha'            => $fechaHora,
@@ -268,9 +307,13 @@ public function registrarVenta(Request $request)
                 throw new \Exception("Debe seleccionar un método de pago.");
             }
 
-            $vuelto = 0;
+            $esPagoEfectivo = $request->metodo_pago === 'efectivo' && $montoPagado > 0;
+            $efectivoRecibido = $esPagoEfectivo ? $montoPagado : null;
+            $vuelto = $esPagoEfectivo && $montoPagado > $total
+                ? round($montoPagado - $total, 2)
+                : null;
+
             if ($montoPagado > $total) {
-                $vuelto = round($montoPagado - $total, 2);
                 $montoPagado = $total;
             }
 
@@ -300,9 +343,14 @@ public function registrarVenta(Request $request)
                 'igv'         => $igvMonto,
                 'total'       => $total,
                 'saldo'       => $saldo,
+                'efectivo_recibido' => $efectivoRecibido,
+                'vuelto'      => $vuelto,
                 'estado'      => $estado,
                 'metodo_pago' => $metodoPagoVenta,
                 'credit_due_date' => in_array($estado, ['credito', 'pendiente'], true) ? $request->credit_due_date : null,
+                'informacion_adicional' => $request->filled('informacion_adicional')
+                    ? trim((string) $request->informacion_adicional)
+                    : null,
             ]);
 
             if ($montoPagado > 0) {
@@ -356,8 +404,8 @@ public function registrarVenta(Request $request)
 // QR en SVG: no depende de Imagick
 $sunatSetting = SunatSetting::current();
 $tipoSunat = $tipo === 'factura' ? '01' : ($tipo === 'boleta' ? '03' : '00');
-$documentoCliente = $cliente->ruc ?: $cliente->dni;
-$tipoDocumentoCliente = $cliente->ruc ? '6' : ($cliente->dni ? '1' : '-');
+$documentoCliente = $cliente?->ruc ?: ($cliente?->dni ?: '');
+$tipoDocumentoCliente = $cliente?->ruc ? '6' : ($cliente?->dni ? '1' : '0');
 $qrData = implode('|', [
     $sunatSetting->fiscal_ruc ?: ($config->ruc ?? ''),
     $tipoSunat,
@@ -395,9 +443,16 @@ $pdf = Pdf::setOptions([
             if (in_array($formato, ['ticket', 'ticket_80', 'ticket_58'], true)) {
                 $ticketWidth = $formato === 'ticket_58' ? 58 : 80;
                 $paperWidth = $ticketWidth === 58 ? 164.41 : 226.77;
-                $lineHeight = $ticketWidth === 58 ? 14 : 20;
-                $baseHeight = $ticketWidth === 58 ? 310 : 350;
-                $alto = $baseHeight + count($venta->detalleVentas) * $lineHeight;
+                $lineHeight = $ticketWidth === 58 ? 26 : 28;
+                $baseHeight = $ticketWidth === 58 ? 377 : 426;
+                $additionalLines = $venta->informacion_adicional
+                    ? max(1, (int) ceil(mb_strlen($venta->informacion_adicional) / ($ticketWidth === 58 ? 34 : 48)))
+                    : 0;
+                $alto = $baseHeight
+                    + count($venta->detalleVentas) * $lineHeight
+                    + $additionalLines * ($ticketWidth === 58 ? 10 : 9)
+                    + ($additionalLines > 0 ? 10 : 0)
+                    + ($venta->efectivo_recibido !== null ? ($ticketWidth === 58 ? 16 : 18) : 0);
                 $pdf->setPaper([0, 0, $paperWidth, $alto]);
             } else {
                 $pdf->setPaper('A4');
@@ -489,7 +544,8 @@ $pdf = Pdf::setOptions([
                 'estado'         => $estado,
                 'saldo'          => $saldo,
                 'monto_pagado'   => $montoPagado,
-                'vuelto'         => $vuelto,
+                'efectivo_recibido' => $efectivoRecibido,
+                'vuelto'         => $vuelto ?? 0,
             ]);
 
         } catch (\Exception $e) {
@@ -603,6 +659,8 @@ public function detalle($id)
         'total'    => (float) $venta->total,
         'saldo'    => $saldo,
         'monto_pagado' => $montoPagado,
+        'efectivo_recibido' => $venta->efectivo_recibido !== null ? (float) $venta->efectivo_recibido : null,
+        'vuelto' => $venta->vuelto !== null ? (float) $venta->vuelto : null,
         'condicion_pago' => match ($venta->estado) {
             'pendiente' => 'Fiado sin adelanto',
             'credito' => 'Crédito con adelanto',

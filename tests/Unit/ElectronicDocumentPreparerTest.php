@@ -77,4 +77,35 @@ class ElectronicDocumentPreparerTest extends TestCase
         $this->expectException(ValidationException::class);
         (new ElectronicDocumentPreparer())->snapshot($sale, $issuer, $establishment);
     }
+
+    public function test_boleta_allows_publico_general_without_document(): void
+    {
+        $issuer = new SunatSetting(['fiscal_ruc' => '20123456789', 'legal_name' => 'DIZANY']);
+        $establishment = new SunatEstablishment([
+            'code' => '0000', 'ubigeo' => '220101', 'department' => 'San Martín',
+            'province' => 'Moyobamba', 'district' => 'Moyobamba', 'address' => 'Av. Principal 123',
+        ]);
+        $product = new Producto(['nombre' => 'Producto público']);
+        $line = new DetalleVenta([
+            'producto_id' => 5, 'presentacion' => 'unidad', 'cantidad' => 1,
+            'precio_presentacion' => 10, 'subtotal' => 10,
+        ]);
+        $line->setRelation('producto', $product);
+
+        $sale = new Venta([
+            'tipo_comprobante' => 'boleta', 'serie' => 'B001', 'correlativo' => 1,
+            'tax_treatment' => 'exonerada', 'op_exoneradas' => 10,
+            'op_gravadas' => 0, 'igv' => 0, 'total' => 10,
+        ]);
+        $sale->fecha = Carbon::now();
+        $sale->setRelation('cliente', null);
+        $sale->setRelation('detalleVentas', new Collection([$line]));
+
+        $snapshot = (new ElectronicDocumentPreparer())->snapshot($sale, $issuer, $establishment);
+
+        $this->assertSame('03', $snapshot['document']['type']);
+        $this->assertSame('0', $snapshot['customer']['document_type']);
+        $this->assertSame('', $snapshot['customer']['document_number']);
+        $this->assertSame('PÚBLICO GENERAL', $snapshot['customer']['name']);
+    }
 }

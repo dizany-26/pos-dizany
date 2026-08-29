@@ -1342,6 +1342,76 @@ select.form-select-sm,
     color: #f4f8ff !important;
 }
 
+.cliente-documento-modo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.cliente-documento-modo .btn {
+    border-radius: 9px !important;
+    font-size: 0.78rem;
+}
+
+.cliente-tipo-documento {
+    flex: 0 0 76px !important;
+    max-width: 76px;
+}
+
+#informacion_adicional {
+    resize: vertical;
+    min-height: 58px;
+}
+
+.client-quick-modal {
+    overflow: hidden;
+    border: 1px solid rgba(88, 130, 184, 0.38);
+    border-radius: 18px;
+}
+
+.client-quick-modal .modal-header {
+    padding: 14px 16px 12px;
+}
+
+.client-quick-modal .modal-title {
+    color: #0b5ed7;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.client-quick-modal .modal-header small {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.68rem;
+}
+
+.client-quick-modal .modal-body {
+    padding: 13px 16px;
+}
+
+.client-quick-modal .form-label {
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.client-quick-modal :is(.form-control, .form-select) {
+    min-height: 38px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+}
+
+.client-quick-modal .modal-footer {
+    gap: 7px;
+    padding: 11px 16px 13px;
+}
+
+.client-quick-modal .modal-footer .btn {
+    min-width: 105px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+}
+
 
 
 

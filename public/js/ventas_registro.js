@@ -100,7 +100,11 @@ document.addEventListener("DOMContentLoaded", () => {
             tipoComprobanteSelect?.value || "boleta";
 
         const documento = v.cliente?.documento || "";
-        const fecha = document.getElementById("fecha_emision")?.value;
+        const clienteModo = v.cliente_modo || (documento ? "con_documento" : "sin_documento");
+        const tipoDocumento = v.tipo_documento || (documento.length === 11 ? "ruc" : "dni");
+        const informacionAdicional = (v.informacion_adicional || "").trim();
+        const ahora = new Date();
+        const fecha = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, "0")}-${String(ahora.getDate()).padStart(2, "0")}`;
         const hora  = document.getElementById("hora_actual")?.value;
 
         const estadoPago =
@@ -109,13 +113,29 @@ document.addEventListener("DOMContentLoaded", () => {
         const metodoPago = v.metodo_pago || "";
         const formato = formatoSelect?.value || "a4";
 
+        if (tipoComprobante === "factura" && (tipoDocumento !== "ruc" || documento.length !== 11 || !v.cliente?.id)) {
+            return mostrarAlerta("La factura requiere seleccionar un cliente registrado con RUC de 11 dígitos.");
+        }
+
+        if (clienteModo === "con_documento" && (!documento || !v.cliente?.id)) {
+            return mostrarAlerta("Consulta y guarda el cliente antes de confirmar la venta.");
+        }
+
         // ============================
         // MONTO PAGADO
         // ============================
         let montoPagado = 0;
 
         if (estadoPago === "pagado") {
-            montoPagado = total;
+            montoPagado = metodoPago === "efectivo"
+                ? parseFloat(inputPaga?.value || 0)
+                : total;
+
+            if (metodoPago === "efectivo" && (!Number.isFinite(montoPagado) || montoPagado < total)) {
+                return mostrarAlerta(
+                    "El efectivo recibido no puede ser menor al total de la venta."
+                );
+            }
         } else if (estadoPago === "credito") {
             montoPagado = parseFloat(inputPaga?.value || 0);
         }
@@ -169,6 +189,9 @@ document.addEventListener("DOMContentLoaded", () => {
         tipo_comprobante: tipoComprobante,
         cliente_id: v.cliente?.id || null,
         documento: documento,
+        cliente_modo: clienteModo,
+        tipo_documento: tipoDocumento,
+        informacion_adicional: informacionAdicional,
         fecha: fecha,
         hora: hora,
         monto_pagado: montoPagado,

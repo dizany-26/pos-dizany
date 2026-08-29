@@ -67,11 +67,16 @@ function crearVentaVacia(id) {
     return {
         id,
         fase: 1,
+        tipo_comprobante: "boleta",
+        cliente_modo: "sin_documento",
+        tipo_documento: "dni",
+        informacion_adicional: "",
         cliente: {
             documento: "",
-            razon: "",
+            razon: "Público General",
             direccion: "",
-            no_guardado: false
+            no_guardado: false,
+            sin_documento: true
         },
         metodo_pago: "",
         productos: []
