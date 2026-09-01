@@ -125,19 +125,44 @@ document.addEventListener("DOMContentLoaded", () => {
         // MONTO PAGADO
         // ============================
         let montoPagado = 0;
+        let pagos = [];
 
         if (estadoPago === "pagado") {
-            montoPagado = metodoPago === "efectivo"
-                ? parseFloat(inputPaga?.value || 0)
-                : total;
+            if (metodoPago === "mixto") {
+                try {
+                    pagos = window.obtenerPagosMixtos?.() || [];
+                } catch (error) {
+                    return mostrarAlerta(error.message);
+                }
+                montoPagado = pagos.reduce((sum, pago) => sum + Number(pago.monto || 0), 0);
+            } else if (metodoPago === "efectivo") {
+                const efectivoRecibido = parseFloat(inputPaga?.value || 0);
+                if (!Number.isFinite(efectivoRecibido) || efectivoRecibido < total) {
+                    return mostrarAlerta(
+                        "El efectivo recibido no puede ser menor al total de la venta."
+                    );
+                }
+                montoPagado = total;
+                pagos = [{ metodo_pago: "efectivo", monto: total, efectivo_recibido: efectivoRecibido }];
+            } else {
+                montoPagado = total;
+                pagos = [{ metodo_pago: metodoPago, monto: total, efectivo_recibido: null }];
+            }
 
-            if (metodoPago === "efectivo" && (!Number.isFinite(montoPagado) || montoPagado < total)) {
+            if (metodoPago === "efectivo" && pagos[0].efectivo_recibido < total) {
                 return mostrarAlerta(
                     "El efectivo recibido no puede ser menor al total de la venta."
                 );
             }
         } else if (estadoPago === "credito") {
             montoPagado = parseFloat(inputPaga?.value || 0);
+            if (montoPagado > 0) {
+                pagos = [{
+                    metodo_pago: metodoPago,
+                    monto: Math.min(montoPagado, total),
+                    efectivo_recibido: metodoPago === "efectivo" ? montoPagado : null,
+                }];
+            }
         }
         // pendiente => 0
 
@@ -195,8 +220,10 @@ document.addEventListener("DOMContentLoaded", () => {
         fecha: fecha,
         hora: hora,
         monto_pagado: montoPagado,
-        efectivo_recibido: metodoPago === "efectivo" && montoPagado > 0 ? montoPagado : null,
+        efectivo_recibido: pagos.find(pago => pago.metodo_pago === "efectivo")?.efectivo_recibido ?? null,
         metodo_pago: metodoPago,
+        estado_pago: estadoPago,
+        pagos: pagos,
         productos: productosEnviar,
         formato: formato,
         credit_due_date: ["credito", "pendiente"].includes(estadoPago) ? document.getElementById("credito-vencimiento")?.value : null

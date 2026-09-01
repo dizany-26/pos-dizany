@@ -79,6 +79,7 @@ function crearVentaVacia(id) {
             sin_documento: true
         },
         metodo_pago: "",
+        pagos: [],
         productos: []
     };
 }

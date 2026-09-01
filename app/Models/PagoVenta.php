@@ -15,7 +15,16 @@ class PagoVenta extends Model
         'usuario_id',
         'monto',
         'metodo_pago',
+        'efectivo_recibido',
+        'vuelto',
         'fecha_pago',
+    ];
+
+    protected $casts = [
+        'monto' => 'decimal:2',
+        'efectivo_recibido' => 'decimal:2',
+        'vuelto' => 'decimal:2',
+        'fecha_pago' => 'datetime',
     ];
 
     // Laravel NO maneja created_at / updated_at automáticamente aquí

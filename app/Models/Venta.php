@@ -47,6 +47,11 @@ class Venta extends Model
     {
         return $this->hasMany(DetalleVenta::class);
     }
+
+    public function pagos()
+    {
+        return $this->hasMany(PagoVenta::class, 'venta_id');
+    }
     protected $casts = [
         'fecha' => 'datetime',
         'credit_due_date' => 'date',

@@ -337,8 +337,21 @@ const documentoSol = sol.documento || null;
                     <div class="detalle-item">
                         <i class="far fa-credit-card"></i>
                         <span>Método de pago</span>
-                        <strong>${v.metodo_pago ?? '—'}</strong>
+                        <strong>${v.metodo_pago === 'mixto' ? 'Pago mixto' : (v.metodo_pago ?? '—')}</strong>
                     </div>
+
+                    ${Array.isArray(v.pagos) && v.pagos.length > 1 ? `
+                        <div class="border-top mt-2 pt-2">
+                            <div class="text-muted small fw-semibold mb-2">Distribución del pago</div>
+                            ${v.pagos.map(pago => `
+                                <div class="detalle-item">
+                                    <i class="fas fa-wallet"></i>
+                                    <span>${String(pago.metodo_pago || 'otro').replace(/^./, c => c.toUpperCase())}</span>
+                                    <strong>${money(pago.monto)}</strong>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
 
                     <div class="detalle-item">
                         <i class="far fa-user"></i>
@@ -352,7 +365,7 @@ const documentoSol = sol.documento || null;
                         <strong>${v.condicion_pago ?? (esVentaCredito ? 'Crédito' : 'Contado')}</strong>
                     </div>
 
-                    ${v.metodo_pago === 'efectivo' && v.efectivo_recibido !== null ? `
+                    ${v.efectivo_recibido !== null ? `
                         <div class="detalle-item">
                             <i class="fas fa-money-bill-wave"></i>
                             <span>Efectivo recibido</span>

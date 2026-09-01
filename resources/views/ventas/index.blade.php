@@ -43,7 +43,7 @@ Nueva venta
 
 
 @section('content')
-<link href="{{ asset('css/ventas.css') }}" rel="stylesheet" />
+<link href="{{ asset('css/ventas.css') }}?v={{ filemtime(public_path('css/ventas.css')) }}" rel="stylesheet" />
 
 <div class="container-fluid ventas-treinta">
 
@@ -298,6 +298,11 @@ Nueva venta
                                 </div>
                             @endforeach
 
+                            <div class="metodo-pago-item metodo-pago-mixto" data-value="mixto">
+                                <img src="/images/mixto.svg" class="icon-img" alt="">
+                                <span class="label">Mixto</span>
+                            </div>
+
                         </div>
 
                         <input type="hidden" id="metodo_pago" name="metodo_pago" value="">
@@ -317,12 +322,12 @@ Nueva venta
                             <i class="fas fa-arrow-left me-1"></i> Volver
                         </button>
                         <button id="btn-ir-step3" class="btn btn-soft btn-soft-primary px-5 venta-step-btn venta-step-btn-primary">
-                            Continuar venta <i class="fas fa-arrow-right ms-2"></i>
+                            Continuar <i class="fas fa-arrow-right ms-2"></i>
                         </button>
                         <button id="btn-confirmar-venta-directo"
                             class="btn btn-soft btn-soft-primary px-5 venta-step-btn venta-step-btn-primary"
                             style="display:none">
-                            <i class="fas fa-check me-2"></i> Confirmar venta
+                            <i class="fas fa-check me-2"></i> Confirmar
                         </button>
                     </div>
                 </div>
@@ -355,6 +360,41 @@ Nueva venta
                             <input type="text" id="vuelto-mostrar" class="form-control mb-3" readonly>
                         </div>
 
+                        <div id="pago-mixto-wrap" class="d-none">
+                            <div class="alert alert-info py-2 mb-3">
+                                Divide el total entre 2 o más métodos.
+                            </div>
+                            <div class="row g-2" id="pago-mixto-metodos">
+                                @foreach([
+                                    'efectivo' => 'Parte en efectivo', 'yape' => 'Parte en Yape', 'plin' => 'Parte en Plin',
+                                    'tarjeta' => 'Tarjeta', 'transferencia' => 'Transferencia', 'otro' => 'Otro'
+                                ] as $value => $label)
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="pago-mixto-{{ $value }}">{{ $label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">S/</span>
+                                            <input type="number" class="form-control pago-mixto-monto"
+                                                id="pago-mixto-{{ $value }}" data-metodo="{{ $value }}"
+                                                min="0" step="0.01" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div id="pago-mixto-efectivo-recibido-wrap" class="mt-3 d-none">
+                                <label class="form-label fw-bold" for="pago-mixto-efectivo-recibido">Importe recibido del cliente</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">S/</span>
+                                    <input type="number" id="pago-mixto-efectivo-recibido" class="form-control" min="0" step="0.01">
+                                </div>
+                                <small class="text-muted">Escribe el billete o monto que entregó el cliente; Dizany calculará el vuelto.</small>
+                            </div>
+                            <div class="pago-mixto-resumen mt-3">
+                                <div><span>Total asignado</span><strong id="pago-mixto-asignado">S/ 0.00</strong></div>
+                                <div><span id="pago-mixto-diferencia-label">Falta distribuir</span><strong id="pago-mixto-diferencia">S/ 0.00</strong></div>
+                                <div id="pago-mixto-vuelto-row" class="d-none"><span>Vuelto</span><strong id="pago-mixto-vuelto">S/ 0.00</strong></div>
+                            </div>
+                        </div>
+
                         <div id="credito-vencimiento-wrap" class="d-none">
                             <label class="form-label" for="credito-vencimiento">Vencimiento del pago pendiente</label>
                             <input type="date" id="credito-vencimiento" class="form-control mb-3" min="{{ date('Y-m-d') }}">
@@ -368,7 +408,7 @@ Nueva venta
                             <i class="fas fa-arrow-left"></i> Volver
                         </button>
                         <button id="btn-confirmar-venta" class="btn btn-soft btn-soft-primary px-5 venta-step-btn venta-step-btn-primary">
-                            <i class="fas fa-check"></i> Confirmar venta
+                            <i class="fas fa-check"></i> Confirmar
                         </button>
                     </div>
                 </div>
@@ -629,6 +669,7 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 <script src="{{ asset('js/ventas_scanner.js') }}?v={{ filemtime(public_path('js/ventas_scanner.js')) }}"></script>
 
 <script src="{{ asset('js/ventas_ui.js') }}?v={{ filemtime(public_path('js/ventas_ui.js')) }}"></script>
+<script src="{{ asset('js/ventas_pagos_mixtos.js') }}?v={{ filemtime(public_path('js/ventas_pagos_mixtos.js')) }}"></script>
 <script src="{{ asset('js/ventas_mobile_cart.js') }}?v={{ filemtime(public_path('js/ventas_mobile_cart.js')) }}"></script>
 <script src="{{ asset('js/ventas_espera.js') }}?v={{ filemtime(public_path('js/ventas_espera.js')) }}"></script>
 <script src="{{ asset('js/ventas_ordenar.js') }}?v={{ filemtime(public_path('js/ventas_ordenar.js')) }}"></script>

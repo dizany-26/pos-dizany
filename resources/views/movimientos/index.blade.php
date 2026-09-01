@@ -164,6 +164,7 @@ Movimientos
                     <option value="yape" @selected($metodo === 'yape')>Yape</option>
                     <option value="plin" @selected($metodo === 'plin')>Plin</option>
                     <option value="otro" @selected($metodo === 'otro')>Otro</option>
+                    <option value="mixto" @selected($metodo === 'mixto')>Pago mixto</option>
                     <option value="fiado" @selected($metodo === 'fiado')>Fiado</option>
                     <option value="credito" @selected($metodo === 'credito')>Crédito</option>
                 </select>
@@ -307,6 +308,7 @@ Movimientos
                                 $metodoLabel = match($metodoPago) {
                                     'transferencia' => 'Transferencia',
                                     'credito' => 'Crédito',
+                                    'mixto' => 'Pago mixto',
                                     default => ucfirst($metodoPago),
                                 };
                             @endphp
@@ -327,7 +329,17 @@ Movimientos
                             <td data-label="Monto"
                                 class="text-end fw-bold {{ $movimiento->tipo === 'ingreso' ? 'text-success' : 'text-danger' }}">
                                 {{ $movimiento->tipo === 'ingreso' ? '+' : '-' }}
-                                S/ {{ number_format($movimiento->monto, 2) }}
+                                S/ {{ number_format($movimiento->monto_mostrado ?? $movimiento->monto, 2) }}
+                                @if($metodoPago === 'mixto' && in_array($metodo, ['', 'mixto'], true) && $movimiento->venta?->pagos?->isNotEmpty())
+                                    <small class="d-block text-muted fw-normal mt-1">
+                                        @foreach($movimiento->venta->pagos as $pago)
+                                            {{ ucfirst($pago->metodo_pago) }} S/ {{ number_format($pago->monto, 2) }}@if(!$loop->last) <span class="mx-1">+</span> @endif
+                                        @endforeach
+                                    </small>
+                                @endif
+                                @if($movimiento->monto_total_venta !== null)
+                                    <small class="d-block text-muted fw-normal">Venta total: S/ {{ number_format($movimiento->monto_total_venta, 2) }}</small>
+                                @endif
                             </td>
 
                             <td data-label="Acciones" class="text-center">

@@ -409,14 +409,16 @@ select.form-select-sm,
 }
 
 .metodo-pago-item {
-    width: 60px;
-    height: 65px;
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    height: 58px;
     background: #f8f9fa;
     border: 1px solid #dcdcdc;
     border-radius: 10px;
     text-align: center;
-    padding: 6px 0;
-    font-size: 11px;
+    padding: 5px 1px;
+    font-size: 9px;
     cursor: pointer;
     transition: 0.2s;
     display: flex;
@@ -435,9 +437,28 @@ select.form-select-sm,
     font-weight: bold;
 }
 
+.pago-mixto-resumen {
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 12px 14px;
+}
+
+.pago-mixto-resumen > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 4px 0;
+}
+
+:root[data-theme='dark'] .pago-mixto-resumen {
+    border-color: #334155;
+    background: #172033;
+}
+
 .icon-img {
-    width: 22px;
-    height: 22px;
+    width: 19px;
+    height: 19px;
     display: block;
     margin: 0 auto;
 }
@@ -1497,15 +1518,20 @@ select.form-select-sm,
 ============================================================ */
 #step-2 .card-footer,
 #step-3 .card-footer {
-    gap: 14px;
-    padding: 14px 16px 16px;
+    gap: 10px;
+    padding: 10px 12px;
 }
 
 .venta-step-btn {
-    min-height: 42px;
-    border-radius: 12px !important;
-    padding: 0.62rem 1.15rem !important;
-    font-size: 0.98rem;
+    flex: 0 0 128px;
+    width: 128px;
+    min-height: 38px;
+    height: 38px;
+    border-radius: 10px !important;
+    padding: 0.3rem 0.65rem !important;
+    font-size: 0.86rem;
+    line-height: 1;
+    white-space: nowrap;
     font-weight: 500;
     justify-content: center;
     border: 1px solid #d8e0ec !important;
@@ -1535,7 +1561,7 @@ select.form-select-sm,
 }
 
 #btn-confirmar-venta-directo.venta-step-btn {
-    min-width: 260px;
+    min-width: 0;
 }
 
 :root[data-theme='dark'] .venta-step-btn {
@@ -1568,6 +1594,7 @@ select.form-select-sm,
 
     .venta-step-btn {
         width: 100%;
+        flex-basis: auto;
     }
 }
 

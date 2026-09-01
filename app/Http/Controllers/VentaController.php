@@ -86,6 +86,11 @@ public function registrarVenta(Request $request)
             'monto_pagado'     => 'required|numeric|min:0',
             'efectivo_recibido'=> 'nullable|numeric|min:0',
             'metodo_pago'      => 'nullable|string',
+            'estado_pago'      => 'nullable|in:pagado,credito,pendiente',
+            'pagos'            => 'nullable|array|max:6',
+            'pagos.*.metodo_pago' => 'required_with:pagos|in:efectivo,tarjeta,transferencia,plin,yape,otro',
+            'pagos.*.monto'    => 'required_with:pagos|numeric|min:0.01',
+            'pagos.*.efectivo_recibido' => 'nullable|numeric|min:0',
             'formato'          => 'nullable|in:a4,ticket,ticket_80,ticket_58',
             'credit_due_date'  => 'nullable|date|after_or_equal:fecha',
         ]);
@@ -302,27 +307,76 @@ public function registrarVenta(Request $request)
             $total    = round($operationBase + $igvMonto, 2);
 
             /* ================= PAGO / ESTADO ================= */
-            $montoPagado = round((float) $request->monto_pagado, 2);
+            $pagosEntrada = collect($request->input('pagos', []))
+                ->filter(fn ($pago) => (float) ($pago['monto'] ?? 0) > 0)
+                ->values();
 
-            if ($request->metodo_pago === 'efectivo' && $request->filled('efectivo_recibido')) {
-                $montoPagado = round((float) $request->efectivo_recibido, 2);
+            if ($pagosEntrada->count() > 1) {
+                $pagoEfectivoEntrada = $pagosEntrada->firstWhere('metodo_pago', 'efectivo');
+                if ($pagoEfectivoEntrada && ($pagoEfectivoEntrada['efectivo_recibido'] ?? null) === null) {
+                    throw new \Exception('Ingresa el efectivo recibido del cliente.');
+                }
             }
 
-            if ($montoPagado > 0 && empty($request->metodo_pago)) {
-                throw new \Exception("Debe seleccionar un método de pago.");
+            $pagos = $pagosEntrada
+                ->map(function (array $pago) {
+                    $metodo = strtolower(trim((string) $pago['metodo_pago']));
+                    $monto = round((float) $pago['monto'], 2);
+                    $recibido = $metodo === 'efectivo'
+                        ? round((float) ($pago['efectivo_recibido'] ?? $monto), 2)
+                        : null;
+
+                    if ($metodo === 'efectivo' && $recibido < $monto) {
+                        throw new \Exception('El efectivo recibido no puede ser menor que la parte pagada en efectivo.');
+                    }
+
+                    return [
+                        'metodo_pago' => $metodo,
+                        'monto' => $monto,
+                        'efectivo_recibido' => $recibido,
+                        'vuelto' => $metodo === 'efectivo' ? round($recibido - $monto, 2) : null,
+                    ];
+                })
+                ->values();
+
+            // Compatibilidad total con el formulario y clientes anteriores.
+            if ($pagos->isEmpty() && (float) $request->monto_pagado > 0) {
+                if (empty($request->metodo_pago)) {
+                    throw new \Exception('Debe seleccionar un método de pago.');
+                }
+
+                $metodo = strtolower(trim((string) $request->metodo_pago));
+                $recibido = $metodo === 'efectivo'
+                    ? round((float) ($request->efectivo_recibido ?? $request->monto_pagado), 2)
+                    : null;
+                $montoAplicado = min(round((float) $request->monto_pagado, 2), $total);
+                $pagos->push([
+                    'metodo_pago' => $metodo,
+                    'monto' => $montoAplicado,
+                    'efectivo_recibido' => $recibido,
+                    'vuelto' => $metodo === 'efectivo' ? max(0, round($recibido - $montoAplicado, 2)) : null,
+                ]);
             }
 
-            $esPagoEfectivo = $request->metodo_pago === 'efectivo' && $montoPagado > 0;
-            $efectivoRecibido = $esPagoEfectivo
-                ? round((float) ($request->efectivo_recibido ?? $montoPagado), 2)
-                : null;
-            $vuelto = $esPagoEfectivo
-                ? max(0, round($efectivoRecibido - $total, 2))
-                : null;
+            if ($pagos->pluck('metodo_pago')->duplicates()->isNotEmpty()) {
+                throw new \Exception('Cada método de pago debe aparecer una sola vez.');
+            }
 
+            $montoPagado = round((float) $pagos->sum('monto'), 2);
             if ($montoPagado > $total) {
-                $montoPagado = $total;
+                throw new \Exception('La suma de los pagos no puede superar el total de la venta.');
             }
+            if ($request->estado_pago === 'pagado' && abs($montoPagado - $total) > 0.009) {
+                throw new \Exception('Distribuye el total completo entre los métodos de pago.');
+            }
+
+            $pagosEfectivo = $pagos->where('metodo_pago', 'efectivo');
+            $efectivoRecibido = $pagosEfectivo->isNotEmpty()
+                ? round((float) $pagosEfectivo->sum('efectivo_recibido'), 2)
+                : null;
+            $vuelto = $pagosEfectivo->isNotEmpty()
+                ? round((float) $pagosEfectivo->sum('vuelto'), 2)
+                : null;
 
             if ($montoPagado <= 0) {
                 $estado = 'pendiente';
@@ -331,11 +385,11 @@ public function registrarVenta(Request $request)
             } elseif ($montoPagado < $total) {
                 $estado = 'credito';
                 $saldo  = round($total - $montoPagado, 2);
-                $metodoPagoVenta = $request->metodo_pago;
+                $metodoPagoVenta = $pagos->count() > 1 ? 'mixto' : $pagos->first()['metodo_pago'];
             } else {
                 $estado = 'pagado';
                 $saldo  = 0;
-                $metodoPagoVenta = $request->metodo_pago;
+                $metodoPagoVenta = $pagos->count() > 1 ? 'mixto' : $pagos->first()['metodo_pago'];
             }
 
             if (in_array($estado, ['credito', 'pendiente'], true) && ! $request->filled('credit_due_date')) {
@@ -360,12 +414,14 @@ public function registrarVenta(Request $request)
                     : null,
             ]);
 
-            if ($montoPagado > 0) {
+            foreach ($pagos as $pago) {
                 PagoVenta::create([
                     'venta_id'    => $venta->id,
                     'usuario_id'  => auth()->id(),
-                    'monto'       => $montoPagado,
-                    'metodo_pago' => $request->metodo_pago,
+                    'monto'       => $pago['monto'],
+                    'metodo_pago' => $pago['metodo_pago'],
+                    'efectivo_recibido' => $pago['efectivo_recibido'],
+                    'vuelto' => $pago['vuelto'],
                 ]);
             }
 
@@ -380,7 +436,7 @@ public function registrarVenta(Request $request)
                 throw new \Exception("La vista [$vista] no existe.");
             }
 
-            $venta->load(['cliente', 'usuario', 'detalleVentas.producto']);
+            $venta->load(['cliente', 'usuario', 'detalleVentas.producto', 'pagos']);
 
             // LOGO
             $logoBase64 = null;
@@ -459,6 +515,7 @@ $pdf = Pdf::setOptions([
                     + count($venta->detalleVentas) * $lineHeight
                     + $additionalLines * ($ticketWidth === 58 ? 10 : 9)
                     + ($additionalLines > 0 ? 10 : 0)
+                    + max(0, $venta->pagos->count() - 1) * ($ticketWidth === 58 ? 10 : 11)
                     + ($venta->efectivo_recibido !== null ? ($ticketWidth === 58 ? 16 : 18) : 0);
                 $pdf->setPaper([0, 0, $paperWidth, $alto]);
             } else {
@@ -634,6 +691,7 @@ public function detalle($id)
         'usuario',
         'cliente',
         'detalleVentas.producto',
+        'pagos',
         'manualTaxDocument',
         'taxProfile.capabilities',
     ])->findOrFail($id);
@@ -685,6 +743,12 @@ public function detalle($id)
 
         // === Método pago ===
         'metodo_pago' => $venta->metodo_pago,
+        'pagos' => $venta->pagos->map(fn (PagoVenta $pago) => [
+            'metodo_pago' => $pago->metodo_pago,
+            'monto' => (float) $pago->monto,
+            'efectivo_recibido' => $pago->efectivo_recibido !== null ? (float) $pago->efectivo_recibido : null,
+            'vuelto' => $pago->vuelto !== null ? (float) $pago->vuelto : null,
+        ])->values(),
 
         // === Cliente (sigues enviándolo como string para tu JS actual) ===
         'cliente' => optional($venta->cliente)->razon_social

@@ -36,7 +36,7 @@ class MovimientoController extends Controller
         $rango = $request->get('rango', 'diario');
         $fecha = trim((string) $request->get('fecha', ''));
         $metodo = strtolower(trim((string) $request->get('metodo', '')));
-        $metodosPermitidos = ['efectivo', 'tarjeta', 'transferencia', 'plin', 'yape', 'otro', 'fiado', 'credito'];
+        $metodosPermitidos = ['efectivo', 'tarjeta', 'transferencia', 'plin', 'yape', 'otro', 'mixto', 'fiado', 'credito'];
         if (! in_array($metodo, $metodosPermitidos, true)) {
             $metodo = '';
         }
@@ -47,7 +47,7 @@ class MovimientoController extends Controller
         /* ==========================
         QUERY BASE
         ========================== */
-        $query = Movimiento::query()->with('usuario');
+        $query = Movimiento::query()->with(['usuario', 'venta.pagos']);
         if (! $esAdmin) {
             $query->where('usuario_id', $usuarioActual->id);
         }
@@ -156,7 +156,15 @@ class MovimientoController extends Controller
         }
 
         if ($metodo !== '') {
-            $query->whereRaw('LOWER(metodo_pago) = ?', [$metodo]);
+            $query->where(function ($porMetodo) use ($metodo) {
+                $porMetodo->whereRaw('LOWER(metodo_pago) = ?', [$metodo]);
+                if (! in_array($metodo, ['mixto', 'fiado', 'credito'], true)) {
+                    $porMetodo->orWhere(function ($mixto) use ($metodo) {
+                        $mixto->whereRaw('LOWER(metodo_pago) = ?', ['mixto'])
+                            ->whereHas('venta.pagos', fn ($pago) => $pago->whereRaw('LOWER(metodo_pago) = ?', [$metodo]));
+                    });
+                }
+            });
         }
 
         /* ==========================
@@ -189,6 +197,17 @@ class MovimientoController extends Controller
             ->orderByDesc('fecha')
             ->paginate(15);
 
+        $movimientos->getCollection()->each(function (Movimiento $movimiento) use ($metodo) {
+            $movimiento->monto_mostrado = (float) $movimiento->monto;
+            $movimiento->monto_total_venta = null;
+            if ($metodo !== '' && $metodo !== 'mixto' && strtolower((string) $movimiento->metodo_pago) === 'mixto') {
+                $movimiento->monto_total_venta = (float) $movimiento->monto;
+                $pagosVenta = $movimiento->venta?->pagos ?? collect();
+                $movimiento->monto_mostrado = (float) $pagosVenta
+                    ->where('metodo_pago', $metodo)->sum('monto');
+            }
+        });
+
         $cajas = Caja::with('usuario')
             ->when(! auth()->user()->esAdmin(), fn ($q) => $q->where('usuario_id', auth()->id()))
             ->when($inicio && $fin, fn ($q) => $q->whereBetween('abierta_en', [$inicio, $fin]))
@@ -220,16 +239,30 @@ class MovimientoController extends Controller
         KPIs (MISMO RANGO)
         ========================== */
 
-        $ventas = Movimiento::ingresos()
+        $ventasQuery = Movimiento::ingresos()
             ->pagados()
             ->activos()
             ->where('subtipo', 'venta')
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
             ->when($inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
-            )
-            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
-            ->sum('monto');
+            );
+
+        if ($metodo === '') {
+            $ventas = (float) $ventasQuery->sum('monto');
+        } elseif ($metodo === 'mixto') {
+            $ventas = (float) $ventasQuery->whereRaw('LOWER(metodo_pago) = ?', ['mixto'])->sum('monto');
+        } else {
+            $ventasDirectas = (float) (clone $ventasQuery)
+                ->whereRaw('LOWER(metodo_pago) = ?', [$metodo])
+                ->sum('monto');
+            $ventasMixtas = (float) (clone $ventasQuery)
+                ->whereRaw('LOWER(movimientos.metodo_pago) = ?', ['mixto'])
+                ->join('pagos_venta as pv', 'pv.venta_id', '=', 'movimientos.referencia_id')
+                ->whereRaw('LOWER(pv.metodo_pago) = ?', [$metodo])
+                ->sum('pv.monto');
+            $ventas = round($ventasDirectas + $ventasMixtas, 2);
+        }
 
         $gastos = Movimiento::egresos()
             ->pagados()
@@ -259,7 +292,17 @@ class MovimientoController extends Controller
         $ganancias = DetalleVenta::whereHas('venta', function ($q) use ($inicio, $fin, $esAdmin, $usuarioActual, $metodo) {
                 $q->where('estado', 'pagado')
                   ->when(! $esAdmin, fn ($q2) => $q2->where('usuario_id', $usuarioActual->id))
-                  ->when($metodo !== '', fn ($q2) => $q2->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
+                  ->when($metodo !== '', function ($q2) use ($metodo) {
+                      $q2->where(function ($porMetodo) use ($metodo) {
+                          $porMetodo->whereRaw('LOWER(metodo_pago) = ?', [$metodo]);
+                          if (! in_array($metodo, ['mixto', 'fiado', 'credito'], true)) {
+                              $porMetodo->orWhere(function ($mixto) use ($metodo) {
+                                  $mixto->whereRaw('LOWER(metodo_pago) = ?', ['mixto'])
+                                      ->whereHas('pagos', fn ($pago) => $pago->whereRaw('LOWER(metodo_pago) = ?', [$metodo]));
+                              });
+                          }
+                      });
+                  })
                   ->when($inicio && $fin, fn ($q2) =>
                       $q2->whereBetween('fecha', [$inicio, $fin])
                   );

@@ -228,6 +228,13 @@ function prepararFase3() {
 
     const { total } = calcularTotal();
 
+    if (document.getElementById("metodo_pago")?.value === "mixto") {
+        window.prepararPagoMixto?.(total);
+        return;
+    }
+
+    document.getElementById("pago-mixto-wrap")?.classList.add("d-none");
+
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
     if (inputPaga) inputPaga.value = "";
     if (inputVuelto) inputVuelto.value = "";
@@ -312,7 +319,7 @@ function actualizarBotonesSegunMetodoPagado() {
 
     if (estado !== "pagado") return;
 
-    if (metodo === "efectivo") {
+    if (metodo === "efectivo" || metodo === "mixto") {
         if (btnIrStep3) btnIrStep3.style.display = "";
         if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "none";
     } else if (metodo) {
@@ -342,7 +349,7 @@ function manejarEstadoVenta() {
 
     if (btnIrStep3) {
         btnIrStep3.style.display = "";
-        btnIrStep3.innerHTML = `Continuar venta <i class="fas fa-arrow-right ms-2"></i>`;
+        btnIrStep3.innerHTML = `Continuar <i class="fas fa-arrow-right ms-2"></i>`;
     }
 
     if (btnConfirmarDirecto) btnConfirmarDirecto.style.display = "none";
@@ -377,6 +384,7 @@ function manejarEstadoVenta() {
         items.forEach(i => {
             i.classList.remove("d-none");
             i.classList.remove("active");
+            if (i.dataset.value === "mixto") i.classList.add("d-none");
         });
         // ✅ efectivo activo por defecto
         activarEfectivoPorDefecto(items, hiddenMetodoPago);
@@ -386,7 +394,7 @@ function manejarEstadoVenta() {
         // botón continuar
         if (btnIrStep3) {
             btnIrStep3.style.display = "";
-            btnIrStep3.innerHTML = `Continuar venta <i class="fas fa-arrow-right ms-2"></i>`;
+            btnIrStep3.innerHTML = `Continuar <i class="fas fa-arrow-right ms-2"></i>`;
         }
         // 🔥 OCULTAR TEXTO "Vuelto" EN CRÉDITO
         if (labelVuelto) {

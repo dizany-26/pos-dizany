@@ -67,7 +67,8 @@ class Caja extends Model
             ->where('estado', 'pagado')
             ->whereRaw('LOWER(metodo_pago) = ?', ['efectivo']);
 
-        $ingresos = (clone $base)->where('tipo', 'ingreso')->sum('monto');
+        $ingresos = (float) (clone $base)->where('tipo', 'ingreso')->sum('monto');
+        $ingresos += $this->montoPagosMixtos('efectivo', 'ingreso');
         $egresos = (clone $base)->where('tipo', 'egreso')->sum('monto');
         $refuerzos = $this->operaciones()->where('tipo', 'refuerzo')->sum('monto');
         $retiros = $this->operaciones()->where('tipo', 'retiro')->sum('monto');
@@ -113,11 +114,16 @@ class Caja extends Model
 
         $this->movimientos()->where('estado', 'pagado')->get(['tipo', 'monto', 'metodo_pago'])
             ->each(function (Movimiento $movimiento) use (&$resultado) {
+                if (mb_strtolower((string) $movimiento->metodo_pago) === 'mixto') return;
                 $medio = static::normalizarMetodo($movimiento->metodo_pago);
                 if ($medio === 'pendiente') return;
                 $tipo = $movimiento->tipo === 'egreso' ? 'egresos' : 'ingresos';
                 $resultado[$medio][$tipo] += (float) $movimiento->monto;
             });
+
+        foreach (array_keys(static::mediosConciliables()) as $medio) {
+            $resultado[$medio]['ingresos'] += $this->montoPagosMixtos($medio, 'ingreso');
+        }
 
         foreach ($resultado as &$valores) {
             $valores['ingresos'] = round($valores['ingresos'], 2);
@@ -128,5 +134,17 @@ class Caja extends Model
         $resultado['efectivo'] = $this->calcularEfectivo();
 
         return $resultado;
+    }
+
+    private function montoPagosMixtos(string $metodo, string $tipo): float
+    {
+        return (float) $this->movimientos()
+            ->where('movimientos.estado', 'pagado')
+            ->where('movimientos.tipo', $tipo)
+            ->whereRaw('LOWER(movimientos.metodo_pago) = ?', ['mixto'])
+            ->where('movimientos.referencia_tipo', 'venta')
+            ->join('pagos_venta as pv', 'pv.venta_id', '=', 'movimientos.referencia_id')
+            ->whereRaw('LOWER(pv.metodo_pago) = ?', [$metodo])
+            ->sum('pv.monto');
     }
 }
