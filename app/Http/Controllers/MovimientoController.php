@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\MovimientosExport;
 use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\Venta;
@@ -11,9 +12,11 @@ use App\Models\Gasto;
 use App\Models\User;
 use App\Models\Lote;
 use App\Models\CompraPago;
+use App\Models\Configuracion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PDF;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MovimientoController extends Controller
 {
@@ -39,6 +42,24 @@ class MovimientoController extends Controller
         $metodosPermitidos = ['efectivo', 'tarjeta', 'transferencia', 'plin', 'yape', 'otro', 'mixto', 'fiado', 'credito'];
         if (! in_array($metodo, $metodosPermitidos, true)) {
             $metodo = '';
+        }
+
+        $cajasFiltro = Caja::with('usuario')
+            ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
+            ->orderByDesc('abierta_en')
+            ->limit(100)
+            ->get();
+        $cajaId = $request->integer('caja_id');
+        $filtroModo = strtolower(trim((string) $request->get('filtro_modo', '')));
+        if (! in_array($filtroModo, ['caja', 'fecha'], true)) {
+            $filtroModo = $cajaId > 0 ? 'caja' : 'fecha';
+        }
+        $cajaSeleccionada = $cajaId > 0 && $filtroModo === 'caja'
+            ? $cajasFiltro->firstWhere('id', $cajaId)
+            : null;
+        if (! $cajaSeleccionada) {
+            $cajaId = null;
+            $filtroModo = 'fecha';
         }
 
         // Normalizar separadores
@@ -151,7 +172,9 @@ class MovimientoController extends Controller
             $fin    = null;
         }
 
-        if ($inicio && $fin) {
+        if ($cajaSeleccionada) {
+            $query->where('caja_id', $cajaSeleccionada->id);
+        } elseif ($inicio && $fin) {
             $query->whereBetween('fecha', [$inicio, $fin]);
         }
 
@@ -210,7 +233,8 @@ class MovimientoController extends Controller
 
         $cajas = Caja::with('usuario')
             ->when(! auth()->user()->esAdmin(), fn ($q) => $q->where('usuario_id', auth()->id()))
-            ->when($inicio && $fin, fn ($q) => $q->whereBetween('abierta_en', [$inicio, $fin]))
+            ->when($cajaSeleccionada, fn ($q) => $q->whereKey($cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) => $q->whereBetween('abierta_en', [$inicio, $fin]))
             ->when($request->filled('buscar'), fn ($q) => $q->whereHas(
                 'usuario',
                 fn ($usuario) => $usuario->where('nombre', 'like', '%' . $request->buscar . '%')
@@ -244,7 +268,8 @@ class MovimientoController extends Controller
             ->activos()
             ->where('subtipo', 'venta')
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
-            ->when($inicio && $fin, fn ($q) =>
+            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
             );
 
@@ -269,7 +294,8 @@ class MovimientoController extends Controller
             ->activos()
             ->where('subtipo', 'gasto')
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
-            ->when($inicio && $fin, fn ($q) =>
+            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
             )
             ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
@@ -281,7 +307,8 @@ class MovimientoController extends Controller
             ->where('subtipo', 'gasto')
             ->where('referencia_tipo', 'gasto')
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
-            ->when($inicio && $fin, fn ($q) =>
+            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) =>
                 $q->whereBetween('fecha', [$inicio, $fin])
             )
             ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
@@ -289,9 +316,19 @@ class MovimientoController extends Controller
 
         $balance = $ventas - $egresos;
 
-        $ganancias = DetalleVenta::whereHas('venta', function ($q) use ($inicio, $fin, $esAdmin, $usuarioActual, $metodo) {
+        $ventaIdsJornada = $cajaSeleccionada
+            ? Movimiento::where('caja_id', $cajaSeleccionada->id)
+                ->where('referencia_tipo', 'venta')
+                ->whereNotNull('referencia_id')
+                ->pluck('referencia_id')
+                ->unique()
+                ->values()
+            : null;
+
+        $ganancias = DetalleVenta::whereHas('venta', function ($q) use ($inicio, $fin, $esAdmin, $usuarioActual, $metodo, $cajaSeleccionada, $ventaIdsJornada) {
                 $q->where('estado', 'pagado')
                   ->when(! $esAdmin, fn ($q2) => $q2->where('usuario_id', $usuarioActual->id))
+                  ->when($cajaSeleccionada, fn ($q2) => $q2->whereIn('id', $ventaIdsJornada))
                   ->when($metodo !== '', function ($q2) use ($metodo) {
                       $q2->where(function ($porMetodo) use ($metodo) {
                           $porMetodo->whereRaw('LOWER(metodo_pago) = ?', [$metodo]);
@@ -303,7 +340,7 @@ class MovimientoController extends Controller
                           }
                       });
                   })
-                  ->when($inicio && $fin, fn ($q2) =>
+                  ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q2) =>
                       $q2->whereBetween('fecha', [$inicio, $fin])
                   );
             })
@@ -324,6 +361,10 @@ class MovimientoController extends Controller
             'fecha'
             , 'tipo'
             , 'cajas'
+            , 'cajasFiltro'
+            , 'cajaSeleccionada'
+            , 'cajaId'
+            , 'filtroModo'
             , 'cajaAbierta'
             , 'resumenCaja'
             , 'usuariosCaja'
@@ -332,32 +373,129 @@ class MovimientoController extends Controller
     }
 
     /* ==========================
-    REPORTE PDF
+    REPORTES PDF / EXCEL
     ========================== */
     public function reporte(Request $request)
     {
         abort_unless($request->user()->esAdmin() || $request->user()->tienePermiso('reportes'), 403);
 
-        $movimientos = Movimiento::activos()->orderByDesc('fecha')->get();
+        $tab = in_array($request->get('tab'), ['ingresos', 'egresos', 'por_cobrar'], true)
+            ? $request->get('tab')
+            : 'ingresos';
+        $rango = $request->get('rango', 'diario');
+        $fecha = str_replace([' to ', ' | ', ' → '], ' a ', trim((string) $request->get('fecha', '')));
+        $metodo = strtolower(trim((string) $request->get('metodo', '')));
+        $buscar = trim((string) $request->get('buscar', ''));
+        $cajaId = $request->integer('caja_id');
+        $cajaSeleccionada = null;
+        $filtroModo = $request->get('filtro_modo', $cajaId > 0 ? 'caja' : 'fecha');
 
-        $ventas = Movimiento::ingresos()->pagados()->activos()->sum('monto');
-        $egresos = Movimiento::egresos()
-            ->pagados()
+        if ($cajaId > 0 && $filtroModo === 'caja') {
+            $cajaSeleccionada = Caja::query()
+                ->with('usuario')
+                ->when(! $request->user()->esAdmin(), fn ($query) => $query->where('usuario_id', $request->user()->id))
+                ->findOrFail($cajaId);
+        }
+
+        [$inicio, $fin, $periodo] = $this->resolverPeriodoReporte($rango, $fecha);
+
+        $query = Movimiento::query()
+            ->with(['usuario', 'venta.pagos'])
             ->activos()
-            ->where('subtipo', 'gasto')
-            ->where('referencia_tipo', 'gasto')
-            ->sum('monto');
+            ->when($cajaSeleccionada, fn ($query) => $query->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($query) => $query->whereBetween('fecha', [$inicio, $fin]));
 
-        $balance = $ventas - $egresos;
+        match ($tab) {
+            'egresos' => $query->egresos()->pagados()->where('subtipo', 'gasto')->where('referencia_tipo', 'gasto'),
+            'por_cobrar' => $query->ingresos()->pendientes()->where('referencia_tipo', 'venta')->whereIn('metodo_pago', ['fiado', 'credito']),
+            default => $query->ingresos()->pagados(),
+        };
 
-        $pdf = PDF::loadView('movimientos.reporte_pdf', compact(
-            'movimientos',
-            'ventas',
-            'egresos',
-            'balance'
-        ));
+        if ($metodo !== '') {
+            $query->where(function ($porMetodo) use ($metodo) {
+                $porMetodo->whereRaw('LOWER(metodo_pago) = ?', [$metodo]);
+                if (! in_array($metodo, ['mixto', 'fiado', 'credito'], true)) {
+                    $porMetodo->orWhere(function ($mixto) use ($metodo) {
+                        $mixto->whereRaw('LOWER(metodo_pago) = ?', ['mixto'])
+                            ->whereHas('venta.pagos', fn ($pago) => $pago->whereRaw('LOWER(metodo_pago) = ?', [$metodo]));
+                    });
+                }
+            });
+        }
 
-        return $pdf->stream('reporte_movimientos.pdf');
+        if ($buscar !== '') {
+            $correlativo = ctype_digit($buscar) ? (int) ltrim($buscar, '0') : null;
+            $query->where(function ($busqueda) use ($buscar, $correlativo) {
+                $busqueda->where('concepto', 'like', "%{$buscar}%")
+                    ->orWhereHas('venta', function ($venta) use ($buscar, $correlativo) {
+                        $venta->where('serie', 'like', "%{$buscar}%")
+                            ->orWhereRaw("CONCAT(serie, '-', LPAD(correlativo, 6, '0')) LIKE ?", ["%{$buscar}%"]);
+                        if ($correlativo !== null) {
+                            $venta->orWhere('correlativo', $correlativo);
+                        }
+                    });
+            });
+        }
+
+        $movimientos = $query->orderByDesc('fecha')->orderByDesc('created_at')->get();
+        $ingresos = (float) $movimientos->where('tipo', 'ingreso')->sum('monto');
+        $egresos = (float) $movimientos->where('tipo', 'egreso')->sum('monto');
+        $balance = $ingresos - $egresos;
+        $config = Configuracion::first();
+        $logoPath = $config?->logo && file_exists(public_path($config->logo))
+            ? public_path($config->logo)
+            : (file_exists(public_path('images/logo.png')) ? public_path('images/logo.png') : null);
+        $logoBase64 = $logoPath
+            ? 'data:image/' . pathinfo($logoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+        $filtroDescripcion = $cajaSeleccionada
+            ? "Caja #{$cajaSeleccionada->id} · " . ($cajaSeleccionada->usuario?->nombre ?? 'Sin cajero')
+            : $periodo;
+        $datos = compact('movimientos', 'ingresos', 'egresos', 'balance', 'filtroDescripcion', 'tab', 'metodo', 'buscar', 'config', 'logoPath', 'logoBase64');
+        $nombreBase = 'movimientos_' . now()->format('Ymd_His');
+
+        if (strtolower((string) $request->get('formato')) === 'excel') {
+            return Excel::download(new MovimientosExport($datos), $nombreBase . '.xlsx');
+        }
+
+        $pdf = PDF::loadView('movimientos.reporte_pdf', $datos)->setPaper('a4', 'landscape');
+
+        return $pdf->download($nombreBase . '.pdf');
+    }
+
+    private function resolverPeriodoReporte(string $rango, string $fecha): array
+    {
+        try {
+            if ($rango === 'diario') {
+                $dia = preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) ? $fecha : now()->format('Y-m-d');
+                return [Carbon::parse($dia)->startOfDay(), Carbon::parse($dia)->endOfDay(), Carbon::parse($dia)->format('d/m/Y')];
+            }
+            if ($rango === 'semanal') {
+                [$desde, $hasta] = array_pad(explode(' a ', $fecha), 2, null);
+                $inicio = $desde ? Carbon::parse($desde)->startOfDay() : now()->startOfWeek()->startOfDay();
+                $fin = $hasta ? Carbon::parse($hasta)->endOfDay() : $inicio->copy()->endOfWeek()->endOfDay();
+                return [$inicio, $fin, $inicio->format('d/m/Y') . ' - ' . $fin->format('d/m/Y')];
+            }
+            if ($rango === 'mensual') {
+                $mes = preg_match('/^\d{4}-\d{2}$/', $fecha) ? Carbon::createFromFormat('Y-m', $fecha) : now();
+                return [$mes->copy()->startOfMonth(), $mes->copy()->endOfMonth(), ucfirst($mes->locale('es')->translatedFormat('F Y'))];
+            }
+            if ($rango === 'anual') {
+                $year = preg_match('/^\d{4}$/', $fecha) ? (int) $fecha : now()->year;
+                return [Carbon::create($year, 1, 1)->startOfDay(), Carbon::create($year, 12, 31)->endOfDay(), (string) $year];
+            }
+            if ($rango === 'personalizado') {
+                [$desde, $hasta] = array_pad(explode(' a ', $fecha), 2, null);
+                if ($desde && $hasta) {
+                    $inicio = Carbon::parse($desde)->startOfDay();
+                    $fin = Carbon::parse($hasta)->endOfDay();
+                    return [$inicio, $fin, $inicio->format('d/m/Y') . ' - ' . $fin->format('d/m/Y')];
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        return [null, null, 'Todos los movimientos'];
     }
 
     /* ==========================

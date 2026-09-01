@@ -45,10 +45,30 @@ Movimientos
 @endif
 
 @if(auth()->user()->esAdmin() || auth()->user()->tienePermiso('reportes'))
-    <a href="{{ route('movimientos.reporte') }}" class="btn-gasto">
-        <i class="fas fa-file-download"></i>
-        <span class="btn-text">Reporte</span>
-    </a>
+    @php
+        $reporteFiltros = array_merge(request()->except(['page', 'cajas_page']), [
+            'caja_id' => $cajaId,
+            'filtro_modo' => $filtroModo,
+        ]);
+    @endphp
+    <div class="dropdown">
+        <button class="btn-gasto dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-file-download"></i>
+            <span class="btn-text">Reporte</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <a class="dropdown-item" href="{{ route('movimientos.reporte', array_merge($reporteFiltros, ['formato' => 'pdf'])) }}">
+                    <i class="fas fa-file-pdf text-danger me-2"></i>Descargar PDF
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{{ route('movimientos.reporte', array_merge($reporteFiltros, ['formato' => 'excel'])) }}">
+                    <i class="fas fa-file-excel text-success me-2"></i>Descargar Excel
+                </a>
+            </li>
+        </ul>
+    </div>
 @endif
 
 @endsection
@@ -101,11 +121,29 @@ Movimientos
 
             <input type="hidden" name="tipo" value="{{ request('tipo','transacciones') }}">
             <input type="hidden" name="tab" value="{{ $tab }}">
+            <input type="hidden" name="filtro_modo" value="{{ $filtroModo }}">
+
+            @if($tipo === 'transacciones')
+            <div class="col-md-4">
+                <select name="caja_id" class="form-select ui-input" onchange="this.form.elements.filtro_modo.value = this.value ? 'caja' : 'fecha'; this.form.submit()">
+                    <option value="">Filtrar por fecha</option>
+                    @foreach($cajasFiltro as $cajaFiltro)
+                        @php
+                            $finCajaFiltro = $cajaFiltro->cerrada_en ?? $cajaFiltro->cierre_solicitado_en;
+                            $estadoCajaFiltro = $finCajaFiltro ? $finCajaFiltro->format('d/m H:i') : 'En curso';
+                        @endphp
+                        <option value="{{ $cajaFiltro->id }}" @selected((int)$cajaId === (int)$cajaFiltro->id)>
+                            Caja #{{ $cajaFiltro->id }} · {{ $cajaFiltro->usuario?->nombre ?? 'Sin cajero' }} · {{ $cajaFiltro->abierta_en->format('d/m H:i') }} → {{ $estadoCajaFiltro }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
 
             <div class="col-md-2">
                 <select name="rango"
                         class="form-select ui-input"
-                        onchange="this.form.submit()">
+                        onchange="if (this.form.elements.caja_id) this.form.elements.caja_id.value = ''; this.form.elements.filtro_modo.value = 'fecha'; this.form.submit()">
                     <option value="diario" {{ $rango === 'diario' ? 'selected' : '' }}>Diario</option>
                     <option value="semanal" {{ $rango === 'semanal' ? 'selected' : '' }}>Semanal</option>
                     <option value="mensual" {{ $rango === 'mensual' ? 'selected' : '' }}>Mensual</option>
@@ -171,7 +209,7 @@ Movimientos
             </div>
             @endif
 
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <input type="text"
                        name="buscar"
                        value="{{ request('buscar') }}"
@@ -181,6 +219,26 @@ Movimientos
             </div>
 
         </form>
+
+        @if($tipo === 'transacciones' && $cajaSeleccionada)
+            @php
+                $finJornada = $cajaSeleccionada->cerrada_en ?? $cajaSeleccionada->cierre_solicitado_en;
+                $estadoJornada = $cajaSeleccionada->estado === 'cerrada'
+                    ? 'Cerrada'
+                    : ($cajaSeleccionada->estado === 'pendiente_cierre' ? 'Cierre pendiente' : 'En curso');
+            @endphp
+            <div class="cash-session-filter-summary mb-4">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <strong>Jornada de caja #{{ $cajaSeleccionada->id }} · {{ $cajaSeleccionada->usuario?->nombre ?? 'Sin cajero' }}</strong>
+                    <small>
+                        {{ $cajaSeleccionada->abierta_en->format('d/m/Y h:i A') }}
+                        → {{ $finJornada?->format('d/m/Y h:i A') ?? 'Ahora' }}
+                        · {{ $estadoJornada }}
+                    </small>
+                </div>
+            </div>
+        @endif
 
         @if($tipo === 'transacciones')
         {{-- ================= KPIs ================= --}}
@@ -301,7 +359,10 @@ Movimientos
                             data-ref-tipo="{{ $movimiento->referencia_tipo }}"
                             data-mov-id="{{ $movimiento->id }}">
 
-                            <td data-label="Fecha">{{ \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y') }}</td>
+                            <td data-label="Fecha">
+                                {{ \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y') }}
+                                <small class="d-block text-muted">{{ $movimiento->created_at?->format('h:i A') ?? '—' }}</small>
+                            </td>
                             <td data-label="Concepto">{{ $movimiento->concepto }}</td>
                             @php
                                 $metodoPago = strtolower($movimiento->metodo_pago ?? 'otro');
@@ -782,7 +843,11 @@ flatpickr.localize(flatpickr.l10ns.es);
     // ✅ esta función EXISTE para todos los rangos
     function submitFormDelayed() {
         clearTimeout(window.__mov_submit_timer);
-        window.__mov_submit_timer = setTimeout(() => form.submit(), 200);
+        window.__mov_submit_timer = setTimeout(() => {
+            if (form.elements.caja_id) form.elements.caja_id.value = "";
+            if (form.elements.filtro_modo) form.elements.filtro_modo.value = "fecha";
+            form.submit();
+        }, 200);
     }
 
     // Helper: date válida YYYY-MM-DD

@@ -352,7 +352,7 @@ Nueva venta
 
                         <div id="step3-pago-wrap">
                             <label class="form-label" id="step3-pago-label">Valor a pagar</label>
-                            <input type="number" id="vuelto-paga" class="form-control mb-3" min="0" step="0.01">
+                            <input type="number" id="vuelto-paga" class="form-control mb-3" min="0" step="0.01" placeholder="Opcional: importe exacto">
                         </div>
 
                         <div id="step3-resultado-wrap">
@@ -384,7 +384,7 @@ Nueva venta
                                 <label class="form-label fw-bold" for="pago-mixto-efectivo-recibido">Importe recibido del cliente</label>
                                 <div class="input-group">
                                     <span class="input-group-text">S/</span>
-                                    <input type="number" id="pago-mixto-efectivo-recibido" class="form-control" min="0" step="0.01">
+                                    <input type="number" id="pago-mixto-efectivo-recibido" class="form-control" min="0" step="0.01" placeholder="Opcional: importe exacto">
                                 </div>
                                 <small class="text-muted">Escribe el billete o monto que entregó el cliente; Dizany calculará el vuelto.</small>
                             </div>

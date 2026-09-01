@@ -123,7 +123,7 @@
         }
         const efectivo = pagos.find(pago => pago.metodo_pago === "efectivo");
         if (efectivo && efectivo.efectivo_recibido === null) {
-            throw new Error("Ingresa el efectivo recibido del cliente.");
+            efectivo.efectivo_recibido = efectivo.monto;
         }
         if (efectivo && efectivo.efectivo_recibido < efectivo.monto) {
             throw new Error("El efectivo recibido no puede ser menor que la parte pagada en efectivo.");

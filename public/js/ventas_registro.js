@@ -136,7 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 montoPagado = pagos.reduce((sum, pago) => sum + Number(pago.monto || 0), 0);
             } else if (metodoPago === "efectivo") {
-                const efectivoRecibido = parseFloat(inputPaga?.value || 0);
+                const efectivoTexto = String(inputPaga?.value || "").trim();
+                const efectivoRecibido = efectivoTexto === ""
+                    ? total
+                    : parseFloat(efectivoTexto);
                 if (!Number.isFinite(efectivoRecibido) || efectivoRecibido < total) {
                     return mostrarAlerta(
                         "El efectivo recibido no puede ser menor al total de la venta."

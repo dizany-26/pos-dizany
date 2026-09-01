@@ -311,13 +311,6 @@ public function registrarVenta(Request $request)
                 ->filter(fn ($pago) => (float) ($pago['monto'] ?? 0) > 0)
                 ->values();
 
-            if ($pagosEntrada->count() > 1) {
-                $pagoEfectivoEntrada = $pagosEntrada->firstWhere('metodo_pago', 'efectivo');
-                if ($pagoEfectivoEntrada && ($pagoEfectivoEntrada['efectivo_recibido'] ?? null) === null) {
-                    throw new \Exception('Ingresa el efectivo recibido del cliente.');
-                }
-            }
-
             $pagos = $pagosEntrada
                 ->map(function (array $pago) {
                     $metodo = strtolower(trim((string) $pago['metodo_pago']));

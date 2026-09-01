@@ -337,7 +337,6 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
                 ->name('cajas.operaciones');
         });
         Route::get('/movimientos/reporte', [MovimientoController::class, 'reporte'])
-            ->middleware('role:Administrador')
             ->name('movimientos.reporte');
         Route::get('/movimientos/gastos/{id}/detalle', [MovimientoController::class, 'detalleGasto'])
             ->name('movimientos.gastos.detalle');

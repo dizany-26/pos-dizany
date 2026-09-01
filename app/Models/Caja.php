@@ -34,6 +34,7 @@ class Caja extends Model
         'abierta_en' => 'datetime',
         'cerrada_en' => 'datetime',
         'cierre_solicitado_en' => 'datetime',
+        'cierre_solicitado_en' => 'datetime',
         'monto_inicial' => 'decimal:2',
         'monto_declarado' => 'decimal:2',
         'ingresos_efectivo' => 'decimal:2',
