@@ -88,6 +88,44 @@ Route::get('/', function () {
 Route::get('/catalogo', function () {
     return redirect()->route('inicio');
 })->name('catalogo');
+
+Route::get('/catalogo/producto/{producto}', function (Producto $producto) {
+    $config = ConfiguracionCatalogo::first();
+    $taxProfile = app(TaxProfileService::class)->current();
+    $igv = $taxProfile?->default_tax_treatment === 'gravada'
+        ? max(0, (float) $taxProfile->igv_rate)
+        : 0;
+
+    $detalleProducto = Producto::with(['categoria', 'marca', 'imagenesCatalogo'])
+        ->withSum(['lotes as stock_total' => function ($query) {
+            $query->where('activo', 1)->where('stock_actual', '>', 0);
+        }], 'stock_actual')
+        ->where('visible_en_catalogo', 1)
+        ->where('activo', 1)
+        ->findOrFail($producto->id);
+
+    $productosRelacionados = Producto::with(['categoria', 'imagenesCatalogo'])
+        ->withSum(['lotes as stock_total' => function ($query) {
+            $query->where('activo', 1)->where('stock_actual', '>', 0);
+        }], 'stock_actual')
+        ->where('visible_en_catalogo', 1)
+        ->where('activo', 1)
+        ->whereKeyNot($detalleProducto->id)
+        ->orderByRaw(
+            'CASE WHEN categoria_id = ? THEN 0 WHEN marca_id = ? THEN 1 ELSE 2 END',
+            [$detalleProducto->categoria_id, $detalleProducto->marca_id]
+        )
+        ->orderBy('nombre')
+        ->limit(4)
+        ->get();
+
+    return view('catalogo.index', compact(
+        'config',
+        'igv',
+        'detalleProducto',
+        'productosRelacionados'
+    ));
+})->name('catalogo.producto');
 Route::get('/consultar-comprobante', [PublicElectronicDocumentController::class,'index'])->name('sunat.public.index');
 Route::post('/consultar-comprobante', [PublicElectronicDocumentController::class,'search'])->middleware('throttle:10,1')->name('sunat.public.search');
 Route::get('/consultar-comprobante/{document}/{kind}', [PublicElectronicDocumentController::class,'download'])->whereIn('kind',['pdf','xml'])->name('sunat.public.download');

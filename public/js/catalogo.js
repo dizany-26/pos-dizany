@@ -33,6 +33,7 @@
     let cart = [];
     let modalProduct = null;
     let modalQuantity = 1;
+    let detailQuantity = 1;
     const igvPercent = Math.max(0, Number(data?.dataset.igv || 0));
 
     try {
@@ -53,8 +54,8 @@
     }));
     cart = cart.map(item => {
         const current = currentCatalog.get(String(item.id));
-        return current ? {...item, ...current} : null;
-    }).filter(Boolean);
+        return current ? {...item, ...current} : item;
+    }).filter(item => item?.presentations?.length && item.stock > 0);
 
     const money = value => Number(value || 0).toFixed(2);
     const finalPrice = basePrice => Number(basePrice || 0) * (1 + igvPercent / 100);
@@ -160,6 +161,22 @@
         document.querySelector('[data-modal-plus]').disabled = modalQuantity >= max;
     }
 
+    function updateDetailQuantity() {
+        const purchase = document.querySelector('[data-detail-purchase]');
+        if (!purchase) return;
+        const add = purchase.querySelector('[data-add-product]');
+        const selectedKey = purchase.querySelector('[data-detail-presentation]').value;
+        const presentations = JSON.parse(add.dataset.presentations);
+        const selected = presentations.find(item => item.key === selectedKey) || presentations[0];
+        const max = Math.max(1, Math.floor(Number(add.dataset.stock) / selected.factor));
+        detailQuantity = Math.max(1, Math.min(detailQuantity, max));
+        const price = document.querySelector('[data-detail-price]');
+        if (price) price.textContent = money(finalPrice(selected.price));
+        purchase.querySelector('[data-detail-quantity]').textContent = detailQuantity;
+        purchase.querySelector('[data-detail-minus]').disabled = detailQuantity <= 1;
+        purchase.querySelector('[data-detail-plus]').disabled = detailQuantity >= max;
+    }
+
     function renderCart() {
         cart = cart.filter(item => item.presentations?.length && item.stock > 0);
         let total = 0;
@@ -181,7 +198,7 @@
                     <h4>${escapeHtml(item.name)}</h4>
                     <select data-presentation="${index}">
                         ${item.presentations.filter(p => p.factor <= item.stock).map(p =>
-                            `<option value="${p.key}" ${p.key === selected.key ? 'selected' : ''}>${p.name} · ${p.factor} un. · S/ ${money(finalPrice(p.price))}${igvPercent > 0 ? ' incl. IGV' : ''}</option>`
+                            `<option value="${p.key}" ${p.key === selected.key ? 'selected' : ''}>${p.name} · ${p.factor} un.</option>`
                         ).join('')}
                     </select>
                     <div class="cart-row-controls">
@@ -214,7 +231,10 @@
     document.addEventListener('click', event => {
         const card = event.target.closest('[data-product]');
         if (card && !event.target.closest('[data-add-product]')) {
-            openProduct(card);
+            const detailLink = card.querySelector('.options-button[href]');
+            if (detailLink && !event.target.closest('a, button')) {
+                window.location.href = detailLink.href;
+            }
             return;
         }
         if (event.target.closest('[data-close-product]')) closeProduct();
@@ -265,14 +285,29 @@
             document.querySelectorAll('[data-category]').forEach(el => el.classList.toggle('active', el.dataset.category === 'all'));
             filterProducts();
         }
+        if (event.target.closest('[data-detail-minus]')) {
+            detailQuantity = Math.max(1, detailQuantity - 1);
+            updateDetailQuantity();
+            return;
+        }
+        if (event.target.closest('[data-detail-plus]')) {
+            detailQuantity++;
+            updateDetailQuantity();
+            return;
+        }
         const add = event.target.closest('[data-add-product]');
         if (add) {
             const presentations = JSON.parse(add.dataset.presentations);
+            const detailPurchase = add.closest('[data-detail-purchase]');
+            const selectedKey = detailPurchase?.querySelector('[data-detail-presentation]')?.value
+                || presentations[0].key;
+            const requestedQuantity = detailPurchase ? detailQuantity : 1;
             const existing = cart.find(item => item.id === add.dataset.id);
             if (existing) {
+                existing.presentation = selectedKey;
                 const selected = presentation(existing);
                 const max = Math.floor(existing.stock / selected.factor);
-                existing.quantity = Math.min(existing.quantity + 1, max);
+                existing.quantity = Math.min(existing.quantity + requestedQuantity, max);
             } else {
                 cart.push({
                     id: add.dataset.id,
@@ -280,12 +315,18 @@
                     image: add.dataset.image,
                     stock: Number(add.dataset.stock),
                     presentations,
-                    presentation: presentations[0].key,
-                    quantity: 1
+                    presentation: selectedKey,
+                    quantity: requestedQuantity
                 });
             }
             renderCart();
-            animateToCart(add.closest('[data-product]').querySelector('.product-visual'));
+            animateToCart(add.closest('[data-product]')?.querySelector('.product-visual')
+                || add.closest('[data-detail-product]')?.querySelector('.catalog-detail-main-image')
+                || add);
+            if (detailPurchase) {
+                detailQuantity = 1;
+                updateDetailQuantity();
+            }
             return;
         }
 
@@ -321,6 +362,11 @@
         if (event.target.matches('[data-modal-presentation]')) {
             modalQuantity = 1;
             updateModal();
+            return;
+        }
+        if (event.target.matches('[data-detail-presentation]')) {
+            detailQuantity = 1;
+            updateDetailQuantity();
             return;
         }
         if (!event.target.matches('[data-presentation]')) return;
@@ -413,20 +459,32 @@
         document.getElementById('noResults').hidden = visible > 0;
     }
 
-    document.getElementById('searchInput').addEventListener('input', filterProducts);
-    document.getElementById('categoryFilter').addEventListener('click', event => {
+    document.getElementById('searchInput')?.addEventListener('input', filterProducts);
+    document.getElementById('categoryFilter')?.addEventListener('click', event => {
         const button = event.target.closest('[data-category]');
         if (!button) return;
         category = button.dataset.category;
         document.querySelectorAll('[data-category]').forEach(el => el.classList.toggle('active', el === button));
         filterProducts();
     });
+    document.querySelectorAll('[data-detail-thumbnail]').forEach(button => {
+        button.addEventListener('click', () => {
+            const mainImage = document.querySelector('[data-detail-main-image]');
+            if (!mainImage) return;
+            mainImage.src = button.dataset.detailThumbnail;
+            mainImage.parentElement?.style.setProperty('--product-image', `url("${button.dataset.detailThumbnail}")`);
+            document.querySelectorAll('[data-detail-thumbnail]').forEach(item => {
+                item.classList.toggle('active', item === button);
+            });
+        });
+    });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             closeCart();
-            closeProduct();
+            if (document.querySelector('[data-product-modal]')) closeProduct();
         }
     });
     document.querySelector('[data-customer-address]').required = true;
+    updateDetailQuantity();
     renderCart();
 })();

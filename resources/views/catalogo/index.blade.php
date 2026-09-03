@@ -1,9 +1,12 @@
 @extends('layouts.catalogo')
 
-@section('title', ($config->nombre_empresa ?? 'DIZANY') . ' | Catálogo')
+@section('title', isset($detalleProducto)
+    ? $detalleProducto->nombre . ' | ' . ($config->nombre_empresa ?? 'DIZANY')
+    : ($config->nombre_empresa ?? 'DIZANY') . ' | Catálogo')
 
 @push('styles')
     <link href="{{ asset('css/catalago/catalago.css') }}?v={{ filemtime(public_path('css/catalago/catalago.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/catalago/producto-detalle.css') }}?v={{ filemtime(public_path('css/catalago/producto-detalle.css')) }}" rel="stylesheet">
 @endpush
 
 @section('content')
@@ -81,6 +84,9 @@
 </header>
 
 <main>
+    @if(isset($detalleProducto))
+        @include('catalogo.partials.producto-detalle')
+    @else
     <section class="catalog-shell" id="productos">
         <aside class="catalog-sidebar" data-catalog-sidebar>
             <div class="sidebar-head">
@@ -161,7 +167,6 @@
                     <div class="product-info">
                         <span class="product-category">{{ $producto->categoria->nombre ?? 'Producto' }}</span>
                         <h3>{{ $producto->nombre }}</h3>
-                        <p>{{ $producto->descripcion ?: 'Disponible en nuestra tienda.' }}</p>
                         @if($presentaciones->isNotEmpty())
                             <div class="product-presentations" aria-label="Presentaciones disponibles">
                                 @foreach($presentaciones as $presentacion)
@@ -181,9 +186,9 @@
                                     @if($igv > 0)<span class="tax-included">Incl. IGV</span>@endif
                                 </div>
                                 <div class="product-actions">
-                                    <button type="button" class="options-button" data-view-product {{ $stock <= 0 ? 'disabled' : '' }}>
+                                    <a href="{{ route('catalogo.producto', $producto) }}" class="options-button">
                                         Detalles
-                                    </button>
+                                    </a>
                                     <button type="button" class="add-button" {{ $stock <= 0 ? 'disabled' : '' }}
                                         data-add-product
                                         data-id="{{ $producto->id }}"
@@ -209,6 +214,7 @@
         </div>
         </div>
     </section>
+    @endif
 </main>
 
 <footer class="site-footer">
