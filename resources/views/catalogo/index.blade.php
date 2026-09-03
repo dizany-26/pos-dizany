@@ -182,7 +182,7 @@
                                 </div>
                                 <div class="product-actions">
                                     <button type="button" class="options-button" data-view-product {{ $stock <= 0 ? 'disabled' : '' }}>
-                                        Ver opciones
+                                        Detalles
                                     </button>
                                     <button type="button" class="add-button" {{ $stock <= 0 ? 'disabled' : '' }}
                                         data-add-product

@@ -221,3 +221,35 @@ body.modal-open{overflow:hidden}
     :root[data-catalog-theme='dark'] .header-store-details{border-color:#29415f}
     :root[data-catalog-theme='dark'] .modal-actions{background:#0f2038}
 }
+
+/* Descripciones uniformes: evita que una tarjeta crezca por textos largos. */
+.product-card .product-info > p {
+    display: -webkit-box;
+    height: auto;
+    min-height: 3.1em;
+    margin: 0;
+    overflow: hidden;
+    line-height: 1.55;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+@media(max-width:780px) {
+    .product-card .product-info > p {
+        display: -webkit-box;
+        min-height: 2.9em;
+        font-size: 9px;
+        line-height: 1.45;
+        -webkit-line-clamp: 2;
+    }
+
+    .product-actions .options-button {
+        padding: 0 5px;
+        font-size: 9px;
+    }
+
+    .product-actions .options-button::before {
+        content: none;
+    }
+}
