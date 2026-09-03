@@ -23,7 +23,70 @@
 }
 
 .productos-table-scroll .productos-table {
-    min-width: 1080px;
+    width: 100%;
+    min-width: 1050px;
+    table-layout: fixed;
+}
+
+.productos-table th:nth-child(1),
+.productos-table td:nth-child(1) { width: 95px; }
+.productos-table th:nth-child(2),
+.productos-table td:nth-child(2) { width: 145px; }
+.productos-table th:nth-child(3),
+.productos-table td:nth-child(3) { width: 220px; }
+.productos-table th:nth-child(5),
+.productos-table td:nth-child(5) { width: 100px; }
+.productos-table th:nth-child(6),
+.productos-table td:nth-child(6) { width: 120px; }
+.productos-table th:nth-child(7),
+.productos-table td:nth-child(7) { width: 125px; }
+
+.productos-table td:nth-child(3) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.producto-description-cell {
+    white-space: normal !important;
+    vertical-align: middle;
+}
+
+.producto-description-wrap {
+    min-width: 0;
+}
+
+.producto-description-text {
+    display: -webkit-box;
+    overflow: hidden;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.producto-description-wrap.is-expanded .producto-description-text {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+}
+
+.producto-description-toggle {
+    display: inline-flex;
+    margin-top: 5px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #1677e8;
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.producto-description-toggle:hover {
+    text-decoration: underline;
+}
+
+:root[data-theme='dark'] .producto-description-toggle {
+    color: #74adff;
 }
 
 .productos-table-scroll::-webkit-scrollbar {
@@ -77,6 +140,30 @@
     .productos-table-scroll .productos-table td > * {
         min-width: 0;
         max-width: 100%;
+    }
+
+    .productos-table-scroll .producto-description-cell {
+        align-items: flex-start;
+    }
+
+    .productos-table-scroll .producto-description-cell::before {
+        flex: 0 0 82px;
+        max-width: 82px;
+        overflow-wrap: normal;
+    }
+
+    .productos-table-scroll .producto-description-wrap {
+        flex: 1 1 auto;
+        width: calc(100% - 94px);
+        text-align: left;
+    }
+
+    .productos-table-scroll .producto-description-text {
+        -webkit-line-clamp: 2;
+    }
+
+    .productos-table-scroll .producto-description-toggle {
+        display: none;
     }
 }
 

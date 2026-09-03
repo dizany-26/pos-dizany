@@ -130,8 +130,17 @@ Productos
                             {{ $producto->nombre }}
                         </td>
 
-                        <td data-label="Descripción" class="text-start">
-                            {{ $producto->descripcion }}
+                        <td data-label="Descripción" class="text-start producto-description-cell">
+                            <div class="producto-description-wrap">
+                                <span class="producto-description-text">{{ $producto->descripcion ?: 'Sin descripción' }}</span>
+                                @if(mb_strlen((string) $producto->descripcion) > 90)
+                                    <button type="button"
+                                            class="producto-description-toggle"
+                                            aria-expanded="false">
+                                        Ver más
+                                    </button>
+                                @endif
+                            </div>
                         </td>
 
                         <td data-label="Precio" class="text-center">
@@ -534,6 +543,16 @@ Productos
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+
+        document.querySelectorAll('.producto-description-toggle').forEach(button => {
+            button.addEventListener('click', function () {
+                const wrapper = this.closest('.producto-description-wrap');
+                const expanded = wrapper.classList.toggle('is-expanded');
+
+                this.textContent = expanded ? 'Ver menos' : 'Ver más';
+                this.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            });
+        });
 
         const inputSearch = document.querySelector('input[name="search"]');
         const selectCategoria = document.querySelector('select[name="categoria_id"]');
