@@ -2,6 +2,16 @@
     align-items: stretch;
 }
 
+.parametros-grid > [class*="col"],
+.parametros-card,
+.parametros-card .card-header,
+.parametros-card .card-body,
+.parametros-table-scroll,
+.parametros-table-scroll > div {
+    min-width: 0;
+    max-width: 100%;
+}
+
 .parametros-card {
     display: flex;
     flex-direction: column;
@@ -17,15 +27,187 @@
 .parametros-table-scroll {
     width: 100%;
     height: 500px;
-    overflow-y: auto;
+    min-height: 0;
+    overflow-x: auto !important;
+    overflow-y: scroll !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
 }
 
-@media (max-width: 767.98px) {
+.parametros-table-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.parametros-table-scroll::-webkit-scrollbar-track {
+    background: rgba(127, 146, 170, .12);
+    border-radius: 999px;
+}
+
+.parametros-table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(77, 125, 183, .72);
+    border-radius: 999px;
+}
+
+/* El sidebar reduce bastante el espacio útil en móviles apaisados y tablets;
+   por eso esta vista pasa a una columna antes que el breakpoint global. */
+@media (max-width: 991.98px) {
+    .parametros-grid {
+        --bs-gutter-x: 0;
+    }
+
+    .parametros-grid > [class*="col"] {
+        width: 100%;
+        padding-right: 0;
+        padding-left: 0;
+    }
+
     .parametros-card {
+        width: 100%;
         height: auto;
+        margin-top: .75rem !important;
+        margin-bottom: .75rem !important;
+    }
+
+    .parametros-card .card-header {
+        padding: 1rem;
+    }
+
+    .parametros-card .card-header > .d-flex {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: .75rem;
+    }
+
+    .parametros-card .card-header > .d-flex > .d-flex {
+        width: 100%;
+        min-width: 0;
+        gap: .5rem !important;
+    }
+
+    .parametros-card .ui-search-wrapper {
+        width: auto !important;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .parametros-card .card-body {
+        padding: .75rem;
     }
 
     .parametros-table-scroll {
-        height: 420px;
+        width: 100%;
+        height: min(420px, 55dvh);
+        overflow-x: hidden !important;
+    }
+}
+
+/* Solo el móvil vertical/angosto usa las filas convertidas en tarjetas. */
+@media (max-width: 767.98px) {
+    .parametros-table-scroll .ui-table,
+    .parametros-table-scroll .ui-table tbody {
+        display: block;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        table-layout: fixed;
+    }
+
+    .parametros-table-scroll .ui-table tr {
+        display: block;
+        width: calc(100% - 2px) !important;
+        min-width: 0 !important;
+        max-width: calc(100% - 2px) !important;
+        margin-right: 1px;
+        margin-left: 1px;
+        padding: 12px;
+        box-sizing: border-box;
+    }
+
+    .parametros-table-scroll .ui-table td {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        gap: 12px;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        box-sizing: border-box;
+    }
+
+    .parametros-table-scroll .ui-table td > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+
+/* Tablet vertical: una sola sección por fila, pero con tabla compacta en vez
+   de las tarjetas grandes que usa el teléfono. */
+@media (min-width: 600px) and (max-width: 991.98px) {
+    .parametros-table-scroll .ui-table {
+        display: table !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .parametros-table-scroll .ui-table thead {
+        display: table-header-group !important;
+    }
+
+    .parametros-table-scroll .ui-table tbody {
+        display: table-row-group !important;
+        width: auto !important;
+    }
+
+    .parametros-table-scroll .ui-table tr {
+        display: table-row !important;
+        width: auto !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .parametros-table-scroll .ui-table td {
+        display: table-cell !important;
+        width: auto !important;
+        padding: .75rem !important;
+        border-bottom: var(--bs-border-width) solid var(--bs-border-color) !important;
+        white-space: normal !important;
+    }
+
+    .parametros-table-scroll .ui-table td::before {
+        display: none !important;
+        content: none !important;
+    }
+}
+
+/* Tablet horizontal: mantiene los dos paneles, pero evita que título,
+   buscador y botón compitan por una sola línea estrecha. */
+@media (min-width: 992px) and (max-width: 1399.98px) {
+    .parametros-card .card-header > .d-flex {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: .75rem;
+    }
+
+    .parametros-card .card-header > .d-flex > .d-flex {
+        width: 100%;
+        min-width: 0;
+        gap: .5rem !important;
+    }
+
+    .parametros-card .ui-search-wrapper {
+        width: auto !important;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .parametros-card .card-header .btn-soft {
+        flex: 0 0 auto;
     }
 }

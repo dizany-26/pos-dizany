@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
+    <link href="{{ asset('css/productos.css') }}?v={{ filemtime(public_path('css/productos.css')) }}" rel="stylesheet" />
     <link href="{{ asset('css/mostrar_detalles_productos.css') }}?v={{ filemtime(public_path('css/mostrar_detalles_productos.css')) }}" rel="stylesheet" />
 @endpush
 
@@ -92,8 +93,8 @@ Productos
         </form>
 
         <!-- Tabla de productos -->
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
+        <div class="table-responsive productos-table-scroll">
+            <table class="table table-hover align-middle mb-0 ui-table text-nowrap productos-table">
                 <thead class="table-light">
                     <tr>
                         <th class="text-center">Imagen</th>
