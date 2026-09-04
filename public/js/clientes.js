@@ -156,10 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const search = document.getElementById('searchCliente');
-    let searchTimer = null;
-    search?.addEventListener('input', () => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(async () => {
+    const initialSearch = search?.value ?? '';
+    const runSearch = async () => {
             const url = new URL(window.location.href);
             search.value.trim() ? url.searchParams.set('search', search.value.trim()) : url.searchParams.delete('search');
             try {
@@ -169,6 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('clientesTableContent').innerHTML = documentResult.getElementById('clientesTableContent').innerHTML;
                 window.history.replaceState({}, '', url);
             } catch (_) {}
-        }, 280);
+    };
+    search?.addEventListener('keydown', event => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        runSearch();
+    });
+    search?.addEventListener('blur', () => {
+        if (search.value !== initialSearch) runSearch();
     });
 });

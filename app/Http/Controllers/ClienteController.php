@@ -22,7 +22,8 @@ class ClienteController extends Controller
                 });
             })
             ->orderBy('nombre')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('clientes.index', compact('clientes'));
     }

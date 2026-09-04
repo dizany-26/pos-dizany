@@ -439,9 +439,6 @@ Nuevo Producto
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="{{ asset('js/validarCodigoBarras.js') }}"></script>
     <script src="{{ asset('js/productoScanner.js') }}?v={{ filemtime(public_path('js/productoScanner.js')) }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
     $(function () {
         $('#categoria_id').select2({

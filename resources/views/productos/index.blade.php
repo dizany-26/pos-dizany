@@ -46,6 +46,7 @@ Productos
         <!-- Filtro y buscador -->
         <form method="GET"
             action="{{ route('productos.index') }}"
+            id="productosFiltros"
             class="row g-3 align-items-end mb-4">
 
             <div class="col-md-3">
@@ -554,46 +555,23 @@ Productos
             });
         });
 
-        const inputSearch = document.querySelector('input[name="search"]');
-        const selectCategoria = document.querySelector('select[name="categoria_id"]');
-        const selectMarca = document.querySelector('select[name="marca_id"]');
-        const rows = document.querySelectorAll('.ui-table tbody tr');
+        const form = document.getElementById('productosFiltros');
+        const inputSearch = form?.querySelector('input[name="search"]');
+        const selects = form?.querySelectorAll('select[name="categoria_id"], select[name="marca_id"]') || [];
+        const submitFilters = () => form?.requestSubmit();
+        const initialSearch = inputSearch?.value ?? '';
 
-        function filtrar() {
+        inputSearch?.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitFilters();
+            }
+        });
+        inputSearch?.addEventListener('blur', () => {
+            if (inputSearch.value !== initialSearch) submitFilters();
+        });
 
-            const texto = inputSearch.value.toLowerCase();
-            const categoria = selectCategoria.value;
-            const marca = selectMarca.value;
-
-            rows.forEach(row => {
-
-                const nombre = row.dataset.nombre || '';
-                const codigo = row.dataset.codigo || '';
-                const rowCategoria = row.dataset.categoria;
-                const rowMarca = row.dataset.marca;
-
-                let coincideBusqueda =
-                    nombre.includes(texto) ||
-                    codigo.includes(texto);
-
-                let coincideCategoria =
-                    categoria === 'todos' || categoria === rowCategoria;
-
-                let coincideMarca =
-                    marca === 'todos' || marca === rowMarca;
-
-                if (coincideBusqueda && coincideCategoria && coincideMarca) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-
-            });
-        }
-
-        inputSearch.addEventListener('input', filtrar);
-        selectCategoria.addEventListener('change', filtrar);
-        selectMarca.addEventListener('change', filtrar);
+        selects.forEach(select => select.addEventListener('change', submitFilters));
 
     });
 </script>

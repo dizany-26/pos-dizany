@@ -54,7 +54,7 @@ class ProductoController extends Controller
     // ===============================
     // PAGINACIÓN
     // ===============================
-    $productos = $query->orderBy('id', 'desc')->paginate(10);
+    $productos = $query->orderBy('id', 'desc')->paginate(10)->withQueryString();
 
     // ===============================
     // CALCULAR STOCK Y PRECIO DESDE LOTES

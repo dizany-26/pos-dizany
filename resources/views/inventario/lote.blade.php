@@ -293,10 +293,6 @@ Ingreso de inventario
 @endpush
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     flatpickr('.date-ingreso', { locale: 'es', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd F Y', disableMobile: true });

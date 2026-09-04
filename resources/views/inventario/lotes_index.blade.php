@@ -51,6 +51,57 @@
         color: #075bbb;
     }
 
+    .lot-product {
+        width: 235px;
+        max-width: 235px;
+        line-height: 1.35;
+    }
+
+    .lot-product-description {
+        display: block;
+        margin-top: 3px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .lot-product-toggle {
+        display: inline-flex;
+        margin-top: 3px;
+        padding: 0;
+        border: 0;
+        color: #1677ff;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .lot-product-toggle:hover {
+        color: #075bbb;
+    }
+
+    /* La tabla conserva todas sus columnas y se desplaza en pantallas
+       horizontales en lugar de recortarse contra el borde del contenido. */
+    .table-responsive.ui-scroll {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x pan-y;
+    }
+
+    .table-responsive.ui-scroll > .tabla-scroll {
+        width: max-content;
+        min-width: 1050px;
+    }
+
+    .table-responsive.ui-scroll > .tabla-scroll > table {
+        width: 100%;
+        min-width: 1050px;
+    }
+
 </style>
 @endpush
 {{-- BOTÓN ATRÁS --}}
@@ -287,11 +338,25 @@
                                 </td>
 
                                 {{-- PRODUCTO --}}
-                                <td data-label="Producto">
-                                    <strong>{{ $lote->producto->nombre ?? '—' }}</strong><br>
-                                    <small class="text-muted">
-                                        {{ \Illuminate\Support\Str::limit($lote->producto->descripcion ?? '', 50) }}
-                                    </small>
+                                <td data-label="Producto" class="lot-product">
+                                    @php
+                                        $descripcionProducto = trim((string) ($lote->producto->descripcion ?? ''));
+                                        $descripcionEsLarga = mb_strlen($descripcionProducto) > 50;
+                                    @endphp
+                                    <strong>{{ $lote->producto->nombre ?? '—' }}</strong>
+                                    @if($descripcionProducto !== '')
+                                        <small class="text-muted lot-product-description lot-product-short">
+                                            {{ $descripcionEsLarga ? \Illuminate\Support\Str::limit($descripcionProducto, 50) : $descripcionProducto }}
+                                        </small>
+                                        @if($descripcionEsLarga)
+                                            <small class="text-muted lot-product-description lot-product-full d-none">
+                                                {{ $descripcionProducto }}
+                                            </small>
+                                            <button type="button" class="lot-product-toggle" aria-expanded="false">
+                                                Ver más
+                                            </button>
+                                        @endif
+                                    @endif
                                 </td>
 
                                 {{-- PROVEEDOR --}}
@@ -390,6 +455,20 @@
 
 <script>
     document.addEventListener('click', function (event) {
+        const productButton = event.target.closest('.lot-product-toggle');
+        if (productButton) {
+            const cell = productButton.closest('.lot-product');
+            const shortDescription = cell.querySelector('.lot-product-short');
+            const fullDescription = cell.querySelector('.lot-product-full');
+            const expanded = productButton.getAttribute('aria-expanded') === 'true';
+
+            shortDescription.classList.toggle('d-none', !expanded);
+            fullDescription.classList.toggle('d-none', expanded);
+            productButton.setAttribute('aria-expanded', String(!expanded));
+            productButton.textContent = expanded ? 'Ver más' : 'Ver menos';
+            return;
+        }
+
         const button = event.target.closest('.lot-provider-toggle');
         if (!button) return;
 

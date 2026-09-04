@@ -35,6 +35,21 @@
             dropdownParent: window.jQuery(dropdownParent)
         });
 
+        // Select2 actualiza el <select> oculto mediante jQuery. Algunas pantallas
+        // escuchan el evento nativo para ejecutar sus filtros; este puente mantiene
+        // ambos mecanismos sincronizados sin obligar a cada vista a conocer Select2.
+        let nativeChangeAt = 0;
+        select.addEventListener('change', () => {
+            nativeChangeAt = window.performance.now();
+        });
+
+        window.jQuery(select)
+            .off('select2:select.uiNativeBridge select2:clear.uiNativeBridge')
+            .on('select2:select.uiNativeBridge select2:clear.uiNativeBridge', function () {
+                if (window.performance.now() - nativeChangeAt < 50) return;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+
         if (searchable) {
             window.jQuery(select).on('select2:open.uiModernControls', function () {
                 const input = document.querySelector('.select2-container--open .select2-search__field');

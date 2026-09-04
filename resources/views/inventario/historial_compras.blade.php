@@ -125,17 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const search = form.querySelector('input[name="buscar"]');
-    const normalize = value => (value || '').toString().toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-    search?.addEventListener('input', () => {
-        const term = normalize(search.value);
-        let visibles = 0;
-        document.querySelectorAll('.compra-history-row').forEach(row => {
-            const visible = !term || normalize(row.dataset.search).includes(term);
-            row.classList.toggle('d-none', !visible);
-            if (visible) visibles++;
-        });
-        document.getElementById('sinResultadosLocales')?.classList.toggle('d-none', visibles > 0);
+    const initialSearch = search?.value ?? '';
+    search?.addEventListener('keydown', event => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        form.requestSubmit();
+    });
+    search?.addEventListener('blur', () => {
+        if (search.value !== initialSearch) form.requestSubmit();
     });
 });
 </script>

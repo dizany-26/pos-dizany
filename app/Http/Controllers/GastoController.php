@@ -47,7 +47,7 @@ class GastoController extends Controller
         }
 
         // Obtener los gastos filtrados
-        $gastos = $query->paginate(10);
+        $gastos = $query->paginate(10)->withQueryString();
         $usuarios = User::all(); // Para el filtro de usuario
 
         // Si la solicitud es AJAX, devolver la vista actualizada

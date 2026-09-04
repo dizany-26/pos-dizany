@@ -437,7 +437,15 @@
     border-radius: 16px !important;
 }
 
-.table-responsive,
+.table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+}
+
 .offcanvas,
 .modal-content {
     overflow: hidden;

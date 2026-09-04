@@ -42,25 +42,25 @@ Gastos
         </div>
         <div class="card-body px-4 pb-4">
             <!-- Filtros Dinámicos -->
-            <div class="row g-3 mb-3 filters-group">
+            <form method="GET" action="{{ route('gastos.index') }}" id="filtrosGastos" class="row g-3 mb-3 filters-group">
                 <div class="col-12 col-md-4">
                     <label for="filter-date" class="form-label">: Por Fecha:</label>
-                    <input type="text" id="filter-date" class="form-control" placeholder="Selecciona una fecha">
+                    <input type="text" id="filter-date" name="fecha" value="{{ request('fecha', now()->toDateString()) }}" class="form-control" placeholder="Selecciona una fecha">
                 </div>
                 <div class="col-12 col-md-4">
                     <label for="filter-descripcion" class="form-label">: Por Descripción:</label>
-                    <input type="text" id="filter-descripcion" class="form-control" placeholder="Filtrar por descripción">
+                    <input type="text" id="filter-descripcion" name="descripcion" value="{{ request('descripcion') }}" class="form-control" placeholder="Filtrar por descripción">
                 </div>
                 <div class="col-12 col-md-4">
                     <label for="filter-usuario" class="form-label">: Por Usuario:</label>
-                    <select id="filter-usuario" class="form-select">
+                    <select id="filter-usuario" name="usuario" class="form-select">
                         <option value="">Seleccione un usuario</option>
                         @foreach($usuarios as $usuario)
-                            <option value="{{ $usuario->id }}">{{ $usuario->nombre }}</option>
+                            <option value="{{ $usuario->id }}" @selected((string) request('usuario') === (string) $usuario->id)>{{ $usuario->nombre }}</option>
                         @endforeach
                     </select>
                 </div>
-            </div>
+            </form>
 
             <!-- Mensaje de no encontrados -->
             <div id="no-gastos-msg" class="alert alert-warning d-none">
@@ -154,28 +154,21 @@ Gastos
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const form               = document.getElementById("filtrosGastos");
     const inputFecha         = document.getElementById("filter-date");
     const filterDescripcion  = document.getElementById("filter-descripcion");
     const filterUsuario      = document.getElementById("filter-usuario");
-    const noGastosMsg        = document.getElementById("no-gastos-msg");
     const totalGastosEl      = document.getElementById("total-gastos");
-
-     // Establecer el valor predeterminado de fecha como hoy (sin hora)
-    const today = new Date();
-    const todayFormatted = today.toLocaleDateString("en-CA"); // "YYYY-MM-DD"
-    inputFecha.value = todayFormatted;
+    const initialDescription = filterDescripcion.value;
 
     // Usar flatpickr para seleccionar la fecha
     flatpickr("#filter-date", {
         dateFormat: "Y-m-d", // Formato de la fecha
-        defaultDate: todayFormatted,
+        defaultDate: inputFecha.value,
         onChange: function () {
-            filtrarTabla(); // Filtra cada vez que la fecha cambia
+            form.requestSubmit();
         }
     });
 
@@ -191,48 +184,16 @@ document.addEventListener("DOMContentLoaded", function () {
         totalGastosEl.textContent = `S/ ${suma.toFixed(2)}`;
     }
 
-    // Petición AJAX y renderizado de la tabla filtrada
-    function filtrarTabla() {
-        const fechaValue       = inputFecha.value.trim();
-        const descripcionValue = filterDescripcion.value.trim().toLowerCase();
-        const usuarioValue     = filterUsuario.value.trim();
-        const url              = "{{ route('gastos.index') }}";
-
-        $.ajax({
-            url: url,
-            type: 'GET',
-            data: {
-                fecha: fechaValue,
-                descripcion: descripcionValue,
-                usuario: usuarioValue
-            },
-            success: function (response) {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(response, 'text/html');
-                document.getElementById("tabla-gastos").innerHTML =
-                    doc.querySelector('#tabla-gastos').innerHTML;
-
-                // Mostrar u ocultar mensaje
-                noGastosMsg.classList.toggle('d-none',
-                    document.querySelectorAll('#tabla-gastos tr').length > 0
-                );
-
-                // Recalcular total
-                calcularTotal();
-            },
-            error: function (xhr, status, error) {
-                console.error("Error al filtrar los datos:", error);
-            }
-        });
-    }
-
-    // Listeners de filtro
-    inputFecha.addEventListener("input", filtrarTabla);
-    filterDescripcion.addEventListener("input", filtrarTabla);
-    filterUsuario.addEventListener("change", filtrarTabla);
-
-    // Filtrar y calcular al cargar la página
-    filtrarTabla();
+    filterDescripcion.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        form.requestSubmit();
+    });
+    filterDescripcion.addEventListener("blur", () => {
+        if (filterDescripcion.value !== initialDescription) form.requestSubmit();
+    });
+    filterUsuario.addEventListener("change", () => form.requestSubmit());
+    calcularTotal();
 });
 </script>
 

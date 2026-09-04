@@ -237,10 +237,6 @@ Panel de Editar
 @endpush
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         flatpickr('.fecha-vencimiento-edit', {

@@ -208,11 +208,13 @@
     </script>
     @endif
 
-    {{-- ✅ Cada vista inyecta sus scripts --}}
-    @stack('scripts')
+    {{-- Dependencias compartidas: se cargan antes de los scripts de cada vista. --}}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+    {{-- ✅ Cada vista inyecta sus scripts --}}
+    @stack('scripts')
     <script src="{{ asset('js/modern-controls.js') }}?v={{ filemtime(public_path('js/modern-controls.js')) }}"></script>
 
 </body>

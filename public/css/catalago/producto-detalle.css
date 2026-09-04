@@ -66,15 +66,18 @@
 
 .catalog-detail-main-image.has-product-image,
 .catalog-related-card > div.has-product-image {
-    background-image: var(--product-image);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
+    background-color: #fff;
 }
 
 .catalog-detail-main-image.has-product-image > img,
 .catalog-related-card > div.has-product-image > img {
-    visibility: hidden;
+    visibility: visible;
+    opacity: 1;
+}
+
+:root[data-catalog-theme='dark'] .catalog-detail-main-image.has-product-image,
+:root[data-catalog-theme='dark'] .catalog-related-card > div.has-product-image {
+    background-color: #fff;
 }
 
 .catalog-related-sold-out {
