@@ -372,6 +372,7 @@
 
     document.querySelector('[data-send-order]').addEventListener('click', async event => {
         const sendButton = event.currentTarget;
+        const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
         const customer = {
             name: document.querySelector('[data-customer-name]').value.trim(),
             phone: document.querySelector('[data-customer-phone]').value.trim(),
@@ -386,9 +387,10 @@
             return;
         }
         error.hidden = true;
-        // Se abre dentro del gesto del usuario para que navegadores móviles no
-        // bloqueen WhatsApp mientras el pedido se registra en el servidor.
-        const whatsappWindow = window.open('', '_blank');
+        // En escritorio reservamos una pestaña durante el gesto del usuario para
+        // evitar el bloqueo de ventanas emergentes. En móvil navegamos en la misma
+        // pestaña al esquema nativo para abrir directamente la aplicación.
+        const whatsappWindow = isMobileDevice ? null : window.open('', '_blank');
         if (whatsappWindow) whatsappWindow.opener = null;
         sendButton.disabled = true;
         const originalButtonHtml = sendButton.innerHTML;
@@ -475,7 +477,10 @@
             '',
             `_Pedido generado desde el catálogo de ${data.dataset.business}._`
         ].filter(line => line !== null).join('\n');
-        const whatsappUrl = `https://wa.me/${data.dataset.phone}?text=${encodeURIComponent(message)}`;
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = isMobileDevice
+            ? `whatsapp://send?phone=${data.dataset.phone}&text=${encodedMessage}`
+            : `https://api.whatsapp.com/send/?phone=${data.dataset.phone}&text=${encodedMessage}&type=phone_number&app_absent=0`;
         if (whatsappWindow) whatsappWindow.location.href = whatsappUrl;
         else window.location.href = whatsappUrl;
         cart = [];
