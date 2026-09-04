@@ -370,9 +370,8 @@
         renderCart();
     });
 
-    document.querySelector('[data-send-order]').addEventListener('click', async event => {
+    document.querySelector('[data-send-order]').addEventListener('click', event => {
         const sendButton = event.currentTarget;
-        const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
         const customer = {
             name: document.querySelector('[data-customer-name]').value.trim(),
             phone: document.querySelector('[data-customer-phone]').value.trim(),
@@ -387,40 +386,34 @@
             return;
         }
         error.hidden = true;
-        // En escritorio reservamos una pestaña durante el gesto del usuario para
-        // evitar el bloqueo de ventanas emergentes. En móvil navegamos en la misma
-        // pestaña al esquema nativo para abrir directamente la aplicación.
-        const whatsappWindow = isMobileDevice ? null : window.open('', '_blank');
-        if (whatsappWindow) whatsappWindow.opener = null;
         sendButton.disabled = true;
         const originalButtonHtml = sendButton.innerHTML;
         sendButton.textContent = 'Preparando pedido...';
 
         let orderCode;
         try {
-            const response = await fetch('/catalogo/pedidos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            // La petición es síncrona a propósito: conserva el gesto del clic para
+            // que el enlace de WhatsApp vuelva a abrir directamente la app móvil.
+            const request = new XMLHttpRequest();
+            request.open('POST', '/catalogo/pedidos', false);
+            request.setRequestHeader('Content-Type', 'application/json');
+            request.setRequestHeader('Accept', 'application/json');
+            request.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]')?.content || '');
+            request.send(JSON.stringify({
+                cliente: {
+                    nombre: customer.name,
+                    telefono: customer.phone,
+                    entrega: customer.delivery,
+                    direccion: customer.address
                 },
-                body: JSON.stringify({
-                    cliente: {
-                        nombre: customer.name,
-                        telefono: customer.phone,
-                        entrega: customer.delivery,
-                        direccion: customer.address
-                    },
-                    items: cart.map(item => ({
-                        producto_id: Number(item.id),
-                        presentacion: presentation(item).key,
-                        cantidad: item.quantity
-                    }))
-                })
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) {
+                items: cart.map(item => ({
+                    producto_id: Number(item.id),
+                    presentacion: presentation(item).key,
+                    cantidad: item.quantity
+                }))
+            }));
+            const result = JSON.parse(request.responseText || '{}');
+            if (request.status < 200 || request.status >= 300 || !result.success) {
                 const validation = result.errors
                     ? Object.values(result.errors).flat().find(Boolean)
                     : null;
@@ -428,7 +421,6 @@
             }
             orderCode = result.pedido.codigo;
         } catch (requestError) {
-            whatsappWindow?.close();
             sendButton.disabled = false;
             sendButton.innerHTML = originalButtonHtml;
             error.textContent = requestError.message || 'No se pudo registrar el pedido. Inténtalo nuevamente.';
@@ -477,12 +469,7 @@
             '',
             `_Pedido generado desde el catálogo de ${data.dataset.business}._`
         ].filter(line => line !== null).join('\n');
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = isMobileDevice
-            ? `whatsapp://send?phone=${data.dataset.phone}&text=${encodedMessage}`
-            : `https://api.whatsapp.com/send/?phone=${data.dataset.phone}&text=${encodedMessage}&type=phone_number&app_absent=0`;
-        if (whatsappWindow) whatsappWindow.location.href = whatsappUrl;
-        else window.location.href = whatsappUrl;
+        window.open(`https://wa.me/${data.dataset.phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
         cart = [];
         renderCart();
         closeCart();
