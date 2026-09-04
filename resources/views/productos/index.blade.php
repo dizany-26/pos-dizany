@@ -35,9 +35,13 @@ Productos
 
     {{-- HEADER --}}
     <div class="card-header text-center pt-4">
-        <h4 class="mb-0 fw-semibold">
+        <h4 class="mb-0 fw-semibold products-list-title">
             <i class="fa-solid fa-box me-2 text-primary"></i>
-            Lista de Productos
+            <span>Lista de Productos</span>
+            <span class="products-total-badge" title="Total de productos registrados">
+                <strong>{{ number_format($totalProductos) }}</strong>
+                {{ $totalProductos === 1 ? 'producto' : 'productos' }}
+            </span>
         </h4>
     </div>
 

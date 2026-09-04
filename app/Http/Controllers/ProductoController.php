@@ -20,6 +20,7 @@ class ProductoController extends Controller
 
     // categorías y marcas para filtros
     extract($this->obtenerCategoriasYMarcas());
+    $totalProductos = Producto::count();
 
     // ===============================
     // QUERY BASE DE PRODUCTOS
@@ -75,7 +76,8 @@ class ProductoController extends Controller
     return view('productos.index', compact(
         'productos',
         'categorias',
-        'marcas'
+        'marcas',
+        'totalProductos'
     ));
 }
 
