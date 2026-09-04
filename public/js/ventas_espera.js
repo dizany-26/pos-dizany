@@ -56,6 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .pos-espera-item .info{ cursor:pointer; flex:1; }
             .pos-espera-item .info strong{ display:block; font-size:13px; }
             .pos-espera-item .info span{ color:#666; font-size:12px; }
+            .pos-espera-origin{
+                display:inline-flex; margin-top:5px; padding:2px 7px;
+                border-radius:999px; background:#e8f2ff; color:#1469c9 !important;
+                font-size:10px !important; font-weight:800; letter-spacing:.06em;
+            }
             .pos-espera-item .delete{
                 border:none; background: rgba(220,53,69,.1);
                 color:#dc3545; width:34px; height:34px;
@@ -86,6 +91,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             :root[data-theme='dark'] .pos-espera-item .info strong{ color:#f1f6ff; }
             :root[data-theme='dark'] .pos-espera-item .info span{ color:#adc7ea; }
+            :root[data-theme='dark'] .pos-espera-origin{
+                background:rgba(37,99,235,.25); color:#8fc2ff !important;
+            }
             :root[data-theme='dark'] .pos-espera-item .delete{
                 background: rgba(239,68,68,.2);
                 color:#ff8e9b;
@@ -99,6 +107,94 @@ document.addEventListener("DOMContentLoaded", () => {
         document.head.appendChild(st);
     })();
 
+    let pedidosCatalogo = [];
+
+    function escaparHtml(valor) {
+        return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        })[caracter]);
+    }
+
+    function idsCatalogoImportados() {
+        return new Set(Object.values(POS.ventas || {})
+            .map(venta => Number(venta.pedido_catalogo_id || 0))
+            .filter(Boolean));
+    }
+
+    function pedidosCatalogoDisponibles() {
+        const importados = idsCatalogoImportados();
+        return pedidosCatalogo.filter(pedido => !importados.has(Number(pedido.id)));
+    }
+
+    async function cargarPedidosCatalogo(renderizar = false) {
+        try {
+            const response = await fetch('/ventas/pedidos-catalogo', {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) throw new Error('No se pudieron consultar los pedidos del catálogo.');
+            pedidosCatalogo = await response.json();
+            actualizarContadorVentasEspera();
+            if (renderizar && !posEsperaPanel?.classList.contains('d-none')) {
+                renderVentasEsperaPanel();
+            }
+        } catch (error) {
+            console.error('Pedidos del catálogo:', error);
+        }
+    }
+
+    async function importarPedidoCatalogo(pedido) {
+        const existente = Object.values(POS.ventas || {})
+            .find(venta => Number(venta.pedido_catalogo_id) === Number(pedido.id));
+        if (existente) {
+            POS.ventaActivaId = existente.id;
+        } else {
+            const response = await fetch('/productos/iniciales', {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) throw new Error('No se pudo cargar el catálogo del POS.');
+            const productos = await response.json();
+            const mapa = new Map(productos.map(producto => [Number(producto.id), producto]));
+            const lineas = [];
+
+            for (const item of pedido.items || []) {
+                const producto = mapa.get(Number(item.producto_id));
+                if (!producto) throw new Error(`El producto ${item.nombre || item.producto_id} ya no está disponible.`);
+                const partes = await window.descomponerFIFO(
+                    producto,
+                    Number(item.cantidad),
+                    item.presentacion
+                );
+                lineas.push(...partes);
+            }
+
+            const id = uidVenta();
+            const venta = crearVentaVacia(id);
+            venta.productos = lineas;
+            venta.alias = `${pedido.cliente_nombre} · ${pedido.codigo}`;
+            venta.cliente.razon = pedido.cliente_nombre;
+            venta.metodo_pago = 'efectivo';
+            venta.origen = 'catalogo';
+            venta.pedido_catalogo_id = Number(pedido.id);
+            venta.pedido_catalogo_codigo = pedido.codigo;
+            venta.pedido_catalogo_telefono = pedido.cliente_telefono;
+            venta.informacion_adicional = [
+                `Pedido del catálogo ${pedido.codigo}`,
+                `Teléfono: ${pedido.cliente_telefono}`,
+                pedido.tipo_entrega === 'domicilio'
+                    ? `Entrega a domicilio: ${pedido.direccion || ''}`
+                    : 'Recoger en tienda'
+            ].join(' | ');
+            POS.ventas[id] = venta;
+            POS.ventaActivaId = id;
+        }
+
+        guardarPOSAhora();
+        window.restaurarVentaActivaEnUI?.();
+        window.renderTodo?.();
+        renderVentasEsperaPanel();
+        cerrarPanelEspera();
+    }
+
     function totalVentaRapido(v) {
         return (v.productos || []).reduce(
             (s, it) => s + (parseFloat(it.precio_unitario || 0) * (parseInt(it.cantidad) || 0)),
@@ -107,14 +203,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function nombreVenta(v) {
+        if (v.alias) return v.alias;
         if (v.cliente?.razon && v.cliente.razon.trim() !== "") {
             return v.cliente.razon.trim();
         }
         return `Venta ${v.id.slice(-4)}`;
     }
 
-    function eliminarVenta(id) {
+    async function cancelarPedidoCatalogo(id) {
+        const response = await fetch(`/ventas/pedidos-catalogo/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'No se pudo cancelar el pedido.');
+        }
+        pedidosCatalogo = pedidosCatalogo.filter(pedido => Number(pedido.id) !== Number(id));
+    }
+
+    async function eliminarVenta(id) {
         if (!POS.ventas[id]) return;
+        const venta = POS.ventas[id];
+        if (venta.pedido_catalogo_id) {
+            await cancelarPedidoCatalogo(venta.pedido_catalogo_id);
+        }
         delete POS.ventas[id];
 
         guardarPOSAhora();   // 🔥 CLAVE
@@ -136,8 +252,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const ventasConItems = Object.values(POS.ventas || {})
             .filter(v => (v.productos || []).length > 0);
 
+        const totalEspera = ventasConItems.length + pedidosCatalogoDisponibles().length;
+
         document.querySelectorAll("#pos-espera-count").forEach(el => {
-            el.innerText = ventasConItems.length;
+            el.innerText = totalEspera;
         });
     }
 
@@ -147,17 +265,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const ventasConItems = Object.values(POS.ventas || {})
             .filter(v => (v.productos || []).length > 0);
+        const pedidosDisponibles = pedidosCatalogoDisponibles();
 
         document.querySelectorAll("#pos-espera-count").forEach(el => {
-            el.innerText = ventasConItems.length;
+            el.innerText = ventasConItems.length + pedidosDisponibles.length;
         });
 
-        if (ventasConItems.length === 0) {
+        if (ventasConItems.length === 0 && pedidosDisponibles.length === 0) {
             posEsperaPanel.innerHTML = `<div class="pos-espera-empty">No hay ventas en espera</div>`;
             return;
         }
 
         posEsperaPanel.innerHTML = "";
+
+        pedidosDisponibles.forEach(pedido => {
+            const cantidad = (pedido.items || []).length;
+            const item = document.createElement('div');
+            item.className = 'pos-espera-item';
+            item.innerHTML = `
+                <div class="info">
+                    <strong>${escaparHtml(pedido.cliente_nombre)} · ${escaparHtml(pedido.codigo)}</strong>
+                    <span>S/ ${formatPrecioDinamico(Number(pedido.total || 0))} • ${cantidad} ${cantidad === 1 ? 'producto' : 'productos'}</span>
+                    <span class="pos-espera-origin"><i class="fas fa-shopping-cart"></i>&nbsp; CATÁLOGO</span>
+                </div>
+                <button class="delete" type="button" title="Cancelar pedido">
+                    <i class="fas fa-trash"></i>
+                </button>`;
+            item.querySelector('.info').addEventListener('click', async () => {
+                item.style.pointerEvents = 'none';
+                try {
+                    await importarPedidoCatalogo(pedido);
+                } catch (error) {
+                    item.style.pointerEvents = '';
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No se pudo cargar el pedido',
+                        text: error.message || 'Actualiza el stock e inténtalo nuevamente.'
+                    });
+                }
+            });
+            item.querySelector('.delete').addEventListener('click', event => {
+                event.stopPropagation();
+                Swal.fire({
+                    title: 'Cancelar pedido del catálogo',
+                    text: 'El pedido desaparecerá de Ventas en espera.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, cancelar pedido',
+                    cancelButtonText: 'Volver'
+                }).then(async result => {
+                    if (!result.isConfirmed) return;
+                    try {
+                        await cancelarPedidoCatalogo(pedido.id);
+                        renderVentasEsperaPanel();
+                    } catch (error) {
+                        Swal.fire('No se pudo cancelar', error.message, 'error');
+                    }
+                });
+            });
+            posEsperaPanel.appendChild(item);
+        });
 
         ventasConItems.forEach(v => {
             const total = totalVentaRapido(v);
@@ -174,8 +341,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             item.innerHTML = `
                 <div class="info">
-                    <strong>${nombreVenta(v)}</strong>
+                    <strong>${escaparHtml(nombreVenta(v))}</strong>
                     <span>S/ ${totalFormateado} • ${cantidad} ${label}</span>
+                    ${v.origen === 'catalogo'
+                        ? `<span class="pos-espera-origin"><i class="fas fa-shopping-cart"></i>&nbsp; CATÁLOGO</span>`
+                        : ''}
                 </div>
                 <button class="delete" type="button" title="Eliminar venta">
                     <i class="fas fa-trash"></i>
@@ -197,17 +367,24 @@ document.addEventListener("DOMContentLoaded", () => {
             item.querySelector(".delete").addEventListener("click", (e) => {
                 e.stopPropagation();
 
+                const esCatalogo = Boolean(v.pedido_catalogo_id);
                 Swal.fire({
-                    title: "Eliminar venta",
-                    text: "Se perderán los productos reservados",
+                    title: esCatalogo ? 'Cancelar pedido del catálogo' : "Eliminar venta",
+                    text: esCatalogo
+                        ? 'El pedido desaparecerá de Ventas en espera.'
+                        : "Se perderán los productos reservados",
                     icon: "warning",
                     showCancelButton: true,
-                    confirmButtonText: "Eliminar",
+                    confirmButtonText: esCatalogo ? 'Sí, cancelar pedido' : "Eliminar",
                     cancelButtonText: "Cancelar"
-                }).then(r => {
+                }).then(async r => {
                     if (!r.isConfirmed) return;
-                    eliminarVenta(v.id);
-                    renderVentasEsperaPanel();
+                    try {
+                        await eliminarVenta(v.id);
+                        renderVentasEsperaPanel();
+                    } catch (error) {
+                        Swal.fire('No se pudo cancelar', error.message, 'error');
+                    }
                 });
             });
 
@@ -259,6 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e.stopPropagation();
 
         renderVentasEsperaPanel();
+        cargarPedidosCatalogo(true);
         if (posEsperaPanel.classList.contains("d-none")) abrirPanelEspera();
         else cerrarPanelEspera();
     });
@@ -269,5 +447,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // EXPONER
     window.renderVentasEsperaPanel = renderVentasEsperaPanel;
     window.actualizarContadorVentasEspera = actualizarContadorVentasEspera;
+
+    cargarPedidosCatalogo();
+    window.setInterval(() => cargarPedidosCatalogo(true), 15000);
 
 });

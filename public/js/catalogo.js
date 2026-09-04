@@ -370,7 +370,8 @@
         renderCart();
     });
 
-    document.querySelector('[data-send-order]').addEventListener('click', () => {
+    document.querySelector('[data-send-order]').addEventListener('click', async event => {
+        const sendButton = event.currentTarget;
         const customer = {
             name: document.querySelector('[data-customer-name]').value.trim(),
             phone: document.querySelector('[data-customer-phone]').value.trim(),
@@ -385,8 +386,55 @@
             return;
         }
         error.hidden = true;
+        // Se abre dentro del gesto del usuario para que navegadores móviles no
+        // bloqueen WhatsApp mientras el pedido se registra en el servidor.
+        const whatsappWindow = window.open('', '_blank');
+        if (whatsappWindow) whatsappWindow.opener = null;
+        sendButton.disabled = true;
+        const originalButtonHtml = sendButton.innerHTML;
+        sendButton.textContent = 'Preparando pedido...';
+
+        let orderCode;
+        try {
+            const response = await fetch('/catalogo/pedidos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    cliente: {
+                        nombre: customer.name,
+                        telefono: customer.phone,
+                        entrega: customer.delivery,
+                        direccion: customer.address
+                    },
+                    items: cart.map(item => ({
+                        producto_id: Number(item.id),
+                        presentacion: presentation(item).key,
+                        cantidad: item.quantity
+                    }))
+                })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                const validation = result.errors
+                    ? Object.values(result.errors).flat().find(Boolean)
+                    : null;
+                throw new Error(validation || result.message || 'No se pudo registrar el pedido.');
+            }
+            orderCode = result.pedido.codigo;
+        } catch (requestError) {
+            whatsappWindow?.close();
+            sendButton.disabled = false;
+            sendButton.innerHTML = originalButtonHtml;
+            error.textContent = requestError.message || 'No se pudo registrar el pedido. Inténtalo nuevamente.';
+            error.hidden = false;
+            return;
+        }
+
         const now = new Date();
-        const orderCode = `DIZ-${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
         const orderDate = now.toLocaleString('es-PE', {
             day: '2-digit',
             month: '2-digit',
@@ -427,10 +475,14 @@
             '',
             `_Pedido generado desde el catálogo de ${data.dataset.business}._`
         ].filter(line => line !== null).join('\n');
-        window.open(`https://wa.me/${data.dataset.phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+        const whatsappUrl = `https://wa.me/${data.dataset.phone}?text=${encodeURIComponent(message)}`;
+        if (whatsappWindow) whatsappWindow.location.href = whatsappUrl;
+        else window.location.href = whatsappUrl;
         cart = [];
         renderCart();
         closeCart();
+        sendButton.disabled = false;
+        sendButton.innerHTML = originalButtonHtml;
     });
 
     function normalizeSearch(value) {

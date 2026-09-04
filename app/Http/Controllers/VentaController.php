@@ -29,6 +29,7 @@ use App\Services\SaleLineCalculator;
 use App\Services\DocumentNumberService;
 use App\Jobs\SendElectronicInvoice;
 use App\Models\SunatSetting;
+use App\Models\PedidoCatalogo;
 use App\Services\Tax\TaxProfileService;
 
 
@@ -93,6 +94,7 @@ public function registrarVenta(Request $request)
             'pagos.*.efectivo_recibido' => 'nullable|numeric|min:0',
             'formato'          => 'nullable|in:a4,ticket,ticket_80,ticket_58',
             'credit_due_date'  => 'nullable|date|after_or_equal:fecha',
+            'pedido_catalogo_id' => 'nullable|integer|exists:pedidos_catalogo,id',
         ]);
 
         if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
@@ -105,6 +107,16 @@ public function registrarVenta(Request $request)
         DB::beginTransaction();
 
         try {
+            $pedidoCatalogo = null;
+            if ($request->filled('pedido_catalogo_id')) {
+                $pedidoCatalogo = PedidoCatalogo::whereKey($request->integer('pedido_catalogo_id'))
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                if ($pedidoCatalogo->estado !== 'pendiente') {
+                    throw new \Exception('Este pedido del catálogo ya fue atendido.');
+                }
+            }
+
             /* ================= CLIENTE ================= */
             $tipo = $request->tipo_comprobante;
             $sinDocumento = $request->cliente_modo === 'sin_documento';
@@ -578,6 +590,14 @@ $pdf = Pdf::setOptions([
                 ]);
             }
 
+            if ($pedidoCatalogo) {
+                $pedidoCatalogo->update([
+                    'estado' => 'atendido',
+                    'venta_id' => $venta->id,
+                    'atendido_en' => now(),
+                ]);
+            }
+
             DB::commit();
 
             if (
@@ -603,6 +623,7 @@ $pdf = Pdf::setOptions([
                 'monto_pagado'   => $montoPagado,
                 'efectivo_recibido' => $efectivoRecibido,
                 'vuelto'         => $vuelto ?? 0,
+                'pedido_catalogo_atendido' => (bool) $pedidoCatalogo,
             ]);
 
         } catch (\Exception $e) {
@@ -656,6 +677,7 @@ $pdf = Pdf::setOptions([
                 || str_starts_with($msg, 'Cantidad inválida para ')
                 || str_starts_with($msg, 'No hay precio público de ')
                 || str_starts_with($msg, 'La presentación ')
+                || $msg === 'Este pedido del catálogo ya fue atendido.'
             ) {
                 return response()->json([
                     'success' => false,

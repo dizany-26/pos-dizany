@@ -230,6 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
             tramos_precio: tramosPrecio
         }];
     }
+    window.descomponerFIFO = descomponerFIFO;
     // ============================
     // AGREGAR PRODUCTO A VENTA ACTIVA
     // ============================

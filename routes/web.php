@@ -24,6 +24,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\PublicElectronicDocumentController;
+use App\Http\Controllers\PedidoCatalogoController;
 use App\Models\Categoria;
 use App\Models\Configuracion;
 use App\Models\ConfiguracionCatalogo;
@@ -88,6 +89,9 @@ Route::get('/', function () {
 Route::get('/catalogo', function () {
     return redirect()->route('inicio');
 })->name('catalogo');
+Route::post('/catalogo/pedidos', [PedidoCatalogoController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('catalogo.pedidos.store');
 
 Route::get('/catalogo/producto/{producto}', function (Producto $producto) {
     $config = ConfiguracionCatalogo::first();
@@ -313,6 +317,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     | Ventas
     */
     Route::middleware('permission:ventas')->group(function () {
+        Route::get('/ventas/pedidos-catalogo', [PedidoCatalogoController::class, 'pending']);
+        Route::delete('/ventas/pedidos-catalogo/{pedido}', [PedidoCatalogoController::class, 'cancel']);
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
         Route::get('/ventas/lista', [VentaController::class, 'listar'])->name('ventas.listar');
         Route::get('/ventas/exportar-excel', [VentaController::class, 'exportarExcel'])
