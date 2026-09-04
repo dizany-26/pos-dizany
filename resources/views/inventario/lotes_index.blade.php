@@ -102,6 +102,107 @@
         min-width: 1050px;
     }
 
+    @media (max-width: 768px) and (orientation: portrait) {
+        .table-responsive.ui-scroll {
+            overflow-x: visible !important;
+            overflow-y: visible !important;
+        }
+
+        .table-responsive.ui-scroll > .tabla-scroll,
+        .table-responsive.ui-scroll > .tabla-scroll > table {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .table-responsive.ui-scroll .ui-table tr {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+
+        .table-responsive.ui-scroll .ui-table td {
+            min-width: 0;
+            min-height: 54px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 9px 4px;
+            border-bottom: 1px dashed rgba(127, 151, 181, .22);
+            text-align: left !important;
+        }
+
+        .table-responsive.ui-scroll .ui-table td::before {
+            flex: none;
+            color: #7d8da4;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .lot-product,
+        .lot-provider {
+            width: 100%;
+            max-width: none;
+        }
+
+        .table-responsive.ui-scroll .ui-table td[data-label="Producto"] {
+            grid-column: 1 / -1;
+            grid-row: 1;
+            min-height: 72px;
+            padding: 10px 12px;
+            border: 1px solid rgba(22, 119, 232, .2);
+            border-radius: 12px;
+            background: rgba(22, 119, 232, .07);
+        }
+
+        .table-responsive.ui-scroll .ui-table td[data-label="Producto"]::before {
+            color: #1677e8;
+        }
+
+        .table-responsive.ui-scroll .ui-table td[data-label="Proveedor"] {
+            grid-column: 1 / -1;
+        }
+
+        .table-responsive.ui-scroll .ui-table td[data-label="Acciones"] {
+            grid-column: 1 / -1;
+            min-height: auto;
+            margin-top: 0;
+            padding: 12px 0 0;
+            border-bottom: 0;
+            align-items: flex-end;
+        }
+
+        .lot-product-content,
+        .lot-provider-content {
+            min-width: 0;
+            width: 100%;
+            max-width: none;
+            margin-left: 0;
+            text-align: left;
+            overflow-wrap: anywhere;
+        }
+
+        .lot-product-toggle,
+        .lot-provider-toggle {
+            justify-content: flex-start;
+        }
+
+        .table-responsive.ui-scroll .ui-table td[data-label="Acciones"] .acciones-lote {
+            justify-content: flex-end;
+        }
+
+        :root[data-theme='dark'] .table-responsive.ui-scroll .ui-table td[data-label="Producto"] {
+            border-color: rgba(82, 156, 245, .3);
+            background: rgba(22, 119, 232, .12);
+        }
+    }
+
 </style>
 @endpush
 {{-- BOTÓN ATRÁS --}}
@@ -343,20 +444,22 @@
                                         $descripcionProducto = trim((string) ($lote->producto->descripcion ?? ''));
                                         $descripcionEsLarga = mb_strlen($descripcionProducto) > 50;
                                     @endphp
-                                    <strong>{{ $lote->producto->nombre ?? '—' }}</strong>
-                                    @if($descripcionProducto !== '')
-                                        <small class="text-muted lot-product-description lot-product-short">
-                                            {{ $descripcionEsLarga ? \Illuminate\Support\Str::limit($descripcionProducto, 50) : $descripcionProducto }}
-                                        </small>
-                                        @if($descripcionEsLarga)
-                                            <small class="text-muted lot-product-description lot-product-full d-none">
-                                                {{ $descripcionProducto }}
+                                    <div class="lot-product-content">
+                                        <strong>{{ $lote->producto->nombre ?? '—' }}</strong>
+                                        @if($descripcionProducto !== '')
+                                            <small class="text-muted lot-product-description lot-product-short">
+                                                {{ $descripcionEsLarga ? \Illuminate\Support\Str::limit($descripcionProducto, 50) : $descripcionProducto }}
                                             </small>
-                                            <button type="button" class="lot-product-toggle" aria-expanded="false">
-                                                Ver más
-                                            </button>
+                                            @if($descripcionEsLarga)
+                                                <small class="text-muted lot-product-description lot-product-full d-none">
+                                                    {{ $descripcionProducto }}
+                                                </small>
+                                                <button type="button" class="lot-product-toggle" aria-expanded="false">
+                                                    Ver más
+                                                </button>
+                                            @endif
                                         @endif
-                                    @endif
+                                    </div>
                                 </td>
 
                                 {{-- PROVEEDOR --}}
@@ -365,19 +468,21 @@
                                         $nombreProveedor = $lote->proveedor->nombre ?? '—';
                                         $proveedorEsLargo = mb_strlen($nombreProveedor) > 28;
                                     @endphp
-                                    <span class="lot-provider-name lot-provider-short">
-                                        {{ $proveedorEsLargo ? \Illuminate\Support\Str::limit($nombreProveedor, 28) : $nombreProveedor }}
-                                    </span>
-                                    @if ($proveedorEsLargo)
-                                        <span class="lot-provider-name lot-provider-full d-none">
-                                            {{ $nombreProveedor }}
+                                    <div class="lot-provider-content">
+                                        <span class="lot-provider-name lot-provider-short">
+                                            {{ $proveedorEsLargo ? \Illuminate\Support\Str::limit($nombreProveedor, 28) : $nombreProveedor }}
                                         </span>
-                                        <button type="button"
-                                            class="lot-provider-toggle"
-                                            aria-expanded="false">
-                                            Ver más
-                                        </button>
-                                    @endif
+                                        @if ($proveedorEsLargo)
+                                            <span class="lot-provider-name lot-provider-full d-none">
+                                                {{ $nombreProveedor }}
+                                            </span>
+                                            <button type="button"
+                                                class="lot-provider-toggle"
+                                                aria-expanded="false">
+                                                Ver más
+                                            </button>
+                                        @endif
+                                    </div>
                                 </td>
 
                                 {{-- STOCK --}}
