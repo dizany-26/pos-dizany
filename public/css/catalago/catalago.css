@@ -311,6 +311,10 @@ body.modal-open{overflow:hidden}
     margin-top: auto;
 }
 
+.product-card .product-presentations {
+    margin-bottom: 9px;
+}
+
 .options-button {
     display: inline-flex;
     align-items: center;

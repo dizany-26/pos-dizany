@@ -398,14 +398,11 @@
             const selected = presentation(item);
             const subtotal = finalPrice(selected.price) * item.quantity;
             return [
-                `🔹 *${item.name}*`,
-                `   ${item.quantity} × ${selected.name} (${selected.factor} un.)`,
-                `   *Total: S/ ${money(subtotal)}*`
+                `🔷 *${item.name}*`,
+                `${item.quantity} × ${selected.name} (${selected.factor} un.)  *S/ ${money(subtotal)}*`
             ].join('\n');
         });
         const total = cart.reduce((sum, item) => sum + finalPrice(presentation(item).price) * item.quantity, 0);
-        const totalPresentations = cart.reduce((sum, item) => sum + item.quantity, 0);
-        const totalUnits = cart.reduce((sum, item) => sum + presentation(item).factor * item.quantity, 0);
         const message = [
             `🛒 *NUEVO PEDIDO | ${data.dataset.business.toUpperCase()}*`,
             '━━━━━━━━━━━━━━━━━━',
@@ -421,11 +418,6 @@
             '📦 *DETALLE DEL PEDIDO*',
             '──────────────────',
             ...lines,
-            '',
-            '💰 *RESUMEN*',
-            `• Productos diferentes: ${cart.length}`,
-            `• Presentaciones solicitadas: ${totalPresentations}`,
-            `• Equivalencia total: ${totalUnits} unidades`,
             '',
             `💵 *TOTAL ESTIMADO: S/ ${money(total)}*`,
             igvPercent > 0 ? `• Precios incluyen IGV (${money(igvPercent)}%)` : null,
