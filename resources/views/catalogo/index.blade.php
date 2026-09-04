@@ -51,21 +51,10 @@
                 <span class="catalog-theme-thumb"></span>
             </span>
         </button>
-        <div class="header-menu">
-            <button type="button" class="menu-trigger" data-menu-trigger aria-label="Abrir menú" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
-            <div class="menu-dropdown" data-menu-dropdown hidden>
-                <button type="button" data-open-cart>Ver mi pedido</button>
-                @if(!empty($config->telefono))
-                    <a href="https://wa.me/{{ $telefono }}" target="_blank" rel="noopener">Contactar por WhatsApp</a>
-                @endif
-            </div>
-        </div>
         @auth
             <a class="access-link" href="{{ route(auth()->user()->rutaInicio()) }}"
                target="_blank" rel="noopener" aria-label="Ir al panel del sistema" title="Ir al panel">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 13h7v7H4z"/></svg>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
                 Ir al panel
             </a>
         @else
@@ -112,7 +101,7 @@
 
         <label class="header-search catalog-search" for="searchInput">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"/></svg>
-            <input id="searchInput" type="search" placeholder="Buscar por nombre o categoría..." autocomplete="off">
+            <input id="searchInput" type="search" placeholder="Buscar por nombre, marca o categoría..." autocomplete="off">
         </label>
 
         <div class="product-grid" id="productContainer">
@@ -139,7 +128,11 @@
                 @endphp
                 <article class="product-card"
                     data-product
-                    data-name="{{ Illuminate\Support\Str::lower($producto->nombre . ' ' . ($producto->categoria->nombre ?? '') . ' ' . ($producto->descripcion ?? '')) }}"
+                    data-name="{{ Illuminate\Support\Str::lower(implode(' ', array_filter([
+                        $producto->nombre,
+                        $producto->categoria->nombre ?? '',
+                        $producto->marca->nombre ?? '',
+                    ]))) }}"
                     data-category="{{ $producto->categoria_id }}"
                     data-id="{{ $producto->id }}"
                     data-stock="{{ $stock }}"
@@ -221,6 +214,19 @@
     <div><strong>{{ $empresa }}</strong><span>{{ $direccionTienda }}</span></div>
     <p>© {{ date('Y') }} {{ $empresa }}. Todos los derechos reservados.</p>
 </footer>
+
+@if(!empty($config->telefono))
+    <a class="catalog-whatsapp-float"
+       href="https://wa.me/{{ $telefono }}"
+       target="_blank" rel="noopener"
+       aria-label="Contactar por WhatsApp"
+       title="Contactar por WhatsApp">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.4l1.3-4.7a8.5 8.5 0 1 1 16.2-4Z"/>
+            <path d="M8.2 7.8c.2-.4.4-.4.7-.4h.4c.1 0 .3 0 .4.4l.8 1.9c.1.2.1.4 0 .6l-.6.8c-.2.2-.1.4 0 .6.7 1.2 1.7 2.1 2.9 2.7 1 .5 1.3.5 1.6.1l.8-1c.2-.3.4-.3.7-.2l2 .9c.3.1.4.3.4.5 0 .3-.2 1.7-1.2 2.4-.9.7-2.1.9-3.5.5-1.5-.4-3.4-1.3-5.3-3.1-1.5-1.4-2.6-3.2-2.9-4.5-.3-1.2 0-2.2.6-2.8Z"/>
+        </svg>
+    </a>
+@endif
 
 <div class="cart-overlay" data-cart-overlay></div>
 <aside class="cart-drawer" data-cart-drawer aria-hidden="true">

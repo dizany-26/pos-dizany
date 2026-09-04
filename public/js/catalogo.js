@@ -270,12 +270,6 @@
             closeProduct();
             return;
         }
-        if (event.target.closest('[data-menu-trigger]')) {
-            const menu = document.querySelector('[data-menu-dropdown]');
-            menu.hidden = !menu.hidden;
-        } else if (!event.target.closest('[data-menu-dropdown]')) {
-            document.querySelector('[data-menu-dropdown]').hidden = true;
-        }
         if (event.target.closest('[data-toggle-categories]')) {
             document.querySelector('[data-catalog-sidebar]').classList.toggle('collapsed');
         }
@@ -447,12 +441,20 @@
         closeCart();
     });
 
+    function normalizeSearch(value) {
+        return String(value ?? '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('es')
+            .trim();
+    }
+
     function filterProducts() {
-        const term = document.getElementById('searchInput').value.trim().toLocaleLowerCase('es');
+        const term = normalizeSearch(document.getElementById('searchInput').value);
         let visible = 0;
         products.forEach(product => {
             const show = (category === 'all' || product.dataset.category === category)
-                && product.dataset.name.includes(term);
+                && normalizeSearch(product.dataset.name).includes(term);
             product.hidden = !show;
             if (show) visible++;
         });
