@@ -88,7 +88,9 @@
         max-width: 100%;
         overflow-x: auto !important;
         overflow-y: auto !important;
-        max-height: calc(100vh - 355px);
+        /* En móviles horizontales 100vh puede ser menor a 355px. La altura
+           mínima evita que el cuerpo de la tabla colapse y oculte las filas. */
+        max-height: clamp(240px, calc(100vh - 355px), 620px);
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x pan-y;
         scrollbar-gutter: stable;
@@ -210,6 +212,12 @@
         :root[data-theme='dark'] .table-responsive.ui-scroll .ui-table td[data-label="Producto"] {
             border-color: rgba(82, 156, 245, .3);
             background: rgba(22, 119, 232, .12);
+        }
+    }
+
+    @media (max-height: 520px) and (orientation: landscape) {
+        .table-responsive.ui-scroll {
+            max-height: 240px;
         }
     }
 
