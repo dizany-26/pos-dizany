@@ -869,6 +869,17 @@
 
 .reconciliation-table-wrap { overflow-x: auto; border-radius: 14px; }
 .reconciliation-table { min-width: 580px; }
+.reconciliation-table tfoot td {
+    border-top: 2px solid var(--border-color, #dbe4ef);
+    background: #edf4ff;
+}
+
+:root[data-theme='dark'] .reconciliation-table tfoot td,
+[data-bs-theme='dark'] .reconciliation-table tfoot td {
+    color: #f1f6ff;
+    border-top-color: #42628a;
+    background: #173052;
+}
 
 :root[data-theme='dark'] .cash-method-field {
     background: #0f1d33;

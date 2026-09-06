@@ -492,7 +492,7 @@ Movimientos
                                 <td data-label="Pagos digitales" class="text-end">
                                     <strong>S/ {{ number_format($totalDigitalCajaFila, 2) }}</strong>
                                     <button type="button" class="btn btn-link btn-sm d-block ms-auto mt-1 p-0"
-                                        data-bs-toggle="modal" data-bs-target="#modalCuadreCaja{{ $caja->id }}">
+                                        data-bs-toggle="modal" data-bs-target="#modalPagosDigitalesCaja{{ $caja->id }}">
                                         Ver detalle
                                     </button>
                                 </td>
@@ -510,12 +510,6 @@ Movimientos
                                 @if(auth()->user()->esAdmin())
                                 <td data-label="Acciones">
                                     <div class="d-flex gap-1">
-                                        @if($caja->estado !== 'pendiente_cierre')
-                                        <button type="button" class="btn-soft btn-soft-info btn-sm"
-                                            data-bs-toggle="modal" data-bs-target="#modalCuadreCaja{{ $caja->id }}">
-                                            <i class="fas fa-wallet"></i> Medios
-                                        </button>
-                                        @endif
                                         @if($caja->estado === 'abierta')
                                             @if($caja->usuario_id === auth()->id())
                                             <button type="button" class="btn-soft btn-soft-danger btn-sm"
@@ -533,21 +527,9 @@ Movimientos
                                             </button>
                                         @elseif($caja->estado === 'pendiente_cierre')
                                             <button type="button" class="btn-soft btn-soft-primary btn-sm"
-                                                data-bs-toggle="modal" data-bs-target="#modalCuadreCaja{{ $caja->id }}">
-                                                <i class="fas fa-scale-balanced"></i> Revisar
+                                                data-bs-toggle="modal" data-bs-target="#modalRevisionCaja{{ $caja->id }}">
+                                                <i class="fas fa-scale-balanced"></i> Revisar cierre
                                             </button>
-                                            <form method="POST" action="{{ route('cajas.aprobar', $caja) }}">
-                                                @csrf
-                                                <button class="btn-soft btn-soft-success btn-sm" type="submit">
-                                                    <i class="fas fa-check"></i> Aprobar
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('cajas.reabrir', $caja) }}">
-                                                @csrf
-                                                <button class="btn-soft btn-soft-warning btn-sm" type="submit">
-                                                    <i class="fas fa-rotate-left"></i> Devolver
-                                                </button>
-                                            </form>
                                         @endif
                                     </div>
                                 </td>
@@ -580,11 +562,14 @@ Movimientos
     $declaradosCuadre = $cajaDetalle->metodos_declarados ?? [];
     $diferenciasCuadre = $cajaDetalle->metodos_diferencias ?? [];
 @endphp
-<div class="modal fade" id="modalCuadreCaja{{ $cajaDetalle->id }}" tabindex="-1" aria-hidden="true">
+@php
+    $mediosDigitales = collect(\App\Models\Caja::mediosConciliables())->except('efectivo');
+@endphp
+<div class="modal fade" id="modalPagosDigitalesCaja{{ $cajaDetalle->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
         <div class="modal-header">
             <div>
-                <h5 class="modal-title"><i class="fas fa-scale-balanced"></i> Medios de pago · {{ $cajaDetalle->usuario?->nombre }}</h5>
+                <h5 class="modal-title"><i class="fas fa-wallet"></i> Pagos digitales · {{ $cajaDetalle->usuario?->nombre }}</h5>
                 <small class="text-muted">Caja #{{ $cajaDetalle->id }} · {{ $cajaDetalle->abierta_en->format('d/m/Y H:i') }} · {{ $cajaDetalle->estado === 'abierta' ? 'En curso' : ($cajaDetalle->estado === 'pendiente_cierre' ? 'Por aprobar' : 'Cerrada') }}</small>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -593,7 +578,7 @@ Movimientos
             <table class="table ui-table reconciliation-table mb-0">
                 <thead><tr><th>Medio</th><th class="text-end">Sistema</th><th class="text-end">Declarado</th><th class="text-end">Diferencia</th></tr></thead>
                 <tbody>
-                @foreach(\App\Models\Caja::mediosConciliables() as $medio => $etiqueta)
+                @foreach($mediosDigitales as $medio => $etiqueta)
                 @php
                     $esperadoMedio = (float) ($esperadosCuadre[$medio] ?? 0);
                     $tieneDeclaradoMedio = array_key_exists($medio, $declaradosCuadre);
@@ -608,20 +593,66 @@ Movimientos
                     <td data-label="Diferencia" class="text-end fw-bold {{ $diferenciaMedio === null || $diferenciaMedio == 0 ? 'text-success' : 'text-danger' }}">{{ $diferenciaMedio === null ? '—' : 'S/ '.number_format($diferenciaMedio, 2) }}</td></tr>
                 @endforeach
                 </tbody>
+                <tfoot>
+                    @php
+                        $totalDigitalEsperado = collect($esperadosCuadre)->except('efectivo')->sum();
+                        $totalDigitalDeclarado = collect($declaradosCuadre)->except('efectivo')->sum();
+                        $totalDigitalDiferencia = collect($diferenciasCuadre)->except('efectivo')->sum();
+                        $tieneDeclaracionDigital = collect($mediosDigitales->keys())->contains(fn ($medio) => array_key_exists($medio, $declaradosCuadre));
+                    @endphp
+                    <tr class="fw-bold">
+                        <td>Total digital</td>
+                        <td class="text-end">S/ {{ number_format($totalDigitalEsperado, 2) }}</td>
+                        <td class="text-end">{{ $tieneDeclaracionDigital ? 'S/ '.number_format($totalDigitalDeclarado, 2) : 'Pendiente' }}</td>
+                        <td class="text-end {{ !$tieneDeclaracionDigital || $totalDigitalDiferencia == 0 ? 'text-success' : 'text-danger' }}">{{ $tieneDeclaracionDigital ? 'S/ '.number_format($totalDigitalDiferencia, 2) : '—' }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div></div>
+</div>
+
+@if($cajaDetalle->estado === 'pendiente_cierre')
+<div class="modal fade" id="modalRevisionCaja{{ $cajaDetalle->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h5 class="modal-title"><i class="fas fa-scale-balanced"></i> Revisar cierre · {{ $cajaDetalle->usuario?->nombre }}</h5>
+                <small class="text-muted">Compara lo esperado con lo declarado antes de aprobar o devolver.</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body"><div class="reconciliation-table-wrap">
+            <table class="table ui-table reconciliation-table mb-0">
+                <thead><tr><th>Medio</th><th class="text-end">Sistema</th><th class="text-end">Declarado</th><th class="text-end">Diferencia</th></tr></thead>
+                <tbody>
+                @foreach(\App\Models\Caja::mediosConciliables() as $medio => $etiqueta)
+                    @php
+                        $esperadoRevision = (float) ($esperadosCuadre[$medio] ?? 0);
+                        $declaradoRevision = (float) ($declaradosCuadre[$medio] ?? 0);
+                        $diferenciaRevision = (float) ($diferenciasCuadre[$medio] ?? ($declaradoRevision - $esperadoRevision));
+                    @endphp
+                    <tr><td><strong>{{ $etiqueta }}</strong></td>
+                        <td class="text-end">S/ {{ number_format($esperadoRevision, 2) }}</td>
+                        <td class="text-end">S/ {{ number_format($declaradoRevision, 2) }}</td>
+                        <td class="text-end fw-bold {{ $diferenciaRevision == 0 ? 'text-success' : 'text-danger' }}">S/ {{ number_format($diferenciaRevision, 2) }}</td></tr>
+                @endforeach
+                </tbody>
             </table>
         </div>
         @if($cajaDetalle->observaciones)<div class="cash-explanation mt-3"><strong>Observación:</strong> {{ $cajaDetalle->observaciones }}</div>@endif
         </div>
         <div class="modal-footer">
-            @if($cajaDetalle->estado === 'pendiente_cierre')
-                <form method="POST" action="{{ route('cajas.reabrir', $cajaDetalle) }}">@csrf<button class="btn-soft btn-soft-warning" type="submit"><i class="fas fa-rotate-left"></i> Devolver</button></form>
-                <form method="POST" action="{{ route('cajas.aprobar', $cajaDetalle) }}">@csrf<button class="btn-soft btn-soft-success" type="submit"><i class="fas fa-check"></i> Aprobar cuadre</button></form>
-            @else
-                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cerrar</button>
-            @endif
+            <form method="POST" action="{{ route('cajas.reabrir', $cajaDetalle) }}">@csrf<button class="btn-soft btn-soft-warning" type="submit"><i class="fas fa-rotate-left"></i> Devolver</button></form>
+            <form method="POST" action="{{ route('cajas.aprobar', $cajaDetalle) }}">@csrf<button class="btn-soft btn-soft-success" type="submit"><i class="fas fa-check"></i> Aprobar cierre</button></form>
         </div>
     </div></div>
 </div>
+@endif
 @endforeach
 
 <div class="modal fade" id="modalAbrirCaja" tabindex="-1" aria-hidden="true">
