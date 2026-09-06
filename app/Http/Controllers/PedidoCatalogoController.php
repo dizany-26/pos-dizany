@@ -7,6 +7,7 @@ use App\Models\Producto;
 use App\Models\User;
 use App\Notifications\CajaNotification;
 use App\Services\SaleLineCalculator;
+use App\Services\PedidoCatalogoNotificationService;
 use App\Services\Tax\TaxProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -103,6 +104,8 @@ class PedidoCatalogoController extends Controller
                 ->notify(new CajaNotification([
                     'titulo' => 'Nuevo pedido del catálogo',
                     'mensaje' => "{$order->cliente_nombre} envió el pedido {$order->codigo}.",
+                    'pedido_catalogo_id' => $order->id,
+                    'pedido_catalogo_codigo' => $order->codigo,
                     'icono' => 'fa-shopping-cart',
                     'color' => 'primary',
                     'url' => route('ventas.index', [], false),
@@ -138,7 +141,7 @@ class PedidoCatalogoController extends Controller
             ])->values();
     }
 
-    public function cancel(PedidoCatalogo $pedido)
+    public function cancel(PedidoCatalogo $pedido, PedidoCatalogoNotificationService $notifications)
     {
         $cancelled = DB::transaction(function () use ($pedido) {
             $lockedOrder = PedidoCatalogo::whereKey($pedido->id)->lockForUpdate()->firstOrFail();
@@ -157,6 +160,8 @@ class PedidoCatalogoController extends Controller
                 'message' => 'Este pedido ya fue atendido o cancelado.',
             ], 422);
         }
+
+        $notifications->markAsRead($pedido);
 
         return response()->json([
             'success' => true,

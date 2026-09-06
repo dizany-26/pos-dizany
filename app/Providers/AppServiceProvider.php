@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\URL;
 
 use App\Models\Producto;
 use App\Models\Lote;
+use App\Services\PedidoCatalogoNotificationService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,12 +44,11 @@ class AppServiceProvider extends ServiceProvider
                     ->count()
                 : 0;
 
-            $notificacionesCaja = auth()->check()
-                ? auth()->user()->unreadNotifications()->latest()->limit(5)->get()
+            $notificacionesNoLeidas = auth()->check()
+                ? app(PedidoCatalogoNotificationService::class)->unreadFor(auth()->user())
                 : collect();
-            $notificacionesCajaTotal = auth()->check()
-                ? auth()->user()->unreadNotifications()->count()
-                : 0;
+            $notificacionesCaja = $notificacionesNoLeidas->take(5);
+            $notificacionesCajaTotal = $notificacionesNoLeidas->count();
             $totalAlertas = $alertaStockBajo + $alertaPorVencer + $notificacionesCajaTotal;
 
             $view->with(compact(

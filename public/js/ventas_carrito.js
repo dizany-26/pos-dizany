@@ -449,18 +449,17 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
 
             const card = `
                 <div class="carrito-item border-bottom pb-3 mb-3" data-index="${index}">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div class="d-flex align-items-start gap-2">
+                    <div class="d-flex justify-content-between align-items-start carrito-item-cabecera">
+                        <div class="d-flex align-items-start gap-2 carrito-producto-resumen">
                             <img src="${imgSrc}" alt="${p.nombre}" class="carrito-thumb">
-                            <div>
-                                <div class="d-flex justify-content-between align-items-center" style="min-width:200px;">
-                                    <span class="fw-semibold small">${p.nombre}</span>
+                            <div class="carrito-producto-info">
+                                <div class="carrito-producto-encabezado">
+                                    <span class="fw-semibold small carrito-producto-nombre">${p.nombre}</span>
                                     <span class="badge ${stockClase} ms-2">
                                         Quedará: ${stockMostrar}
                                     </span>
 
                                 </div>
-                                <div class="text-muted extra-small">${p.descripcion || ""}</div>
                             </div>
                         </div>
                         <button class="btn btn-outline-danger btn-sm rounded-circle eliminar-item" data-index="${index}">
@@ -468,10 +467,10 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                         </button>
                     </div>
 
-                    <div class="d-flex align-items-center mt-2 gap-2">
-                        <div class="flex-grow-1">
-                            <span class="d-block extra-small text-muted mb-1">Tipo venta</span>
-                            <select class="form-select form-select-sm tipo-venta" data-index="${index}">
+                    <div class="carrito-item-controles mt-2">
+                        <div class="carrito-presentacion-control">
+                            <span class="d-block extra-small text-muted mb-1">Presentación</span>
+                            <select class="form-select form-select-sm tipo-venta" data-index="${index}" data-native-select>
                                 <option value="unidad" ${p.tipo_venta === "unidad" ? "selected" : ""}>Unidad</option>
                                 ${
                                     p.unidades_por_paquete > 0 && p.precio_paquete > 0
@@ -496,14 +495,14 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                             </select>
                         </div>
 
-                        <div class="d-flex align-items-center gap-1">
+                        <div class="carrito-cantidad-control">
                             <button class="btn btn-light btn-sm btn-restar" data-index="${index}">−</button>
                             <input type="number" min="1" class="form-control form-control-sm text-center cambiar-cantidad"
                                 data-index="${index}" value="${p.cantidad}">
                             <button class="btn btn-light btn-sm btn-sumar" data-index="${index}">+</button>
                         </div>
 
-                        <div class="text-end" style="width:90px;">
+                        <div class="text-end carrito-precio-control">
                             <div class="fw-semibold small">
                                 S/ ${formatPrecioDinamico(precioUnitarioFinal)}
                                 ${obtenerIGVPercent() > 0 ? '<span class="d-block text-success extra-small">Incl. IGV</span>' : ''}
@@ -519,6 +518,21 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
             `;
             carritoLista.insertAdjacentHTML("beforeend", card);
         });
+
+        // Select2 solo para la presentación del carrito. Se inicializa aquí porque
+        // estos controles se reconstruyen cada vez que cambia una cantidad.
+        if (window.jQuery?.fn?.select2) {
+            window.jQuery(carritoLista)
+                .find("select.tipo-venta")
+                .each(function () {
+                    window.jQuery(this).select2({
+                        width: "100%",
+                        minimumResultsForSearch: Infinity,
+                        dropdownCssClass: "ui-modern-select-dropdown carrito-presentacion-dropdown",
+                        dropdownParent: window.jQuery(document.body)
+                    });
+                });
+        }
 
         actualizarResumen();
         actualizarBotonCarrito();
@@ -579,7 +593,7 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
 
         if (window.jQuery?.fn?.select2) {
             window.jQuery(carritoLista).on(
-                "change.ventasCarrito select2:select.ventasCarrito",
+                "change.ventasCarrito",
                 "select.tipo-venta",
                 function () {
                     cambiarPresentacion(this);

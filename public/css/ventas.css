@@ -2,9 +2,18 @@
    LAYOUT GENERAL / WRAPPER TIPO TREINTA
 ============================================================ */
 
+/* Ventas ocupa el espacio que deja el footer; las listas hacen el scroll. */
+#content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
 /* Contenedor principal de la vista de ventas (debajo del header del layout) */
 .ventas-treinta {
-    height: calc(100vh - 80px); /* Ajusta este valor si tu header es más alto/bajo */
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     padding: 10px 15px;
@@ -147,6 +156,7 @@
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
     transition: all 0.15s ease-in-out;
     cursor: pointer;
+    height: 100%;
 }
 
 .product-card:hover {
@@ -189,14 +199,18 @@
 /* Información extra (Incl. IGV) puede ir como texto pequeño */
 .product-info {
     margin-top: 0.5rem;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
 }
 
 .product-name {
     font-size: 0.85rem;
     font-weight: 700;
     color: #0f172a;
-    height: 2.2em;
-    overflow: hidden;
+    min-height: 2.5em;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
 }
 
 .product-desc {
@@ -752,8 +766,113 @@ select.form-select-sm,
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    object-fit: cover;
-    background: #f1f5f9;
+    object-fit: contain;
+    padding: 2px;
+    background: #ffffff;
+}
+
+.carrito-producto-resumen,
+.carrito-producto-info,
+.carrito-producto-nombre {
+    min-width: 0;
+}
+
+.carrito-producto-resumen,
+.carrito-producto-info {
+    flex: 1;
+}
+
+.carrito-item-cabecera {
+    gap: 0.75rem;
+}
+
+.carrito-producto-encabezado {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.carrito-producto-nombre {
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.carrito-producto-encabezado .badge {
+    flex: none;
+    margin-right: 0.2rem;
+}
+
+.carrito-item-controles {
+    display: grid;
+    grid-template-columns: 132px 116px minmax(62px, 1fr);
+    align-items: end;
+    gap: 0.6rem;
+}
+
+.carrito-presentacion-control,
+.carrito-presentacion-control .tipo-venta,
+.carrito-presentacion-control > .select2-container {
+    width: 100%;
+    min-width: 0;
+}
+
+.carrito-presentacion-control {
+    position: relative;
+}
+
+/* Select2 deja el select nativo en posición absoluta. Lo anclamos dentro del
+   control para que cada producto adicional no aumente la altura de la página. */
+.carrito-presentacion-control > select.select2-hidden-accessible {
+    top: 0 !important;
+    left: 0 !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: 0 !important;
+}
+
+.carrito-presentacion-control .select2-selection--single {
+    min-height: 32px;
+    height: 32px;
+    border-radius: 10px !important;
+}
+
+.carrito-presentacion-control .select2-selection--single .select2-selection__rendered {
+    padding-left: 10px;
+    padding-right: 28px;
+    font-size: 0.82rem;
+}
+
+.carrito-presentacion-control .select2-selection--single .select2-selection__arrow {
+    right: 5px;
+    height: 30px;
+}
+
+.carrito-cantidad-control {
+    display: grid;
+    grid-template-columns: 28px 50px 28px;
+    align-items: center;
+    gap: 5px;
+}
+
+.carrito-cantidad-control .btn-restar,
+.carrito-cantidad-control .btn-sumar {
+    width: 28px;
+    height: 31px;
+    padding: 0;
+}
+
+.carrito-cantidad-control .cambiar-cantidad {
+    width: 50px;
+    min-width: 0;
+    height: 31px;
+    padding: 0 4px;
+}
+
+.carrito-precio-control {
+    min-width: 62px;
+    align-self: end;
+    padding-bottom: 0.35rem;
 }
 
 .extra-small {
@@ -1287,6 +1406,43 @@ select.form-select-sm,
 
 :root[data-theme='dark'] .product-desc {
     color: #a9c1e3 !important;
+}
+
+:root[data-theme='dark'] .carrito-item .btn-restar,
+:root[data-theme='dark'] .carrito-item .btn-sumar {
+    background: #132b4b !important;
+    border-color: #355b88 !important;
+    color: #f3f7ff !important;
+    box-shadow: none !important;
+}
+
+:root[data-theme='dark'] .carrito-thumb {
+    background: #ffffff;
+    border: 1px solid #355b88;
+}
+
+:root[data-theme='dark'] .carrito-presentacion-control .tipo-venta {
+    color: #eef5ff !important;
+    background-color: #0b1d35 !important;
+    border-color: #355b88 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23dbeafe' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.55rem center !important;
+    background-size: 12px 12px !important;
+    padding-right: 1.8rem !important;
+}
+
+:root[data-theme='dark'] .carrito-item .btn-restar:hover,
+:root[data-theme='dark'] .carrito-item .btn-sumar:hover {
+    background: #1c4778 !important;
+    border-color: #5793d5 !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .carrito-item .btn-restar:focus-visible,
+:root[data-theme='dark'] .carrito-item .btn-sumar:focus-visible {
+    outline: 2px solid #65a6ed;
+    outline-offset: 2px;
 }
 
 :root[data-theme='dark'] .treinta-col.derecha .card {

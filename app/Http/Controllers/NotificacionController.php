@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PedidoCatalogoNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -52,13 +53,11 @@ class NotificacionController extends Controller
         return $destino;
     }
 
-    public function caja(): JsonResponse
+    public function caja(PedidoCatalogoNotificationService $catalogNotifications): JsonResponse
     {
-        $notificaciones = auth()->user()
-            ->unreadNotifications()
-            ->latest()
-            ->limit(10)
-            ->get()
+        $unread = $catalogNotifications->unreadFor(auth()->user());
+        $notificaciones = $unread
+            ->take(10)
             ->map(fn ($notificacion) => [
                 'id' => $notificacion->id,
                 'titulo' => $notificacion->data['titulo'] ?? 'Alerta de caja',
@@ -68,7 +67,7 @@ class NotificacionController extends Controller
             ]);
 
         return response()->json([
-            'total' => auth()->user()->unreadNotifications()->count(),
+            'total' => $unread->count(),
             'notificaciones' => $notificaciones,
         ]);
     }

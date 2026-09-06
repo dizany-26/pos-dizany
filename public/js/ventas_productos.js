@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .some(it => Number(it.id) === Number(prod.id));
 
     return `
-        <div class="col-6 col-md-4 col-xl-3 mb-3">
+        <div class="col-6 col-md-4 col-xl-3 mb-3 d-flex">
             <div class="product-card agregar-carrito
                 ${disponible <= 0 ? "agotado" : ""}
                 ${enCarrito ? "en-carrito" : ""}"

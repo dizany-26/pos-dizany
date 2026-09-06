@@ -600,6 +600,11 @@ $pdf = Pdf::setOptions([
 
             DB::commit();
 
+            if ($pedidoCatalogo) {
+                app(\App\Services\PedidoCatalogoNotificationService::class)
+                    ->markAsRead($pedidoCatalogo);
+            }
+
             if (
                 in_array($tipo, ['factura', 'boleta'], true)
                 && in_array($estado, ['pagado', 'credito', 'pendiente'], true)

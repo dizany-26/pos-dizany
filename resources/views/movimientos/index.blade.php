@@ -971,6 +971,9 @@ flatpickr.localize(flatpickr.l10ns.es);
     if (rango === "mensual") {
         window.__mov_fp = flatpickr("#picker-wrapper", {
             wrap: true,
+            // En móviles Flatpickr intenta reemplazarse por el calendario nativo,
+            // que solo permite elegir días e ignora monthSelectPlugin.
+            disableMobile: true,
             plugins: [
                 new monthSelectPlugin({
                     shorthand: true,
