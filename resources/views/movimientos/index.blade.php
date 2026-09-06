@@ -444,6 +444,7 @@ Movimientos
                             <th class="text-end">Egresos efectivo</th>
                             <th class="text-end">Refuerzos</th>
                             <th class="text-end">Retiros</th>
+                            @if(auth()->user()->esAdmin())<th class="text-end">Pagos digitales</th>@endif
                             <th class="text-end">Esperado</th>
                             <th class="text-end">Contado</th>
                             <th class="text-end">Diferencia</th>
@@ -470,6 +471,13 @@ Movimientos
                                 $diferenciaCajaFila = $contadoCajaFila !== null
                                     ? (float) $contadoCajaFila - (float) $totalesCajaFila['esperado']
                                     : null;
+                                $conciliacionCajaFila = $caja->calcularConciliacion();
+                                $esperadosCajaFila = $caja->metodos_esperados ?? collect($conciliacionCajaFila)
+                                    ->mapWithKeys(fn ($valores, $medio) => [$medio => (float) ($valores['esperado'] ?? 0)])
+                                    ->all();
+                                $totalDigitalCajaFila = collect($esperadosCajaFila)
+                                    ->except('efectivo')
+                                    ->sum();
                             @endphp
                             <tr>
                                 <td data-label="Cajero">{{ $caja->usuario->nombre ?? '—' }}</td>
@@ -480,6 +488,15 @@ Movimientos
                                 <td data-label="Egresos" class="text-end text-danger">S/ {{ number_format($totalesCajaFila['egresos'], 2) }}</td>
                                 <td data-label="Refuerzos" class="text-end text-success">S/ {{ number_format($totalesCajaFila['refuerzos'], 2) }}</td>
                                 <td data-label="Retiros" class="text-end text-danger">S/ {{ number_format($totalesCajaFila['retiros'], 2) }}</td>
+                                @if(auth()->user()->esAdmin())
+                                <td data-label="Pagos digitales" class="text-end">
+                                    <strong>S/ {{ number_format($totalDigitalCajaFila, 2) }}</strong>
+                                    <button type="button" class="btn btn-link btn-sm d-block ms-auto mt-1 p-0"
+                                        data-bs-toggle="modal" data-bs-target="#modalCuadreCaja{{ $caja->id }}">
+                                        Ver detalle
+                                    </button>
+                                </td>
+                                @endif
                                 <td data-label="Esperado" class="text-end fw-bold">{{ $puedeVerArqueo ? 'S/ '.number_format($totalesCajaFila['esperado'], 2) : 'Oculto' }}</td>
                                 <td data-label="Contado" class="text-end">{{ $puedeVerArqueo && $contadoCajaFila !== null ? 'S/ '.number_format($contadoCajaFila, 2) : '—' }}</td>
                                 <td data-label="Diferencia" class="text-end fw-bold {{ ($diferenciaCajaFila ?? 0) < 0 ? 'text-danger' : 'text-success' }}">
@@ -493,6 +510,12 @@ Movimientos
                                 @if(auth()->user()->esAdmin())
                                 <td data-label="Acciones">
                                     <div class="d-flex gap-1">
+                                        @if($caja->estado !== 'pendiente_cierre')
+                                        <button type="button" class="btn-soft btn-soft-info btn-sm"
+                                            data-bs-toggle="modal" data-bs-target="#modalCuadreCaja{{ $caja->id }}">
+                                            <i class="fas fa-wallet"></i> Medios
+                                        </button>
+                                        @endif
                                         @if($caja->estado === 'abierta')
                                             @if($caja->usuario_id === auth()->id())
                                             <button type="button" class="btn-soft btn-soft-danger btn-sm"
@@ -531,7 +554,7 @@ Movimientos
                                 @endif
                             </tr>
                         @empty
-                            <tr><td colspan="{{ auth()->user()->esAdmin() ? 13 : 12 }}" class="text-center text-muted py-4">No hay sesiones de caja en este periodo.</td></tr>
+                            <tr><td colspan="{{ auth()->user()->esAdmin() ? 14 : 12 }}" class="text-center text-muted py-4">No hay sesiones de caja en este periodo.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -548,17 +571,22 @@ Movimientos
 </div>
 
 @if(auth()->user()->esAdmin())
-@foreach($cajas->where('estado', 'pendiente_cierre') as $cajaPendiente)
+@foreach($cajas as $cajaDetalle)
 @php
-    $esperadosCuadre = $cajaPendiente->metodos_esperados ?? [];
-    $declaradosCuadre = $cajaPendiente->metodos_declarados ?? ['efectivo' => $cajaPendiente->monto_declarado];
-    $diferenciasCuadre = $cajaPendiente->metodos_diferencias ?? [];
-    $efectivoPendiente = $cajaPendiente->calcularEfectivo();
+    $conciliacionDetalle = $cajaDetalle->calcularConciliacion();
+    $esperadosCuadre = $cajaDetalle->metodos_esperados ?? collect($conciliacionDetalle)
+        ->mapWithKeys(fn ($valores, $medio) => [$medio => (float) ($valores['esperado'] ?? 0)])
+        ->all();
+    $declaradosCuadre = $cajaDetalle->metodos_declarados ?? [];
+    $diferenciasCuadre = $cajaDetalle->metodos_diferencias ?? [];
 @endphp
-<div class="modal fade" id="modalCuadreCaja{{ $cajaPendiente->id }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalCuadreCaja{{ $cajaDetalle->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title"><i class="fas fa-scale-balanced"></i> Cuadre de {{ $cajaPendiente->usuario?->nombre }}</h5>
+            <div>
+                <h5 class="modal-title"><i class="fas fa-scale-balanced"></i> Medios de pago · {{ $cajaDetalle->usuario?->nombre }}</h5>
+                <small class="text-muted">Caja #{{ $cajaDetalle->id }} · {{ $cajaDetalle->abierta_en->format('d/m/Y H:i') }} · {{ $cajaDetalle->estado === 'abierta' ? 'En curso' : ($cajaDetalle->estado === 'pendiente_cierre' ? 'Por aprobar' : 'Cerrada') }}</small>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body"><div class="reconciliation-table-wrap">
@@ -567,23 +595,30 @@ Movimientos
                 <tbody>
                 @foreach(\App\Models\Caja::mediosConciliables() as $medio => $etiqueta)
                 @php
-                    $esperadoMedio = (float) ($esperadosCuadre[$medio] ?? ($medio === 'efectivo' ? $efectivoPendiente['esperado'] : 0));
-                    $declaradoMedio = (float) ($declaradosCuadre[$medio] ?? 0);
-                    $diferenciaMedio = (float) ($diferenciasCuadre[$medio] ?? ($declaradoMedio - $esperadoMedio));
+                    $esperadoMedio = (float) ($esperadosCuadre[$medio] ?? 0);
+                    $tieneDeclaradoMedio = array_key_exists($medio, $declaradosCuadre);
+                    $declaradoMedio = $tieneDeclaradoMedio ? (float) $declaradosCuadre[$medio] : null;
+                    $diferenciaMedio = $tieneDeclaradoMedio
+                        ? (float) ($diferenciasCuadre[$medio] ?? ($declaradoMedio - $esperadoMedio))
+                        : null;
                 @endphp
                 <tr><td data-label="Medio"><strong>{{ $etiqueta }}</strong></td>
                     <td data-label="Sistema" class="text-end">S/ {{ number_format($esperadoMedio, 2) }}</td>
-                    <td data-label="Declarado" class="text-end">S/ {{ number_format($declaradoMedio, 2) }}</td>
-                    <td data-label="Diferencia" class="text-end fw-bold {{ $diferenciaMedio == 0 ? 'text-success' : 'text-danger' }}">S/ {{ number_format($diferenciaMedio, 2) }}</td></tr>
+                    <td data-label="Declarado" class="text-end">{{ $declaradoMedio === null ? 'Pendiente' : 'S/ '.number_format($declaradoMedio, 2) }}</td>
+                    <td data-label="Diferencia" class="text-end fw-bold {{ $diferenciaMedio === null || $diferenciaMedio == 0 ? 'text-success' : 'text-danger' }}">{{ $diferenciaMedio === null ? '—' : 'S/ '.number_format($diferenciaMedio, 2) }}</td></tr>
                 @endforeach
                 </tbody>
             </table>
         </div>
-        @if($cajaPendiente->observaciones)<div class="cash-explanation mt-3"><strong>Observación:</strong> {{ $cajaPendiente->observaciones }}</div>@endif
+        @if($cajaDetalle->observaciones)<div class="cash-explanation mt-3"><strong>Observación:</strong> {{ $cajaDetalle->observaciones }}</div>@endif
         </div>
         <div class="modal-footer">
-            <form method="POST" action="{{ route('cajas.reabrir', $cajaPendiente) }}">@csrf<button class="btn-soft btn-soft-warning" type="submit"><i class="fas fa-rotate-left"></i> Devolver</button></form>
-            <form method="POST" action="{{ route('cajas.aprobar', $cajaPendiente) }}">@csrf<button class="btn-soft btn-soft-success" type="submit"><i class="fas fa-check"></i> Aprobar cuadre</button></form>
+            @if($cajaDetalle->estado === 'pendiente_cierre')
+                <form method="POST" action="{{ route('cajas.reabrir', $cajaDetalle) }}">@csrf<button class="btn-soft btn-soft-warning" type="submit"><i class="fas fa-rotate-left"></i> Devolver</button></form>
+                <form method="POST" action="{{ route('cajas.aprobar', $cajaDetalle) }}">@csrf<button class="btn-soft btn-soft-success" type="submit"><i class="fas fa-check"></i> Aprobar cuadre</button></form>
+            @else
+                <button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cerrar</button>
+            @endif
         </div>
     </div></div>
 </div>

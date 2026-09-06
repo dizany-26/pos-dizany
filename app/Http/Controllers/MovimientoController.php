@@ -266,21 +266,23 @@ class MovimientoController extends Controller
         $ventasQuery = Movimiento::ingresos()
             ->pagados()
             ->activos()
-            ->where('subtipo', 'venta')
-            ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
-            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->where('movimientos.subtipo', 'venta')
+            ->when(! $esAdmin, fn ($q) => $q->where('movimientos.usuario_id', $usuarioActual->id))
+            ->when($cajaSeleccionada, fn ($q) => $q->where('movimientos.caja_id', $cajaSeleccionada->id))
             ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) =>
-                $q->whereBetween('fecha', [$inicio, $fin])
+                $q->whereBetween('movimientos.fecha', [$inicio, $fin])
             );
 
         if ($metodo === '') {
-            $ventas = (float) $ventasQuery->sum('monto');
+            $ventas = (float) $ventasQuery->sum('movimientos.monto');
         } elseif ($metodo === 'mixto') {
-            $ventas = (float) $ventasQuery->whereRaw('LOWER(metodo_pago) = ?', ['mixto'])->sum('monto');
+            $ventas = (float) $ventasQuery
+                ->whereRaw('LOWER(movimientos.metodo_pago) = ?', ['mixto'])
+                ->sum('movimientos.monto');
         } else {
             $ventasDirectas = (float) (clone $ventasQuery)
-                ->whereRaw('LOWER(metodo_pago) = ?', [$metodo])
-                ->sum('monto');
+                ->whereRaw('LOWER(movimientos.metodo_pago) = ?', [$metodo])
+                ->sum('movimientos.monto');
             $ventasMixtas = (float) (clone $ventasQuery)
                 ->whereRaw('LOWER(movimientos.metodo_pago) = ?', ['mixto'])
                 ->join('pagos_venta as pv', 'pv.venta_id', '=', 'movimientos.referencia_id')
