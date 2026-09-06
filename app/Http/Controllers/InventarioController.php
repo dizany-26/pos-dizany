@@ -16,20 +16,77 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class InventarioController extends Controller
 {
-    public function lotes()
-{
-    $lotes = Lote::with(['producto', 'proveedor'])
-        ->withCount('movimientos')
-        ->where('activo', 1)
-        ->orderByRaw('fecha_vencimiento IS NULL') // los sin vencimiento al final
-        ->orderBy('fecha_vencimiento', 'asc')    // FEFO REAL
-        ->orderBy('fecha_ingreso', 'asc')        // desempate
-        ->get();
+    public function lotes(Request $request)
+    {
+        $query = Lote::with(['producto', 'proveedor'])
+            ->withCount('movimientos')
+            ->where('activo', 1);
+
+        $query->when($request->filled('estado'), function ($query) use ($request) {
+            $hoy = Carbon::today();
+
+            match ($request->string('estado')->toString()) {
+                'vencido' => $query->whereDate('fecha_vencimiento', '<', $hoy),
+                '10' => $query->whereBetween('fecha_vencimiento', [$hoy, $hoy->copy()->addDays(10)]),
+                '30' => $query->whereBetween('fecha_vencimiento', [$hoy->copy()->addDays(11), $hoy->copy()->addDays(30)]),
+                'ok' => $query->whereDate('fecha_vencimiento', '>', $hoy->copy()->addDays(30)),
+                'sin' => $query->whereNull('fecha_vencimiento'),
+                default => null,
+            };
+        });
+
+        $query->when($request->filled('producto_id'), fn ($query) =>
+            $query->where('producto_id', $request->integer('producto_id'))
+        );
+        $query->when($request->stock === 'con', fn ($query) => $query->where('stock_actual', '>', 0));
+        $query->when($request->stock === 'sin', fn ($query) => $query->where('stock_actual', '<=', 0));
+        $query->when($request->movimientos === '1', fn ($query) => $query->has('movimientos'));
+        $query->when($request->movimientos === '0', fn ($query) => $query->doesntHave('movimientos'));
+
+        $query->when($request->filled('buscar'), function ($query) use ($request) {
+            $buscar = trim($request->string('buscar')->toString());
+            $numeroLote = preg_replace('/^LT-?/i', '', $buscar);
+
+            $query->where(function ($query) use ($buscar, $numeroLote) {
+                $query->where('codigo_comprobante', 'like', "%{$buscar}%")
+                    ->orWhereHas('producto', fn ($producto) => $producto->where('nombre', 'like', "%{$buscar}%"))
+                    ->orWhereHas('proveedor', fn ($proveedor) => $proveedor->where('nombre', 'like', "%{$buscar}%"));
+
+                if (ctype_digit($numeroLote)) {
+                    $query->orWhere('numero_lote', (int) $numeroLote);
+                }
+            });
+        });
+
+        // La prioridad FEFO se calcula globalmente, no solo dentro de la página visible.
+        $prioridadesFefo = Lote::where('activo', 1)
+            ->where('stock_actual', '>', 0)
+            ->orderBy('producto_id')
+            ->orderByRaw('fecha_vencimiento IS NULL')
+            ->orderBy('fecha_vencimiento')
+            ->orderBy('fecha_ingreso')
+            ->orderBy('id')
+            ->get(['id', 'producto_id'])
+            ->groupBy('producto_id')
+            ->flatMap(fn ($lotesProducto) => $lotesProducto->values()->mapWithKeys(
+                fn ($lote, $indice) => [$lote->id => $indice + 1]
+            ));
+
+        if ($request->fefo === '1') {
+            $query->whereIn('id', $prioridadesFefo->filter(fn ($prioridad) => $prioridad === 1)->keys());
+        }
+
+        $lotes = $query
+            ->orderByRaw('fecha_vencimiento IS NULL')
+            ->orderBy('fecha_vencimiento')
+            ->orderBy('fecha_ingreso')
+            ->paginate(10)
+            ->withQueryString();
 
         $productos = Producto::where('activo', 1)->orderBy('nombre')->get();
 
-    return view('inventario.lotes_index', compact('lotes', 'productos'));
-}
+        return view('inventario.lotes_index', compact('lotes', 'productos', 'prioridadesFefo'));
+    }
 
 public function actualizarStock(Request $request, $id)
 {

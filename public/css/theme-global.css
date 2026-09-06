@@ -189,6 +189,52 @@
 }
 
 /* =========================================================
+   PAGINACION GLOBAL — estados legibles en modo oscuro
+========================================================= */
+:root[data-theme='dark'] .pagination {
+    --bs-pagination-bg: var(--dm-surface-soft);
+    --bs-pagination-border-color: var(--dm-border);
+    --bs-pagination-color: #b9d3ff;
+    --bs-pagination-hover-bg: var(--dm-surface-strong);
+    --bs-pagination-hover-border-color: #42628a;
+    --bs-pagination-hover-color: #ffffff;
+    --bs-pagination-focus-bg: var(--dm-surface-strong);
+    --bs-pagination-focus-color: #ffffff;
+    --bs-pagination-active-bg: #2563eb;
+    --bs-pagination-active-border-color: #3b82f6;
+    --bs-pagination-active-color: #ffffff;
+    --bs-pagination-disabled-bg: #0d1729;
+    --bs-pagination-disabled-border-color: #263752;
+    --bs-pagination-disabled-color: #7183a1;
+}
+
+:root[data-theme='dark'] .pagination .page-link {
+    color: var(--bs-pagination-color) !important;
+    background-color: var(--bs-pagination-bg) !important;
+    border-color: var(--bs-pagination-border-color) !important;
+}
+
+:root[data-theme='dark'] .pagination .page-link:hover,
+:root[data-theme='dark'] .pagination .page-link:focus {
+    color: var(--bs-pagination-hover-color) !important;
+    background-color: var(--bs-pagination-hover-bg) !important;
+    border-color: var(--bs-pagination-hover-border-color) !important;
+}
+
+:root[data-theme='dark'] .pagination .page-item.active .page-link {
+    color: var(--bs-pagination-active-color) !important;
+    background-color: var(--bs-pagination-active-bg) !important;
+    border-color: var(--bs-pagination-active-border-color) !important;
+}
+
+:root[data-theme='dark'] .pagination .page-item.disabled .page-link {
+    color: var(--bs-pagination-disabled-color) !important;
+    background-color: var(--bs-pagination-disabled-bg) !important;
+    border-color: var(--bs-pagination-disabled-border-color) !important;
+    opacity: 1;
+}
+
+/* =========================================================
    LIGHT MODE — Header/Sidebar/Footer white premium
 ========================================================= */
 :root[data-theme='light'] body,

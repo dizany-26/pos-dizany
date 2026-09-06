@@ -87,9 +87,11 @@
         width: 100%;
         max-width: 100%;
         overflow-x: auto !important;
-        overflow-y: hidden !important;
+        overflow-y: auto !important;
+        max-height: calc(100vh - 355px);
         -webkit-overflow-scrolling: touch;
         touch-action: pan-x pan-y;
+        scrollbar-gutter: stable;
     }
 
     .table-responsive.ui-scroll > .tabla-scroll {
@@ -102,10 +104,18 @@
         min-width: 1050px;
     }
 
+    .table-responsive.ui-scroll .ui-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
     @media (max-width: 768px) and (orientation: portrait) {
         .table-responsive.ui-scroll {
             overflow-x: visible !important;
             overflow-y: visible !important;
+            max-height: none;
+            scrollbar-gutter: auto;
         }
 
         .table-responsive.ui-scroll > .tabla-scroll,
@@ -225,24 +235,24 @@
 
         <div class="card-body pt-2 pb-4">
                 {{-- FILTROS (van arriba de la tabla) --}}
-                <div class="px-2 mb-4">
+                <form method="GET" action="{{ route('inventario.lotes') }}" id="formFiltrosLotes" class="px-2 mb-4 filtros-lotes">
                     <div class="row mb-3 g-2">
                         <div class="col-md-2">
-                            <select id="filtroEstado" class="form-select ui-input">
+                            <select name="estado" id="filtroEstado" class="form-select ui-input">
                                 <option value="">Estado</option>
-                                <option value="vencido">Vencidos</option>
-                                <option value="10">Vence ≤ 10 días</option>
-                                <option value="30">Vence ≤ 30 días</option>
-                                <option value="ok">Vigentes</option>
-                                <option value="sin">Sin vencimiento</option>
+                                <option value="vencido" @selected(request('estado') === 'vencido')>Vencidos</option>
+                                <option value="10" @selected(request('estado') === '10')>Vence ≤ 10 días</option>
+                                <option value="30" @selected(request('estado') === '30')>Vence entre 11 y 30 días</option>
+                                <option value="ok" @selected(request('estado') === 'ok')>Vigentes</option>
+                                <option value="sin" @selected(request('estado') === 'sin')>Sin vencimiento</option>
                             </select>
                         </div>
 
                         <div class="col-md-2">
-                            <select id="filtroProducto" class="form-select ui-input">
+                            <select name="producto_id" id="filtroProducto" class="form-select ui-input">
                                 <option value="">Producto</option>
                                 @foreach ($productos as $producto)
-                                    <option value="{{ strtolower($producto->nombre) }}">
+                                    <option value="{{ $producto->id }}" @selected((string) request('producto_id') === (string) $producto->id)>
                                         {{ $producto->nombre }}
                                     </option>
                                 @endforeach
@@ -250,17 +260,17 @@
                         </div>
 
                         <div class="col-md-2">
-                            <select id="filtroStock" class="form-select ui-input">
+                            <select name="stock" id="filtroStock" class="form-select ui-input">
                                 <option value="">Stock</option>
-                                <option value="con">Con stock</option>
-                                <option value="sin">Sin stock</option>
+                                <option value="con" @selected(request('stock') === 'con')>Con stock</option>
+                                <option value="sin" @selected(request('stock') === 'sin')>Sin stock</option>
                             </select>
                         </div>
 
                         <div class="col-md-2">
-                            <select id="filtroFefo" class="form-select ui-input">
+                            <select name="fefo" id="filtroFefo" class="form-select ui-input">
                                 <option value="">FEFO</option>
-                                <option value="1">Prioridad FEFO</option>
+                                <option value="1" @selected(request('fefo') === '1')>Prioridad FEFO</option>
                             </select>
                         </div>
 
@@ -268,7 +278,7 @@
                             <div class="dropdown">
                                 <button
                                     id="filtroMovimientosBtn"
-                                    class="btn-soft btn-soft-primary btn-soft-icon"
+                                    class="btn-soft btn-soft-primary btn-soft-icon {{ request()->filled('movimientos') ? 'activo' : '' }}"
                                     type="button"
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false"
@@ -294,22 +304,26 @@
                                         </a>
                                     </li>
                                 </ul>
+                                <input type="hidden" name="movimientos" id="filtroMovimientos" value="{{ request('movimientos') }}">
                             </div>
                         </div>
 
                         <div class="col-md-3 d-flex align-items-center gap-1">
-                            <input type="text" id="filtroBuscar" class="form-control ui-input"
-                                placeholder="Buscar lote o producto…">
+                            <input type="search" name="buscar" id="filtroBuscar" class="form-control ui-input"
+                                value="{{ request('buscar') }}" placeholder="Buscar lote, producto o proveedor…">
 
-                                <button type="button"
-                                        id="btnLimpiarFiltros"
+                                <button type="submit" class="btn-soft btn-soft-primary btn-soft-icon" title="Buscar en todos los lotes">
+                                    <i class="fas fa-search"></i>
+                                </button>
+
+                                <a href="{{ route('inventario.lotes') }}"
                                         class="btn-soft btn-soft-info btn-soft-icon"
                                         title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
-                                </button>
+                                </a>
                         </div>
                     </div>
-                </div>
+                </form>
 
             <div class="table-responsive ui-scroll">
                 
@@ -331,23 +345,16 @@
                     </thead>
 
                     <tbody>
-                        @php
-                            $fefoIndex = [];
-                        @endphp
-
                         @forelse ($lotes as $lote)
                             @php
                                 // =========================
                                 // FEFO POR PRODUCTO
                                 // =========================
-                                $pid = $lote->producto_id;
-
                                 if ($lote->stock_actual <= 0) {
                                     $fefoIcon = '<span class="fefo-empty-box" title="Lote agotado" aria-label="Lote agotado"><i class="fas fa-box-open"></i></span>';
                                     $prioridadFefo = null;
                                 } else {
-                                    $fefoIndex[$pid] = ($fefoIndex[$pid] ?? 0) + 1;
-                                    $prioridadFefo = $fefoIndex[$pid];
+                                    $prioridadFefo = $prioridadesFefo->get($lote->id);
                                 }
 
                                 if ($lote->stock_actual <= 0) {
@@ -383,18 +390,7 @@
                                 }
                             @endphp
 
-                            <tr
-                                data-estado="{{ $estadoVenc }}"
-                                data-producto="{{ strtolower($lote->producto->nombre ?? '') }}"
-                                data-stock="{{ $lote->stock_actual > 0 ? 'con' : 'sin' }}"
-                                data-fefo="{{ $prioridadFefo === 1 ? '1' : '0' }}"
-                                data-movimientos="{{ $lote->movimientos_count > 0 ? '1' : '0' }}"
-                                data-texto="{{ strtolower(
-                                    ($lote->codigo_comprobante ?? '') . ' ' .
-                                    ($lote->producto->nombre ?? '') . ' ' .
-                                    ($lote->proveedor->nombre ?? '')
-                                ) }}"
-                            >
+                            <tr>
                                 {{-- CODIGO COMPROBANTE --}}
                                 <td data-label="Cód. Comprobante">
                                     <strong>{{ blank($lote->codigo_comprobante) ? '—' : $lote->codigo_comprobante }}</strong>
@@ -550,6 +546,15 @@
 
             </div>
 
+            @if($lotes->hasPages() || $lotes->total() > 0)
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 px-2 pt-3">
+                    <small class="text-muted">
+                        Mostrando {{ $lotes->firstItem() ?? 0 }}–{{ $lotes->lastItem() ?? 0 }} de {{ $lotes->total() }} lotes
+                    </small>
+                    {{ $lotes->links('pagination::simple-bootstrap-4') }}
+                </div>
+            @endif
+
         </div>
 
 </div>
@@ -590,66 +595,12 @@
 </script>
 
 <script>
-    document.getElementById('btnLimpiarFiltros')
-        .addEventListener('click', function () {
-
-            document.getElementById('filtroEstado').value = '';
-            document.getElementById('filtroProducto').value = '';
-            document.getElementById('filtroStock').value = '';
-            document.getElementById('filtroFefo').value = '';
-            document.getElementById('filtroBuscar').value = '';
-
-            document.querySelectorAll('.filtro-activo')
-                .forEach(el => el.classList.remove('filtro-activo'));
-
-            // Mostrar todas las filas
-            document.querySelectorAll('tbody tr').forEach(tr => {
-                tr.style.display = '';
-            });
-    });
-</script>
-
-<script>
-    let filtroMovimientosValor = "";
-    
-    document.addEventListener('DOMContentLoaded', function () { 
-
-        const filas = document.querySelectorAll('tbody tr');
-
-        const estado = document.getElementById('filtroEstado');
-        const producto = document.getElementById('filtroProducto');
-        const stock = document.getElementById('filtroStock');
-        const fefo = document.getElementById('filtroFefo');
-        const buscar = document.getElementById('filtroBuscar');
-
-        function filtrar() {
-            const vEstado = estado.value;
-            const vProducto = producto.value;
-            const vStock = stock.value;
-            const vFefo = fefo.value;
-            const vBuscar = buscar.value.toLowerCase();
-            const vMov = filtroMovimientosValor;
-
-            filas.forEach(tr => {
-                let visible = true;
-
-                if (vEstado && tr.dataset.estado !== vEstado) visible = false;
-                if (vProducto && tr.dataset.producto !== vProducto) visible = false;
-                if (vStock && tr.dataset.stock !== vStock) visible = false;
-                if (vFefo && tr.dataset.fefo !== vFefo) visible = false;
-                if (vBuscar && !tr.dataset.texto.includes(vBuscar)) visible = false;
-                if (vMov && tr.dataset.movimientos !== vMov) visible = false;
-
-                tr.style.display = visible ? '' : 'none';
-            });
-        }
-
-        [estado, producto, stock, fefo].forEach(el =>
-            el.addEventListener('change', filtrar)
-        );
-
-        
-        buscar.addEventListener('input', filtrar);
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('formFiltrosLotes');
+        form.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', () => form.submit());
+            select.classList.toggle('filtro-activo', select.value !== '');
+        });
     });
 </script>
 <script>
@@ -658,29 +609,10 @@
             item.addEventListener('click', e => {
                 e.preventDefault();
 
-                filtroMovimientosValor = item.dataset.mov || "";
-
-                // feedback visual
-                const btn = document.getElementById('filtroMovimientosBtn');
-                btn.classList.toggle('activo', filtroMovimientosValor !== "");
-
-                // aplicar filtro
-                const evento = new Event('change');
-                document.getElementById('filtroEstado').dispatchEvent(evento);
+                document.getElementById('filtroMovimientos').value = item.dataset.mov || '';
+                document.getElementById('formFiltrosLotes').submit();
             });
         });
-</script>
-
-<script>
-    document.querySelectorAll('.filtros-lotes select, .filtros-lotes input')
-        .forEach(el => {
-            el.addEventListener('change', () => {
-                el.classList.toggle('filtro-activo', el.value !== '');
-            });
-            el.addEventListener('input', () => {
-                el.classList.toggle('filtro-activo', el.value !== '');
-            });
-    });
 </script>
 
 @endpush
