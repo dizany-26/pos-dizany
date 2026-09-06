@@ -65,6 +65,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const money = (n) => `S/ ${Number(n || 0).toFixed(2)}`;
 
+    const renderDescripcionProducto = (descripcion) => {
+        const texto = String(descripcion || '').trim();
+        if (!texto) return '';
+
+        const caracteres = Array.from(texto);
+        if (caracteres.length <= 95) {
+            return `<div class="producto-desc">${texto}</div>`;
+        }
+
+        const resumen = `${caracteres.slice(0, 95).join('').trimEnd()}…`;
+        return `
+            <div class="producto-desc producto-desc-short">${resumen}</div>
+            <div class="producto-desc producto-desc-full d-none">${texto}</div>
+            <button type="button" class="producto-desc-toggle" aria-expanded="false">Ver más</button>
+        `;
+    };
+
+    const renderImagenProducto = (imagen) => `
+        ${imagen ? `<img src="${imagen}" alt="Imagen del producto" class="producto-img" onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none')">` : ''}
+        <span class="producto-img producto-img-placeholder ${imagen ? 'd-none' : ''}" aria-hidden="true">
+            <i class="fas fa-box"></i>
+        </span>
+    `;
+
+    contenido.addEventListener('click', (event) => {
+        const boton = event.target.closest('.producto-desc-toggle');
+        if (!boton) return;
+
+        const producto = boton.closest('.producto-info');
+        const resumen = producto?.querySelector('.producto-desc-short');
+        const descripcionCompleta = producto?.querySelector('.producto-desc-full');
+        if (!resumen || !descripcionCompleta) return;
+
+        const expandido = boton.getAttribute('aria-expanded') === 'true';
+        resumen.classList.toggle('d-none', !expandido);
+        descripcionCompleta.classList.toggle('d-none', expandido);
+        boton.setAttribute('aria-expanded', String(!expandido));
+        boton.textContent = expandido ? 'Ver más' : 'Ver menos';
+    });
+
     function renderEstadoBadge(estado) {
         switch (estado) {
             case 'pagado':
@@ -203,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${!estaPagada ? `<div class="detalle-item"><i class="far fa-calendar-check"></i><span>Vencimiento del pago</span><strong>${compra.fecha_vencimiento ?? 'Sin fecha'}</strong></div>` : ''}
                         </div>
                         <h6 class="mt-4 fw-semibold text-muted small text-uppercase">Productos del lote</h6>
-                        <div class="card ui-card rounded-4 p-3 listado-productos">${(compra.productos || []).map(p => `<div class="producto-item-pro"><div class="producto-info"><div class="producto-nombre">${p.nombre}</div>${p.descripcion ? `<div class="producto-desc">${p.descripcion}</div>` : ''}<div class="producto-cantidad">${p.cantidad} unidades × S/ ${Number(p.costo || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</div></div><div class="producto-precio">${money(p.subtotal)}</div></div>`).join('')}</div>
+                        <div class="card ui-card rounded-4 p-3 listado-productos">${(compra.productos || []).map(p => `<div class="producto-item-pro">${renderImagenProducto(p.imagen)}<div class="producto-info"><div class="producto-nombre">${p.nombre}</div>${renderDescripcionProducto(p.descripcion)}<div class="producto-cantidad">${p.cantidad} unidades × S/ ${Number(p.costo || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</div></div><div class="producto-precio">${money(p.subtotal)}</div></div>`).join('')}</div>
                         ${compra.pagos?.length ? `<h6 class="mt-4 fw-semibold text-muted small text-uppercase">Historial de pagos</h6><div class="card ui-card rounded-4 p-3">${historial}</div>` : ''}
                         ${compra.puede_pagar ? `<button type="button" class="btn-soft btn-soft-warning w-100 mt-3" onclick="mostrarPagoCompra()"><i class="fas fa-cash-register"></i><span>Registrar pago</span></button>` : ''}
                     </div>
@@ -517,7 +557,7 @@ const documentoSol = sol.documento || null;
                                 <img src="${p.imagen ?? ''}" class="producto-img" onerror="this.style.display='none'">
                                 <div class="producto-info">
                                     <div class="producto-nombre">${p.nombre ?? '—'}</div>
-                                    ${p.descripcion ? `<div class="producto-desc">${p.descripcion}</div>` : ''}
+                                    ${renderDescripcionProducto(p.descripcion)}
                                     <div class="producto-cantidad">${p.cantidad_txt ?? ''}</div>
                                 </div>
                                 <div class="producto-precio">

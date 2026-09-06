@@ -271,6 +271,9 @@ public function detalleCompraLote(Lote $lote)
         'productos' => $lotes->map(fn ($item) => [
             'nombre' => $item->producto->nombre ?? '—',
             'descripcion' => $item->producto->descripcion ?? null,
+            'imagen' => $item->producto?->imagen
+                ? asset('uploads/productos/'.$item->producto->imagen)
+                : null,
             'cantidad' => (int) $item->stock_inicial,
             'costo' => (float) $item->precio_compra,
             'subtotal' => round((float) $item->stock_inicial * (float) $item->precio_compra, 2),
