@@ -137,24 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </form>
     </div>
 
-    @if($taxProfile?->emission_system === 'see_sol')
-    <div class="sunat-panel mb-4">
-        <div class="sunat-checklist-head rounded-3 mb-3"><div><strong><i class="fas fa-link text-primary me-2"></i>SEE-SOL · vincular boleta oficial</strong><small>SUNAT genera la serie y el número. DIZANY no los inventa ni requiere certificado digital en esta modalidad.</small></div></div>
-        <div class="sunat-table-wrap"><table class="sunat-table"><thead><tr><th>Venta interna</th><th>Cliente</th><th>Total</th><th>Datos de SUNAT SOL</th></tr></thead><tbody>
-        @forelse($sales->filter(fn($sale)=>$sale->emission_system === 'see_sol' && !$sale->manualTaxDocument) as $sale)
-            <tr><td>{{ $sale->serie }}-{{ str_pad($sale->correlativo,6,'0',STR_PAD_LEFT) }}</td><td>{{ $sale->cliente?->nombre }}</td><td>S/ {{ number_format($sale->total,2) }}</td><td>
-                <form method="POST" action="{{ route('sunat.sol.link',$sale) }}" class="sunat-inline">@csrf
-                    <input class="form-control form-control-sm" name="series" maxlength="4" required placeholder="Serie SUNAT">
-                    <input class="form-control form-control-sm" type="number" name="number" min="1" required placeholder="Número">
-                    <input class="form-control form-control-sm" type="datetime-local" name="issued_at" required value="{{ optional($sale->fecha)->format('Y-m-d\TH:i') }}">
-                    <input type="hidden" name="total" value="{{ $sale->total }}"><button class="btn btn-sm btn-outline-primary">Vincular</button>
-                </form>
-            </td></tr>
-        @empty<tr><td colspan="4" class="text-center text-muted py-4">No hay ventas SEE-SOL pendientes de vincular.</td></tr>@endforelse
-        </tbody></table></div>
-    </div>
-    @endif
-
     @if(!$taxProfile)
     <div class="sunat-panel text-center py-5">
         <i class="fas fa-sliders-h fa-2x text-primary mb-3"></i>

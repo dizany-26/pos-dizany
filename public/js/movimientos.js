@@ -440,9 +440,18 @@ const documentoSol = sol.documento || null;
                 </div>
 
                 ${sol.aplica ? `
-                    <h6 class="mt-4 fw-semibold text-muted small text-uppercase">
-                        Boleta oficial SUNAT SOL
-                    </h6>
+                    <details class="sol-disclosure mt-4">
+                        <summary class="sol-disclosure-summary">
+                            <span class="sol-disclosure-title">
+                                <i class="fas fa-file-invoice"></i>
+                                <span>Boleta oficial SUNAT SOL</span>
+                            </span>
+                            <span class="sol-disclosure-state ${documentoSol ? 'is-linked' : 'is-pending'}">
+                                ${documentoSol ? 'Vinculada' : 'Pendiente'}
+                            </span>
+                            <i class="fas fa-chevron-down sol-disclosure-chevron" aria-hidden="true"></i>
+                        </summary>
+                        <div class="sol-disclosure-body">
                     ${documentoSol ? `
                         <div class="card ui-card rounded-4 p-3 sol-linked-card">
                             <div class="d-flex align-items-center gap-2 mb-3">
@@ -491,6 +500,8 @@ const documentoSol = sol.documento || null;
                             Esta venta SEE-SOL todavía no tiene una boleta oficial vinculada. Solicita a un administrador que complete el registro.
                         </div>
                     `}
+                        </div>
+                    </details>
                 ` : ''}
 
                 <!-- ===== PRODUCTOS ===== -->

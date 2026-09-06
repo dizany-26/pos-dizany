@@ -837,6 +837,59 @@
     border-color: rgba(96, 165, 250, .3);
     background: rgba(30, 64, 175, .2);
 }
+
+.sol-disclosure {
+    overflow: hidden;
+    border: 1px solid var(--border-color, #dbe4ef);
+    border-radius: 1rem;
+    background: var(--card-bg, #fff);
+}
+
+.sol-disclosure-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: .65rem;
+    padding: .9rem 1rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.sol-disclosure-summary::-webkit-details-marker { display: none; }
+.sol-disclosure-title {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    min-width: 0;
+    font-size: .82rem;
+    font-weight: 750;
+    text-transform: uppercase;
+}
+.sol-disclosure-title i { color: #2563eb; }
+.sol-disclosure-state {
+    padding: .22rem .55rem;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 750;
+}
+.sol-disclosure-state.is-linked { color: #15803d; background: rgba(34, 197, 94, .14); }
+.sol-disclosure-state.is-pending { color: #a16207; background: rgba(245, 158, 11, .16); }
+.sol-disclosure-chevron { color: var(--text-muted, #64748b); transition: transform .2s ease; }
+.sol-disclosure[open] .sol-disclosure-chevron { transform: rotate(180deg); }
+.sol-disclosure-body { padding: 0 .75rem .75rem; }
+.sol-disclosure-body > .card { margin: 0; }
+
+:root[data-theme='dark'] .sol-disclosure,
+[data-bs-theme='dark'] .sol-disclosure {
+    border-color: #304766;
+    background: #0f1d33;
+}
+
+:root[data-theme='dark'] .sol-disclosure-state.is-linked,
+[data-bs-theme='dark'] .sol-disclosure-state.is-linked { color: #86efac; }
+:root[data-theme='dark'] .sol-disclosure-state.is-pending,
+[data-bs-theme='dark'] .sol-disclosure-state.is-pending { color: #fde68a; }
 .cash-methods-heading {
     display: flex;
     flex-direction: column;
