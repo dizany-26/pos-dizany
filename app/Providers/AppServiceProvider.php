@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
-use App\Models\Producto;
 use App\Models\Lote;
 use App\Services\PedidoCatalogoNotificationService;
 
@@ -32,8 +31,15 @@ class AppServiceProvider extends ServiceProvider
                 && (auth()->user()->esAdmin() || auth()->user()->tienePermiso('inventario.resumen'));
 
             $alertaStockBajo = $puedeVerInventario
-                ? Producto::withSum('lotes as stock_total', 'stock_actual')
-                    ->having('stock_total', '<=', 10)
+                ? DB::table('productos')
+                    ->leftJoin('lotes', function ($join) {
+                        $join->on('productos.id', '=', 'lotes.producto_id')
+                            ->where('lotes.activo', 1);
+                    })
+                    ->where('productos.activo', 1)
+                    ->select('productos.id')
+                    ->groupBy('productos.id')
+                    ->havingRaw('COALESCE(SUM(lotes.stock_actual), 0) <= MAX(COALESCE(productos.stock_minimo, 10))')
                     ->count()
                 : 0;
 
@@ -41,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
                 ? Lote::whereNotNull('fecha_vencimiento')
                     ->whereDate('fecha_vencimiento', '<=', now()->addDays(30))
                     ->where('stock_actual', '>', 0)
+                    ->where('activo', 1)
                     ->count()
                 : 0;
 

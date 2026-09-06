@@ -155,10 +155,10 @@ Productos
                         <td data-label="Stock" class="text-center">
                             <span class="fw-bold">{{ $producto->stock_total }}</span>
 
-                            @if($producto->stock_total <= 5)
-                                <span class="ui-badge ui-badge-danger ms-2">Stock bajo</span>
-                            @elseif($producto->stock_total <= 10)
-                                <span class="ui-badge ui-badge-warning ms-2">Poco stock</span>
+                            @if($producto->stock_total <= 0)
+                                <span class="ui-badge ui-badge-danger ms-2">Sin stock</span>
+                            @elseif($producto->stock_total <= ($producto->stock_minimo ?? 10))
+                                <span class="ui-badge ui-badge-warning ms-2">Stock bajo</span>
                             @endif
                         </td>
 

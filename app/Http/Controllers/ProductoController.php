@@ -29,7 +29,8 @@ class ProductoController extends Controller
         'categoria',
         'marca',
         'lotes' => function ($q) {
-            $q->where('stock_actual', '>', 0)
+            $q->where('activo', 1)
+              ->where('stock_actual', '>', 0)
               ->orderBy('fecha_ingreso'); // FIFO
         }
     ]);
