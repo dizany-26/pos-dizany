@@ -342,11 +342,6 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             ->name('ventas.autorizar');
     });
 
-    Route::middleware('permission:reportes')->group(function () {
-        Route::get('/ventas/{venta}/edit', [VentaController::class, 'edit'])->name('ventas.edit');
-        Route::put('/ventas/{venta}', [VentaController::class, 'update'])->name('ventas.update');
-    });
-
     /*
     | Gastos
     */
