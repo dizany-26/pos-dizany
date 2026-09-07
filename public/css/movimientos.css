@@ -1015,3 +1015,88 @@
     #modalCerrarCaja .modal-dialog { margin: .5rem; }
     #modalCerrarCaja .modal-body { max-height: 68vh; overflow-y: auto; }
 }
+
+/* El detalle de compras aprovecha todo el alto disponible en móviles. */
+@media (max-width: 991.98px), (max-height: 600px) and (pointer: coarse) {
+    .detalle-venta-panel {
+        height: 100dvh;
+    }
+
+    .detalle-venta-panel .offcanvas-body {
+        min-height: 0;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+
+    .detalle-venta-panel .listado-productos {
+        min-height: 0;
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .detalle-venta-panel .producto-desc {
+        line-height: 1.25;
+    }
+}
+
+@media (max-width: 768px) {
+    [id^='modalPagosDigitalesCaja'] .modal-dialog {
+        margin: .65rem;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .modal-body {
+        padding: .75rem;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table-wrap {
+        overflow: visible;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table {
+        width: 100%;
+        min-width: 0;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table tbody tr,
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table tfoot tr {
+        width: 100%;
+        margin-bottom: .65rem;
+        padding: .65rem .8rem;
+        border-radius: 12px;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table td {
+        min-height: 0;
+        padding: .38rem 0;
+        gap: .75rem;
+        font-size: .82rem;
+        line-height: 1.25;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table td::before {
+        font-size: .76rem;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table tfoot,
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table tfoot tr {
+        display: block;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table tfoot td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 0;
+        border-bottom: 1px dashed var(--border-color, #e2e8f0);
+        background: transparent;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table tfoot td::before {
+        content: attr(data-label) ':';
+        color: var(--text-muted, #64748b);
+        font-weight: 600;
+    }
+
+    [id^='modalPagosDigitalesCaja'] .reconciliation-table tfoot td:last-child {
+        border-bottom: 0;
+    }
+}

@@ -70,11 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!texto) return '';
 
         const caracteres = Array.from(texto);
-        if (caracteres.length <= 95) {
+        const limiteResumen = window.matchMedia('(max-width: 991.98px), (max-height: 600px) and (pointer: coarse)').matches
+            ? 55
+            : 90;
+
+        if (caracteres.length <= limiteResumen) {
             return `<div class="producto-desc">${texto}</div>`;
         }
 
-        const resumen = `${caracteres.slice(0, 95).join('').trimEnd()}…`;
+        const resumen = `${caracteres.slice(0, limiteResumen).join('').trimEnd()}…`;
         return `
             <div class="producto-desc producto-desc-short">${resumen}</div>
             <div class="producto-desc producto-desc-full d-none">${texto}</div>

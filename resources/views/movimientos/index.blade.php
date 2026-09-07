@@ -601,10 +601,10 @@ Movimientos
                         $tieneDeclaracionDigital = collect($mediosDigitales->keys())->contains(fn ($medio) => array_key_exists($medio, $declaradosCuadre));
                     @endphp
                     <tr class="fw-bold">
-                        <td>Total digital</td>
-                        <td class="text-end">S/ {{ number_format($totalDigitalEsperado, 2) }}</td>
-                        <td class="text-end">{{ $tieneDeclaracionDigital ? 'S/ '.number_format($totalDigitalDeclarado, 2) : 'Pendiente' }}</td>
-                        <td class="text-end {{ !$tieneDeclaracionDigital || $totalDigitalDiferencia == 0 ? 'text-success' : 'text-danger' }}">{{ $tieneDeclaracionDigital ? 'S/ '.number_format($totalDigitalDiferencia, 2) : '—' }}</td>
+                        <td data-label="Resumen">Total digital</td>
+                        <td data-label="Sistema" class="text-end">S/ {{ number_format($totalDigitalEsperado, 2) }}</td>
+                        <td data-label="Declarado" class="text-end">{{ $tieneDeclaracionDigital ? 'S/ '.number_format($totalDigitalDeclarado, 2) : 'Pendiente' }}</td>
+                        <td data-label="Diferencia" class="text-end {{ !$tieneDeclaracionDigital || $totalDigitalDiferencia == 0 ? 'text-success' : 'text-danger' }}">{{ $tieneDeclaracionDigital ? 'S/ '.number_format($totalDigitalDiferencia, 2) : '—' }}</td>
                     </tr>
                 </tfoot>
             </table>
