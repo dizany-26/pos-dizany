@@ -52,7 +52,7 @@ Ingreso de inventario
             @if(!empty($compraEnCurso))
                 <div class="alert alert-primary d-flex flex-wrap justify-content-between align-items-center gap-2 rounded-4 mb-3">
                     <div><i class="fas fa-link me-2"></i><strong>Compra en curso.</strong> Los datos del documento se conservarán al agregar otro producto.</div>
-                    <button type="submit" formnovalidate formaction="{{ route('inventario.compra-en-curso.limpiar') }}" formmethod="POST" class="btn-soft btn-soft-info"><i class="fas fa-file-circle-plus"></i> Nueva compra</button>
+                    <button type="submit" formnovalidate formaction="{{ route('inventario.compra-en-curso.limpiar') }}" formmethod="POST" class="btn-soft inventory-new-purchase-btn"><i class="fas fa-file-circle-plus"></i> Nueva compra</button>
                 </div>
             @endif
 
@@ -138,7 +138,7 @@ Ingreso de inventario
             </div>
         </section>
 
-        <section class="inventory-entry-card">
+        <section class="inventory-entry-card" id="producto-y-lote">
             <div class="inventory-step">
                 <span>2</span>
                 <div><strong>Producto y lote</strong><small>Artículo, cantidad, costo y vencimiento</small></div>
@@ -193,7 +193,9 @@ Ingreso de inventario
                     <label class="inv-label">Vencimiento del producto</label>
                     <input type="text" name="fecha_vencimiento"
                         class="form-control ui-input date-vencimiento"
+                        placeholder="Hoy: {{ now()->format('d/m/Y') }}"
                         value="{{ old('fecha_vencimiento') }}">
+                    <small class="field-help">Selecciona la fecha de vencimiento real.</small>
                 </div>
             </div>
 

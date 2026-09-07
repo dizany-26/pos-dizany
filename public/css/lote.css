@@ -173,6 +173,39 @@ input[type="date"]::-moz-focus-inner {
     margin-bottom: 18px;
 }
 
+#producto-y-lote {
+    scroll-margin-top: 82px;
+}
+
+.alert-primary .inventory-new-purchase-btn {
+    border: 1px solid rgba(13, 80, 190, .38);
+    background: rgba(13, 110, 253, .24);
+    color: #073b91;
+    box-shadow: none;
+}
+
+.alert-primary .inventory-new-purchase-btn:hover,
+.alert-primary .inventory-new-purchase-btn:focus-visible {
+    border-color: rgba(13, 80, 190, .52);
+    background: rgba(13, 110, 253, .34);
+    color: #052c6f;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .1);
+    outline: none;
+}
+
+:root[data-theme='dark'] .alert-primary .inventory-new-purchase-btn {
+    border-color: rgba(13, 80, 190, .38);
+    background: rgba(13, 110, 253, .24);
+    color: #073b91;
+}
+
+:root[data-theme='dark'] .alert-primary .inventory-new-purchase-btn:hover,
+:root[data-theme='dark'] .alert-primary .inventory-new-purchase-btn:focus-visible {
+    border-color: rgba(13, 80, 190, .52);
+    background: rgba(13, 110, 253, .34);
+    color: #052c6f;
+}
+
 .inventory-step {
     display: flex;
     align-items: center;

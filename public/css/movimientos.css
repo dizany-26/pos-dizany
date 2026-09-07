@@ -660,6 +660,34 @@
     font-size: 1.05rem;
 }
 
+:root[data-theme='dark'] .cash-explanation,
+[data-bs-theme='dark'] .cash-explanation {
+    color: #b8c9df;
+    background: #132b47;
+}
+
+:root[data-theme='dark'] .cash-closing-summary,
+[data-bs-theme='dark'] .cash-closing-summary {
+    border-color: #304766;
+    background: #0f1d33;
+    color: #e8f0fb;
+}
+
+:root[data-theme='dark'] .cash-closing-summary span,
+[data-bs-theme='dark'] .cash-closing-summary span {
+    color: #9eb4cf;
+}
+
+:root[data-theme='dark'] .cash-closing-summary .cash-expected,
+[data-bs-theme='dark'] .cash-closing-summary .cash-expected {
+    border-top-color: #304766;
+}
+
+:root[data-theme='dark'] .cash-closing-summary .cash-expected strong,
+[data-bs-theme='dark'] .cash-closing-summary .cash-expected strong {
+    color: #60a5fa;
+}
+
 .cash-difference {
     min-height: 20px;
     color: #687b92;

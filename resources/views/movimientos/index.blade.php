@@ -688,7 +688,7 @@ Movimientos
                 <div class="input-group">
                     <span class="input-group-text">S/</span>
                     <input type="number" name="monto_inicial" class="form-control ui-input"
-                        min="0" step="0.01" value="0.00" required>
+                        min="0" step="0.01" placeholder="0.00" required>
                 </div>
             </div>
             <div class="modal-footer">
@@ -743,7 +743,7 @@ Movimientos
                             <span class="input-group-text">S/</span>
                             <input type="number" name="metodos[{{ $medio }}]"
                                 id="{{ $medio === 'efectivo' ? 'montoContadoCaja' : '' }}"
-                                class="form-control ui-input" min="0" step="0.01" value="0.00" required>
+                                class="form-control ui-input" min="0" step="0.01" placeholder="0.00" required>
                         </div>
                     </label>
                     @endforeach

@@ -100,6 +100,38 @@
     margin-bottom: 12px;
 }
 
+.ventas-search-field {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ventas-search-field .form-control {
+    padding-right: 2.75rem;
+}
+
+.ventas-search-clear {
+    position: absolute;
+    top: 50%;
+    right: .65rem;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #64748b;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.ventas-search-clear:hover,
+.ventas-search-clear:focus-visible {
+    background: #e2e8f0;
+    color: #0f172a;
+    outline: none;
+}
+
 /* Fallback para clases antiguas (por si quedan) */
 .ventas-search-card {
     background: #ffffff;
@@ -141,6 +173,7 @@
 
 .productos-scroll {
     flex: 1;
+    align-content: flex-start;
     overflow-y: auto;
     padding-right: 4px;
 }
@@ -1373,6 +1406,16 @@ select.form-select-sm,
 
 :root[data-theme='dark'] .contenedor-buscador .form-control::placeholder {
     color: #9ab4d8 !important;
+}
+
+:root[data-theme='dark'] .ventas-search-clear {
+    color: #b7c9e3;
+}
+
+:root[data-theme='dark'] .ventas-search-clear:hover,
+:root[data-theme='dark'] .ventas-search-clear:focus-visible {
+    background: #17365d;
+    color: #ffffff;
 }
 
 :root[data-theme='dark'] .btn-filtro-categoria {

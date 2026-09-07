@@ -493,8 +493,7 @@ public function storeLote(Request $request)
             'fecha_vencimiento_pago' => $request->condicion_pago === 'credito' ? $request->fecha_vencimiento_pago : null,
             'observaciones_compra' => $request->observaciones_compra,
         ]]);
-        return redirect()
-            ->route('inventario.lote')
+        return redirect(route('inventario.lote').'#producto-y-lote')
             ->with(
                 'success',
                 $request->condicion_pago === 'credito'

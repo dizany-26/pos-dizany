@@ -57,8 +57,14 @@ Nueva venta
             <div class="contenedor-buscador">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-search me-2 text-primary"></i>
-                    <input type="text" id="buscar_producto" class="form-control"
-                        placeholder="Buscar productos por nombre o código...">
+                    <div class="ventas-search-field">
+                        <input type="text" id="buscar_producto" class="form-control"
+                            placeholder="Buscar productos por nombre o código...">
+                        <button type="button" id="limpiar_busqueda_producto"
+                            class="ventas-search-clear" aria-label="Limpiar búsqueda" hidden>
+                            <i class="fas fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
                     <button type="button"
                         id="btnEscanearVenta"
                         class="btn-soft btn-soft-info ventas-scan-btn ms-2"

@@ -31,8 +31,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // ELEMENTOS
     // ============================
     const buscarInput   = document.getElementById("buscar_producto");
+    const limpiarBusquedaBtn = document.getElementById("limpiar_busqueda_producto");
     const resultadosDiv = document.getElementById("resultados-busqueda");
     const esEscritorioPOS = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    let versionBusqueda = 0;
+
+    function actualizarBotonLimpiarBusqueda() {
+        if (!limpiarBusquedaBtn || !buscarInput) return;
+        limpiarBusquedaBtn.hidden = buscarInput.value.length === 0;
+    }
 
     function enfocarBuscadorPOS() {
         if (!buscarInput || !esEscritorioPOS) return;
@@ -274,6 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const carritoLista = document.getElementById("carrito-lista");
         carritoLista?.scrollTo({ top: 0, behavior: "smooth" });
         buscarInput.value = "";
+        actualizarBotonLimpiarBusqueda();
         enfocarBuscadorPOS();
         renderGrillaProductos(window.PRODUCTOS_SNAPSHOT || []);
         return { added: true, reason: "added", product: prod };
@@ -379,6 +387,8 @@ document.addEventListener("DOMContentLoaded", () => {
         buscarInput.addEventListener("input", () => {
 
             const q = buscarInput.value.trim();
+            const versionActual = ++versionBusqueda;
+            actualizarBotonLimpiarBusqueda();
 
             if (!q) {
                 renderGrillaProductos(window.PRODUCTOS_SNAPSHOT || []);
@@ -386,10 +396,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             buscarProductosApi(q)
-                .then(list => renderGrillaProductos(list))
-                .catch(() =>
-                    mostrarAlerta("Error al buscar productos")
-                );
+                .then(list => {
+                    if (
+                        versionActual === versionBusqueda &&
+                        buscarInput.value.trim() === q
+                    ) {
+                        renderGrillaProductos(list);
+                    }
+                })
+                .catch(() => {
+                    if (versionActual === versionBusqueda) {
+                        mostrarAlerta("Error al buscar productos");
+                    }
+                });
         });
 
         buscarInput.addEventListener("keydown", async (event) => {
@@ -404,6 +423,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 mostrarAlerta("Error al buscar productos");
             }
         });
+
+        limpiarBusquedaBtn?.addEventListener("click", () => {
+            buscarInput.value = "";
+            buscarInput.dispatchEvent(new Event("input", { bubbles: true }));
+            buscarInput.focus();
+        });
+
+        actualizarBotonLimpiarBusqueda();
     }
 
     // ============================
