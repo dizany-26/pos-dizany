@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071a35">
+    <title>Sin conexión | DIZANY</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { min-height: 100dvh; margin: 0; padding: 24px; display: grid; place-items: center; background: linear-gradient(145deg, #071a35, #102d52); color: #eef6ff; font-family: system-ui, sans-serif; }
+        main { width: min(420px, 100%); padding: 32px 24px; border: 1px solid rgba(255,255,255,.14); border-radius: 24px; background: rgba(255,255,255,.08); box-shadow: 0 24px 60px rgba(0,0,0,.25); text-align: center; }
+        img { width: 92px; height: 92px; border-radius: 22px; }
+        h1 { margin: 20px 0 10px; font-size: 25px; }
+        p { margin: 0 0 24px; color: #b9c9dc; line-height: 1.55; }
+        button { min-height: 46px; padding: 0 20px; border: 0; border-radius: 12px; background: #3b82f6; color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <main>
+        <img src="/images/pwa/icon-192.png" alt="DIZANY">
+        <h1>Sin conexión a internet</h1>
+        <p>Para proteger la información de ventas, caja e inventario, DIZANY necesita conexión para mostrar datos actualizados.</p>
+        <button type="button" onclick="location.reload()">Intentar nuevamente</button>
+    </main>
+</body>
+</html>

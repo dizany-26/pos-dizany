@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="theme-color" content="#071a35">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DIZANY">
     <title>Iniciar Sesión | {{ $config->nombre_empresa ?? 'Dizany' }}</title>
     @php
         $loginFavicon = ($config && $config->logo)
@@ -12,6 +17,9 @@
     <link rel="icon" href="{{ $loginFavicon }}">
     <link rel="shortcut icon" href="{{ $loginFavicon }}">
     <link rel="apple-touch-icon" href="{{ $loginFavicon }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="stylesheet" href="{{ asset('css/pwa.css') }}?v={{ filemtime(public_path('css/pwa.css')) }}">
+    <script src="{{ asset('js/pwa.js') }}?v={{ filemtime(public_path('js/pwa.js')) }}" defer></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
