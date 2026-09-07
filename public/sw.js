@@ -1,9 +1,9 @@
-const CACHE_VERSION = 'dizany-pwa-v1';
+const CACHE_VERSION = 'dizany-pwa-v2';
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
     OFFLINE_URL,
-    '/images/pwa/icon-192.png',
-    '/images/pwa/icon-512.png'
+    '/images/pwa/icon-192.png?v=2',
+    '/images/pwa/icon-512.png?v=2'
 ];
 
 self.addEventListener('install', event => {
