@@ -1,35 +1,56 @@
-.pwa-install-button {
+.pwa-install-prompt {
     position: fixed;
     left: max(16px, env(safe-area-inset-left));
     bottom: max(16px, env(safe-area-inset-bottom));
     z-index: 1090;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    min-height: 46px;
-    padding: 0 17px;
+    overflow: hidden;
     border: 1px solid rgba(255, 255, 255, .2);
     border-radius: 14px;
     background: #0d6efd;
-    color: #fff;
     box-shadow: 0 12px 30px rgba(13, 110, 253, .32);
+}
+
+.pwa-install-button,
+.pwa-install-dismiss {
+    min-height: 46px;
+    border: 0;
+    background: #0d6efd;
+    color: #fff;
     font: inherit;
-    font-size: 14px;
-    font-weight: 750;
     cursor: pointer;
 }
 
-.pwa-install-button:hover,
-.pwa-install-button:focus-visible {
-    background: #075dcc;
-    outline: 3px solid rgba(96, 165, 250, .35);
-    outline-offset: 2px;
+.pwa-install-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px 0 17px;
+    font-size: 14px;
+    font-weight: 750;
 }
 
-.pwa-install-button[hidden] {
+.pwa-install-dismiss {
+    width: 40px;
+    padding: 0;
+    border-left: 1px solid rgba(255, 255, 255, .22);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.pwa-install-button:hover,
+.pwa-install-button:focus-visible,
+.pwa-install-dismiss:hover,
+.pwa-install-dismiss:focus-visible {
+    background: #075dcc;
+    outline: none;
+}
+
+.pwa-install-prompt[hidden] {
     display: none;
 }
 
 @media (display-mode: standalone) {
-    .pwa-install-button { display: none !important; }
+    .pwa-install-prompt { display: none !important; }
 }

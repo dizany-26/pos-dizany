@@ -149,6 +149,7 @@ class CajaController extends Controller
 
             if ($administradores->isNotEmpty()) {
                 $administradores->each->notify(new CajaNotification([
+                    'caja_id' => $caja->id,
                     'titulo' => 'Cierre de caja por revisar',
                     'mensaje' => ($cajero?->nombre ?? 'Un empleado')
                         .' envió el cuadre de todos los medios de pago para revisión.',
