@@ -118,9 +118,40 @@
     @stack('styles')
 
     <link rel="stylesheet" href="{{ asset('css/theme-global.css') }}?v={{ filemtime(public_path('css/theme-global.css')) }}">
+    @php
+        $systemTheme = array_merge(
+            \App\Models\Configuracion::lightThemeDefaults(),
+            \App\Models\Configuracion::query()->first()?->light_theme ?? []
+        );
+        $themeBackground = static fn (string $section) => !empty($systemTheme[$section.'_gradient'])
+            ? 'linear-gradient(135deg, '.$systemTheme[$section.'_from'].', '.$systemTheme[$section.'_to'].')'
+            : $systemTheme[$section.'_from'];
+        $themeText = static function (string $hex): string {
+            $hex = ltrim($hex, '#');
+            $r = hexdec(substr($hex, 0, 2)); $g = hexdec(substr($hex, 2, 2)); $b = hexdec(substr($hex, 4, 2));
+            return (($r * 299 + $g * 587 + $b * 114) / 1000) > 155 ? '#10213b' : '#ffffff';
+        };
+    @endphp
+    <style id="dizany-light-theme">
+        :root[data-theme='light'] {
+            --brand-accent: {{ $systemTheme['accent'] }};
+            --brand-accent-text: {{ $themeText($systemTheme['accent']) }};
+            --brand-header-bg: {{ $themeBackground('header') }};
+            --brand-header-text: {{ $themeText($systemTheme['header_from']) }};
+            --brand-sidebar-bg: {{ $themeBackground('sidebar') }};
+            --brand-sidebar-text: {{ $themeText($systemTheme['sidebar_from']) }};
+            --brand-footer-bg: {{ $themeBackground('footer') }};
+            --brand-footer-text: {{ $themeText($systemTheme['footer_from']) }};
+            --brand-table-bg: {{ $themeBackground('table') }};
+            --brand-table-text: {{ $themeText($systemTheme['table_from']) }};
+            --brand-modal-bg: {{ $themeBackground('modal') }};
+            --brand-modal-text: {{ $themeText($systemTheme['modal_from']) }};
+        }
+    </style>
+    <link rel="stylesheet" href="{{ asset('css/light-theme-customizer.css') }}?v={{ filemtime(public_path('css/light-theme-customizer.css')) }}">
 </head>
 
-<body class="theme-shell">
+<body class="theme-shell {{ !empty($systemTheme['enabled']) ? 'custom-light-theme' : '' }}">
 
     {{-- HEADER --}}
     @include('components.header')
@@ -147,6 +178,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- JS HEADER ACTIONS (NUEVO SISTEMA) -->
     <script src="{{ asset('js/header-actions.js') }}?v={{ filemtime(public_path('js/header-actions.js')) }}"></script>
+    @stack('scripts')
 
     <!-- Script: Toggle Sidebar -->
     <script>

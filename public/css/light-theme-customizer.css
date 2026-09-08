@@ -1,0 +1,48 @@
+:root[data-theme='light'] body.custom-light-theme header#header {
+    background: var(--brand-header-bg) !important;
+    color: var(--brand-header-text) !important;
+}
+:root[data-theme='light'] body.custom-light-theme header#header .brand-name,
+:root[data-theme='light'] body.custom-light-theme header#header .nav-link,
+:root[data-theme='light'] body.custom-light-theme header#header .btn-header-more { color: var(--brand-header-text) !important; }
+:root[data-theme='light'] body.custom-light-theme #sidebar { background: var(--brand-sidebar-bg) !important; color: var(--brand-sidebar-text) !important; }
+:root[data-theme='light'] body.custom-light-theme #sidebar a,
+:root[data-theme='light'] body.custom-light-theme #sidebar .submenu-toggle,
+:root[data-theme='light'] body.custom-light-theme #sidebar .sidebar-section-title { color: var(--brand-sidebar-text) !important; }
+:root[data-theme='light'] body.custom-light-theme #sidebar a:hover,
+:root[data-theme='light'] body.custom-light-theme #sidebar a.active,
+:root[data-theme='light'] body.custom-light-theme #sidebar .submenu-toggle:hover,
+:root[data-theme='light'] body.custom-light-theme #sidebar .submenu-toggle.active { background: color-mix(in srgb, var(--brand-accent) 15%, transparent) !important; border-color: var(--brand-accent) !important; }
+:root[data-theme='light'] body.custom-light-theme #footer,
+:root[data-theme='light'] body.custom-light-theme footer { background: var(--brand-footer-bg) !important; color: var(--brand-footer-text) !important; }
+:root[data-theme='light'] body.custom-light-theme #content table thead th,
+:root[data-theme='light'] body.custom-light-theme #content .ui-table thead th { background: var(--brand-table-bg) !important; color: var(--brand-table-text) !important; }
+:root[data-theme='light'] body.custom-light-theme .modal-header { background: var(--brand-modal-bg) !important; color: var(--brand-modal-text) !important; }
+:root[data-theme='light'] body.custom-light-theme .modal-header .btn-close { filter: none; }
+:root[data-theme='light'] body.custom-light-theme .btn-primary:not(.cambiar-clave-btn),
+:root[data-theme='light'] body.custom-light-theme .bg-primary {
+    background-color: var(--brand-accent) !important;
+    border-color: var(--brand-accent) !important;
+    color: var(--brand-accent-text) !important;
+}
+:root[data-theme='light'] body.custom-light-theme .btn-primary:not(.cambiar-clave-btn) i,
+:root[data-theme='light'] body.custom-light-theme .bg-primary i { color: inherit !important; }
+:root[data-theme='light'] body.custom-light-theme .text-primary { color: var(--brand-accent) !important; }
+
+.theme-config-panel { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-color, #dbe4f0); }
+.theme-config-heading { display:flex; justify-content:space-between; gap:16px; align-items:start; margin-bottom:18px; }
+.theme-config-heading p { margin:4px 0 0; color:#6b7b91; font-size:.86rem; }
+.theme-enable-toggle { display:flex; align-items:center; gap:11px; margin-bottom:16px; padding:12px 14px; border:1px solid #cfe0f5; border-radius:12px; background:#f3f8ff; cursor:pointer; }
+.theme-enable-toggle input { width:18px; height:18px; accent-color:#0d6efd; }
+.theme-enable-toggle span { display:grid; }
+.theme-enable-toggle small { color:#687a91; font-size:.78rem; }
+.theme-reset { border:1px solid #cbd8e8; border-radius:10px; background:#fff; padding:8px 12px; color:#31506f; }
+.theme-config-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.theme-color-card { border:1px solid #dbe4f0; border-radius:14px; padding:14px; background:#f9fbfe; }
+.theme-color-card > strong { display:block; margin-bottom:10px; }
+.theme-color-inputs { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.theme-color-inputs label { display:grid; grid-template-columns:42px 1fr; align-items:center; gap:8px; font-size:.78rem; color:#62738a; }
+.theme-color-inputs input[type='color'] { width:42px; height:36px; padding:2px; border:1px solid #cad6e5; border-radius:8px; background:#fff; }
+.theme-gradient-toggle { display:flex; gap:8px; align-items:center; margin-top:11px; font-size:.8rem; }
+.theme-preview { height:46px; margin-top:11px; border:1px solid rgba(0,0,0,.1); border-radius:10px; }
+@media(max-width:700px) { .theme-config-grid{grid-template-columns:1fr}.theme-config-heading{flex-direction:column}.theme-color-inputs{grid-template-columns:1fr 1fr} }
