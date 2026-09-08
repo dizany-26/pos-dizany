@@ -186,6 +186,7 @@
                                         data-add-product
                                         data-id="{{ $producto->id }}"
                                         data-name="{{ $producto->nombre }}"
+                                        data-detail-url="{{ route('catalogo.producto', $producto) }}"
                                         data-image="{{ $producto->imagen ? asset('uploads/productos/' . $producto->imagen) : '' }}"
                                         data-stock="{{ $stock }}"
                                         data-presentations='@json($presentaciones)'>

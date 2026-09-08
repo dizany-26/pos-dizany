@@ -24,6 +24,8 @@
     });
 
     const products = [...document.querySelectorAll('[data-product]')];
+    const catalogSidebar = document.querySelector('[data-catalog-sidebar]');
+    const categoryToggle = document.querySelector('[data-toggle-categories]');
     const drawer = document.querySelector('[data-cart-drawer]');
     const itemsBox = document.querySelector('[data-cart-items]');
     const emptyBox = document.querySelector('[data-cart-empty]');
@@ -36,6 +38,52 @@
     let detailQuantity = 1;
     const igvPercent = Math.max(0, Number(data?.dataset.igv || 0));
 
+    const syncStickyMeasurements = () => {
+        const headerHeight = document.querySelector('.site-header')?.getBoundingClientRect().height || 0;
+        const sidebarHeight = catalogSidebar?.getBoundingClientRect().height || 0;
+        document.documentElement.style.setProperty('--catalog-header-height', `${Math.ceil(headerHeight)}px`);
+        document.documentElement.style.setProperty('--catalog-sidebar-height', `${Math.ceil(sidebarHeight)}px`);
+        syncStickyState();
+    };
+
+    const syncStickyState = () => {
+        const headerHeight = Number.parseFloat(getComputedStyle(document.documentElement)
+            .getPropertyValue('--catalog-header-height')) || 0;
+        const sidebarHeight = Number.parseFloat(getComputedStyle(document.documentElement)
+            .getPropertyValue('--catalog-sidebar-height')) || 0;
+        const mobile = window.matchMedia('(max-width: 900px)').matches;
+
+        catalogSidebar?.classList.toggle(
+            'is-stuck',
+            mobile && catalogSidebar.getBoundingClientRect().top <= headerHeight + 1
+        );
+
+        const search = document.querySelector('.catalog-search');
+        const searchTop = headerHeight + (mobile ? sidebarHeight + 8 : 10);
+        search?.classList.toggle('is-stuck', search.getBoundingClientRect().top <= searchTop + 1);
+    };
+
+    const syncCategoryToggle = () => {
+        if (!catalogSidebar || !categoryToggle) return;
+        const collapsed = catalogSidebar.classList.contains('collapsed');
+        categoryToggle.setAttribute('aria-expanded', String(!collapsed));
+        categoryToggle.setAttribute('aria-label', collapsed ? 'Mostrar categorías' : 'Ocultar categorías');
+    };
+
+    if (catalogSidebar && window.matchMedia('(max-width: 900px)').matches) {
+        catalogSidebar.classList.add('collapsed');
+    }
+    syncCategoryToggle();
+
+    if ('ResizeObserver' in window) {
+        const stickyObserver = new ResizeObserver(syncStickyMeasurements);
+        document.querySelector('.site-header') && stickyObserver.observe(document.querySelector('.site-header'));
+        catalogSidebar && stickyObserver.observe(catalogSidebar);
+    }
+    window.addEventListener('resize', syncStickyMeasurements, { passive: true });
+    window.addEventListener('scroll', syncStickyState, { passive: true });
+    syncStickyMeasurements();
+
     try {
         cart = JSON.parse(localStorage.getItem(storageKey)) || [];
     } catch (_) {
@@ -47,6 +95,7 @@
         if (!add) return [card.dataset.id, null];
         return [card.dataset.id, {
             name: add.dataset.name,
+            detailUrl: add.dataset.detailUrl,
             image: add.dataset.image,
             stock: Number(add.dataset.stock),
             presentations: JSON.parse(add.dataset.presentations)
@@ -195,14 +244,15 @@
                 : '<span class="cart-thumb"></span>';
             row.innerHTML = `${picture}
                 <div class="cart-row-info">
-                    <h4>${escapeHtml(item.name)}</h4>
+                    <a class="cart-product-link" href="${escapeHtml(item.detailUrl || `/catalogo/producto/${encodeURIComponent(item.id)}`)}"
+                        title="Ver detalles de ${escapeHtml(item.name)}">${escapeHtml(item.name)}</a>
                     <select data-presentation="${index}">
                         ${item.presentations.filter(p => p.factor <= item.stock).map(p =>
                             `<option value="${p.key}" ${p.key === selected.key ? 'selected' : ''}>${p.name} · ${p.factor} un.</option>`
                         ).join('')}
                     </select>
                     <div class="cart-row-controls">
-                        <button type="button" data-minus="${index}">−</button>
+                        <button type="button" data-minus="${index}" ${item.quantity <= 1 ? 'disabled' : ''}>−</button>
                         <b>${item.quantity}</b>
                         <button type="button" data-plus="${index}" ${item.quantity >= max ? 'disabled' : ''}>+</button>
                     </div>
@@ -271,7 +321,9 @@
             return;
         }
         if (event.target.closest('[data-toggle-categories]')) {
-            document.querySelector('[data-catalog-sidebar]').classList.toggle('collapsed');
+            catalogSidebar?.classList.toggle('collapsed');
+            syncCategoryToggle();
+            requestAnimationFrame(syncStickyMeasurements);
         }
         if (event.target.closest('[data-clear-filters]')) {
             category = 'all';
@@ -306,6 +358,7 @@
                 cart.push({
                     id: add.dataset.id,
                     name: add.dataset.name,
+                    detailUrl: add.dataset.detailUrl,
                     image: add.dataset.image,
                     stock: Number(add.dataset.stock),
                     presentations,
@@ -332,7 +385,7 @@
         const minus = event.target.closest('[data-minus]');
         if (minus) {
             const item = cart[Number(minus.dataset.minus)];
-            item.quantity > 1 ? item.quantity-- : cart.splice(Number(minus.dataset.minus), 1);
+            item.quantity = Math.max(1, item.quantity - 1);
         }
         const plus = event.target.closest('[data-plus]');
         if (plus) {
