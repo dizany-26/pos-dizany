@@ -419,7 +419,7 @@
         if (!event.target.matches('[data-presentation]')) return;
         const item = cart[Number(event.target.dataset.presentation)];
         item.presentation = event.target.value;
-        item.quantity = Math.min(item.quantity, Math.floor(item.stock / presentation(item).factor)) || 1;
+        item.quantity = 1;
         renderCart();
     });
 
