@@ -550,7 +550,7 @@ Nueva venta
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Guardar cliente</button>
+                <button type="submit" class="btn-soft btn-soft-success"><i class="fas fa-save"></i> Guardar cliente</button>
             </div>
             </form>
         </div>

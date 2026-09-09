@@ -296,8 +296,26 @@ select.form-select-sm,
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    padding: 4px 8px !important;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    margin-left: 6px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+
+:root[data-theme='light'] #btn-cliente-accion:hover,
+:root[data-theme='light'] #btn-cliente-accion:focus-visible {
+    background: #e7eef6 !important;
+    border-color: #4f7093 !important;
+    color: #3d5d7f !important;
+    box-shadow: 0 0 0 3px rgba(79, 112, 147, .14) !important;
+}
+
+:root[data-theme='light'] #btn-cliente-accion:hover #icono-plus,
+:root[data-theme='light'] #btn-cliente-accion:focus-visible #icono-plus {
+    color: #3d5d7f !important;
 }
 
 /* Iconos de guardar / agregar cliente */
@@ -1622,8 +1640,21 @@ select.form-select-sm,
 }
 
 .client-quick-modal .modal-footer {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
     gap: 7px;
     padding: 11px 16px 13px;
+}
+
+.client-quick-modal .modal-footer > * {
+    margin: 0;
+}
+
+.client-quick-modal .modal-footer .btn-soft {
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 .client-quick-modal .modal-footer .btn {
@@ -1640,6 +1671,47 @@ select.form-select-sm,
 #step-3 .card,
 #step-1 .card {
     border-radius: 10px !important;
+}
+
+/* Encabezado independiente del carrito: un solo radio y sin borde posterior visible. */
+.treinta-col.derecha #step-1 > .card:first-child {
+    overflow: hidden;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+}
+
+.treinta-col.derecha #step-1 > .card:first-child > .card-header {
+    margin: 0;
+    border: 0 !important;
+    border-radius: 12px !important;
+}
+
+:root[data-theme='light'] .treinta-col.derecha #step-1 > .card:first-child > .card-header {
+    background: linear-gradient(135deg, #4f7093 0%, #3d5d7f 100%) !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='light'] .treinta-col.derecha .card-header.bg-primary {
+    background: linear-gradient(135deg, #4f7093 0%, #3d5d7f 100%) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='light'] .treinta-col.derecha .card-header.bg-primary * {
+    color: inherit !important;
+}
+
+:root[data-theme='light'] .btn-filtro-categoria.active,
+:root[data-theme='light'] .btn-filtro-categoria:hover,
+:root[data-theme='light'] .cliente-documento-modo .btn-check:checked + .btn {
+    background: #4f7093 !important;
+    border-color: #4f7093 !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='light'] .treinta-col.derecha #step-1 > .card:first-child > .card-header a {
+    color: #ffffff !important;
 }
 
 #step-2 .card-header.bg-primary.text-white,

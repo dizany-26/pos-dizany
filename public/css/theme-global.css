@@ -990,3 +990,16 @@
 *::-webkit-scrollbar-corner {
     background: transparent !important;
 }
+/* Encabezados de tabla con terminaciones redondeadas en todo el sistema. */
+:root[data-theme='light'] #content table thead th {
+    background: #b8cce6 !important;
+    color: #102a4c !important;
+}
+
+#content table thead > tr:first-child > th:first-child {
+    border-radius: 12px 0 0 12px !important;
+}
+
+#content table thead > tr:first-child > th:last-child {
+    border-radius: 0 12px 12px 0 !important;
+}
