@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastScanValue = '';
     let lastScanAt = 0;
     let focusAfterScannerClose = false;
+    let scannerLifecyclePromise = Promise.resolve();
     const SCAN_COOLDOWN_MS = 1500;
     const PREFERRED_CAMERA_STORAGE_KEY = 'dizany_barcode_preferred_camera_v1';
 
@@ -185,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fillBarcode(decodedText, false);
             focusAfterScannerClose = true;
             setStatus('Código detectado correctamente. Cerrando escáner…', 'success');
+            await requestScannerStop();
             hideScannerModal();
             await playSuccessFeedback();
         } finally {
@@ -217,17 +219,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        let forcedCleanup = false;
+        const withTimeout = (promise, milliseconds, message) => Promise.race([
+            promise,
+            new Promise((_, reject) => window.setTimeout(() => reject(new Error(message)), milliseconds)),
+        ]);
+
         try {
-            await html5QrCode.stop();
+            await withTimeout(html5QrCode.stop(), 2500, 'La cámara tardó demasiado en detenerse');
         } catch (error) {
             console.warn('No se pudo detener el escáner correctamente:', error);
+            forcedCleanup = true;
+        } finally {
+            document.querySelectorAll(`#${readerElementId} video`).forEach((video) => {
+                video.srcObject?.getTracks?.().forEach((track) => track.stop());
+                video.srcObject = null;
+            });
         }
 
         try {
-            await html5QrCode.clear();
+            await withTimeout(html5QrCode.clear(), 1500, 'El lector tardó demasiado en limpiarse');
         } catch (error) {
             console.warn('No se pudo limpiar el escáner:', error);
+            forcedCleanup = true;
         }
+
+        if (forcedCleanup) html5QrCode = null;
 
         torchEnabled = false;
         zoomEnabled = false;
@@ -243,6 +260,23 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomControl?.classList.add('d-none');
 
         scannerRunning = false;
+    };
+
+    const requestScannerStop = () => {
+        scannerLifecyclePromise = scannerLifecyclePromise
+            .catch((error) => console.warn('Operación anterior del escáner falló:', error))
+            .then(() => stopScanner());
+        return scannerLifecyclePromise;
+    };
+
+    const requestScannerStart = () => {
+        scannerLifecyclePromise = scannerLifecyclePromise
+            .catch((error) => console.warn('Operación anterior del escáner falló:', error))
+            .then(async () => {
+                if (!modalElement.classList.contains('show')) return;
+                await startScanner();
+            });
+        return scannerLifecyclePromise;
     };
 
     const getTrackCapabilities = () => {
@@ -1190,8 +1224,11 @@ document.addEventListener('DOMContentLoaded', () => {
         await scanBarcodePhoto(photoInput.files?.[0]);
     });
 
-    btnCerrar.addEventListener('click', () => {
+    btnCerrar.addEventListener('click', async () => {
+        btnCerrar.disabled = true;
+        await requestScannerStop();
         hideScannerModal();
+        btnCerrar.disabled = false;
     });
 
     modalElement.addEventListener('shown.bs.modal', () => {
@@ -1199,11 +1236,11 @@ document.addEventListener('DOMContentLoaded', () => {
         scanLock = false;
         lastScanValue = '';
         lastScanAt = 0;
-        startScanner();
+        void requestScannerStart();
     });
 
-    modalElement.addEventListener('hidden.bs.modal', () => {
-        void stopScanner();
+    modalElement.addEventListener('hidden.bs.modal', async () => {
+        await requestScannerStop();
         cleanupOrphanedModalState();
         toggleFallback(false);
         setStatus('En móvil usa la cámara. En PC puedes usar una pistola lectora enfocando el campo.', 'info');
