@@ -120,7 +120,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const hideScannerModal = () => {
         modal?.hide();
-        window.setTimeout(cleanupOrphanedModalState, 500);
+        window.setTimeout(() => {
+            if (modalElement.classList.contains('show')) {
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                modalElement.setAttribute('aria-hidden', 'true');
+                modalElement.removeAttribute('aria-modal');
+                modalElement.removeAttribute('role');
+
+                if (focusAfterScannerClose) {
+                    focusAfterScannerClose = false;
+                    focusNextInput();
+                }
+            }
+
+            cleanupOrphanedModalState();
+        }, 180);
     };
 
     const playSuccessFeedback = async () => {
@@ -186,14 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
             fillBarcode(decodedText, false);
             focusAfterScannerClose = true;
             setStatus('Código detectado correctamente. Cerrando escáner…', 'success');
-
-            try {
-                html5QrCode?.pause(true);
-            } catch (error) {
-                console.warn('No se pudo pausar el lector después de detectar el código:', error);
-            }
-
             hideScannerModal();
+            void requestScannerStop();
             void playSuccessFeedback();
         } finally {
             window.setTimeout(() => {
@@ -222,10 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
             setToolActive(btnTorch, false);
             setToolActive(btnZoom, false);
             zoomControl?.classList.add('d-none');
+            html5QrCode = null;
             return;
         }
 
-        let forcedCleanup = false;
         const withTimeout = (promise, milliseconds, message) => Promise.race([
             promise,
             new Promise((_, reject) => window.setTimeout(() => reject(new Error(message)), milliseconds)),
@@ -235,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await withTimeout(html5QrCode.stop(), 2500, 'La cámara tardó demasiado en detenerse');
         } catch (error) {
             console.warn('No se pudo detener el escáner correctamente:', error);
-            forcedCleanup = true;
         } finally {
             document.querySelectorAll(`#${readerElementId} video`).forEach((video) => {
                 video.srcObject?.getTracks?.().forEach((track) => track.stop());
@@ -247,10 +255,11 @@ document.addEventListener('DOMContentLoaded', () => {
             await withTimeout(html5QrCode.clear(), 1500, 'El lector tardó demasiado en limpiarse');
         } catch (error) {
             console.warn('No se pudo limpiar el escáner:', error);
-            forcedCleanup = true;
         }
 
-        if (forcedCleanup) html5QrCode = null;
+        // Una instancia nueva por apertura evita reutilizar estados internos
+        // pausados o incompletos de html5-qrcode en navegadores móviles.
+        html5QrCode = null;
 
         torchEnabled = false;
         zoomEnabled = false;
