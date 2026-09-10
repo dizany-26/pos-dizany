@@ -190,7 +190,15 @@ Resumen de Inventario
             <div class="card shadow-sm rounded-4 border-0 h-100 summary-table-card">
                 <div class="card-header fw-bold border-0 d-flex justify-content-between align-items-center">
                     <span><i class="fas fa-triangle-exclamation text-warning me-2"></i>Productos críticos</span>
-                    <span class="summary-count">{{ $productosCriticos->count() }}</span>
+                    <div class="summary-critical-controls" aria-label="Filtrar productos críticos">
+                        <button type="button" class="summary-critical-filter is-danger" data-critical-filter="sin-stock" aria-pressed="false">
+                            <i class="fas fa-circle-xmark"></i> Sin stock
+                        </button>
+                        <button type="button" class="summary-critical-filter is-warning" data-critical-filter="stock-bajo" aria-pressed="false">
+                            <i class="fas fa-triangle-exclamation"></i> Stock bajo
+                        </button>
+                        <span class="summary-count" id="critical-products-count">{{ $productosCriticos->count() }}</span>
+                    </div>
                 </div>
                 <div class="card-body table-responsive summary-table-scroll">
                     <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
@@ -203,7 +211,7 @@ Resumen de Inventario
                         </thead>
                         <tbody>
                             @forelse($productosCriticos as $producto)
-                                <tr>
+                                <tr data-critical-state="{{ ($producto->stock_total ?? 0) == 0 ? 'sin-stock' : 'stock-bajo' }}">
                                     <td data-label="Producto">
                                         {{ $producto->nombre }}
                                     </td>
@@ -223,6 +231,9 @@ Resumen de Inventario
                             @empty
                                 <tr><td colspan="3" class="summary-empty"><i class="fas fa-circle-check"></i><span>Todo el inventario tiene stock suficiente.</span></td></tr>
                             @endforelse
+                            <tr id="critical-products-empty" class="d-none">
+                                <td colspan="3" class="summary-empty"><i class="fas fa-filter-circle-xmark"></i><span>No hay productos para este filtro.</span></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -331,6 +342,39 @@ Resumen de Inventario
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+
+    const criticalFilters = document.querySelectorAll('[data-critical-filter]');
+    const criticalRows = document.querySelectorAll('[data-critical-state]');
+    const criticalCount = document.getElementById('critical-products-count');
+    const criticalEmpty = document.getElementById('critical-products-empty');
+    let activeCriticalFilter = null;
+
+    const applyCriticalFilter = () => {
+        let visibleRows = 0;
+
+        criticalRows.forEach(row => {
+            const isVisible = !activeCriticalFilter || row.dataset.criticalState === activeCriticalFilter;
+            row.classList.toggle('d-none', !isVisible);
+            if (isVisible) visibleRows++;
+        });
+
+        criticalFilters.forEach(button => {
+            const isActive = button.dataset.criticalFilter === activeCriticalFilter;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+
+        if (criticalCount) criticalCount.textContent = visibleRows;
+        if (criticalEmpty) criticalEmpty.classList.toggle('d-none', visibleRows !== 0);
+    };
+
+    criticalFilters.forEach(button => {
+        button.addEventListener('click', () => {
+            const selectedFilter = button.dataset.criticalFilter;
+            activeCriticalFilter = activeCriticalFilter === selectedFilter ? null : selectedFilter;
+            applyCriticalFilter();
+        });
+    });
 
     const counters = document.querySelectorAll('.counter');
 
