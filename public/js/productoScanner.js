@@ -186,9 +186,15 @@ document.addEventListener('DOMContentLoaded', () => {
             fillBarcode(decodedText, false);
             focusAfterScannerClose = true;
             setStatus('Código detectado correctamente. Cerrando escáner…', 'success');
-            await requestScannerStop();
+
+            try {
+                html5QrCode?.pause(true);
+            } catch (error) {
+                console.warn('No se pudo pausar el lector después de detectar el código:', error);
+            }
+
             hideScannerModal();
-            await playSuccessFeedback();
+            void playSuccessFeedback();
         } finally {
             window.setTimeout(() => {
                 scanLock = false;
