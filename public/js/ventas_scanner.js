@@ -84,6 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/[^0-9A-Za-z]/g, '')
             .trim();
 
+    const limpiarBuscador = () => {
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
     const playCartSuccessFeedback = async () => {
         try {
             if (!successAudio) {
@@ -368,10 +373,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (resultado?.reason === 'duplicate') {
-                if (typeof window.mostrarAlerta === 'function') {
-                    window.mostrarAlerta('Este producto ya está en la canasta.');
-                }
+                limpiarBuscador();
                 setStatus('Ese producto ya estaba en la lista.', 'info');
+            } else if (resultado?.reason === 'not_found') {
+                limpiarBuscador();
+                setStatus('No se encontró un producto con ese código.', 'info');
             } else {
                 setStatus('Código leído. Revisa los resultados y presiona Enter si deseas agregarlo.', 'info');
             }
