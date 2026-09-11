@@ -1100,3 +1100,29 @@
         border-bottom: 0;
     }
 }
+.client-name-details {
+    max-width: 240px;
+}
+
+.client-name-details summary {
+    color: var(--primary, #2563eb);
+    cursor: pointer;
+    font-size: .75rem;
+    font-weight: 600;
+    list-style: none;
+    margin-top: 2px;
+    width: max-content;
+}
+
+.client-name-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.client-name-details .show-less,
+.client-name-details[open] .show-more {
+    display: none;
+}
+
+.client-name-details[open] .show-less {
+    display: inline;
+}

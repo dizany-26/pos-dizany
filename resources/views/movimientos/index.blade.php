@@ -207,6 +207,16 @@ Movimientos
                     <option value="credito" @selected($metodo === 'credito')>Crédito</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <input type="search"
+                       name="documento_buscar"
+                       value="{{ $documentoBuscar }}"
+                       class="form-control ui-input"
+                       inputmode="numeric"
+                       autocomplete="off"
+                       placeholder="Filtrar por DNI o RUC..."
+                       onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
+            </div>
             @endif
 
             <div class="col-md-2">
@@ -214,7 +224,7 @@ Movimientos
                        name="buscar"
                        value="{{ request('buscar') }}"
                        class="form-control ui-input"
-                       placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : 'Buscar concepto o N.° de boleta...' }}"
+                       placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : 'Buscar concepto, comprobante o DNI/RUC...' }}"
                        onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
             </div>
 
@@ -344,6 +354,7 @@ Movimientos
                         <tr>
                             <th>Fecha</th>
                             <th>Concepto</th>
+                            <th>DNI / RUC</th>
                             <th>Método</th>
                             <th>Estado</th>
                             <th class="text-end">Monto</th>
@@ -364,6 +375,24 @@ Movimientos
                                 <small class="d-block text-muted">{{ $movimiento->created_at?->format('h:i A') ?? '—' }}</small>
                             </td>
                             <td data-label="Concepto">{{ $movimiento->concepto }}</td>
+                            @php
+                                $clienteMovimiento = $movimiento->venta?->cliente;
+                                $documentoCliente = $clienteMovimiento?->dni ?: $clienteMovimiento?->ruc;
+                            @endphp
+                            <td data-label="DNI / RUC">
+                                <span class="fw-semibold text-nowrap">{{ $documentoCliente ?: '—' }}</span>
+                                @if($documentoCliente && $clienteMovimiento?->nombre)
+                                    @if(mb_strlen($clienteMovimiento->nombre) > 24)
+                                        <small class="d-block text-muted">{{ \Illuminate\Support\Str::limit($clienteMovimiento->nombre, 24) }}</small>
+                                        <details class="client-name-details">
+                                            <summary><span class="show-more">Ver más</span><span class="show-less">Ver menos</span></summary>
+                                            <small class="d-block text-muted mt-1">{{ $clienteMovimiento->nombre }}</small>
+                                        </details>
+                                    @else
+                                        <small class="d-block text-muted">{{ $clienteMovimiento->nombre }}</small>
+                                    @endif
+                                @endif
+                            </td>
                             @php
                                 $metodoPago = strtolower($movimiento->metodo_pago ?? 'otro');
                                 $metodoLabel = match($metodoPago) {
@@ -411,7 +440,7 @@ Movimientos
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
+                            <td colspan="7" class="text-center text-muted py-4">
                                 No hay movimientos para mostrar
                             </td>
                         </tr>

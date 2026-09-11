@@ -42,6 +42,7 @@ class MovimientoController extends Controller
         if (! in_array($metodo, $metodosPermitidos, true)) {
             $metodo = '';
         }
+        $documentoBuscar = trim((string) $request->get('documento_buscar', ''));
 
         $cajasFiltro = Caja::with('usuario')
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
@@ -67,7 +68,7 @@ class MovimientoController extends Controller
         /* ==========================
         QUERY BASE
         ========================== */
-        $query = Movimiento::query()->with(['usuario', 'venta.pagos']);
+        $query = Movimiento::query()->with(['usuario', 'venta.pagos', 'venta.cliente']);
         if (! $esAdmin) {
             $query->where('usuario_id', $usuarioActual->id);
         }
@@ -189,6 +190,13 @@ class MovimientoController extends Controller
             });
         }
 
+        if ($documentoBuscar !== '') {
+            $query->whereHas('venta.cliente', function ($cliente) use ($documentoBuscar) {
+                $cliente->where('dni', 'like', '%' . $documentoBuscar . '%')
+                    ->orWhere('ruc', 'like', '%' . $documentoBuscar . '%');
+            });
+        }
+
         /* ==========================
         BUSCADOR
         ========================== */
@@ -207,6 +215,11 @@ class MovimientoController extends Controller
                                 if ($correlativoNumerico !== null) {
                                     $venta->orWhere('correlativo', $correlativoNumerico);
                                 }
+
+                                $venta->orWhereHas('cliente', function ($cliente) use ($buscar) {
+                                    $cliente->where('dni', 'like', '%' . $buscar . '%')
+                                        ->orWhere('ruc', 'like', '%' . $buscar . '%');
+                                });
                             });
                     });
             });
@@ -400,6 +413,7 @@ class MovimientoController extends Controller
             , 'resumenCaja'
             , 'usuariosCaja'
             , 'metodo'
+            , 'documentoBuscar'
         ));
     }
 
@@ -416,6 +430,7 @@ class MovimientoController extends Controller
         $rango = $request->get('rango', 'diario');
         $fecha = str_replace([' to ', ' | ', ' → '], ' a ', trim((string) $request->get('fecha', '')));
         $metodo = strtolower(trim((string) $request->get('metodo', '')));
+        $documentoBuscar = trim((string) $request->get('documento_buscar', ''));
         $buscar = trim((string) $request->get('buscar', ''));
         $cajaId = $request->integer('caja_id');
         $cajaSeleccionada = null;
@@ -431,7 +446,7 @@ class MovimientoController extends Controller
         [$inicio, $fin, $periodo] = $this->resolverPeriodoReporte($rango, $fecha);
 
         $query = Movimiento::query()
-            ->with(['usuario', 'venta.pagos'])
+            ->with(['usuario', 'venta.pagos', 'venta.cliente'])
             ->activos()
             ->when($cajaSeleccionada, fn ($query) => $query->where('caja_id', $cajaSeleccionada->id))
             ->when(! $cajaSeleccionada && $inicio && $fin, fn ($query) => $query->whereBetween('fecha', [$inicio, $fin]));
@@ -454,6 +469,13 @@ class MovimientoController extends Controller
             });
         }
 
+        if ($documentoBuscar !== '') {
+            $query->whereHas('venta.cliente', function ($cliente) use ($documentoBuscar) {
+                $cliente->where('dni', 'like', '%' . $documentoBuscar . '%')
+                    ->orWhere('ruc', 'like', '%' . $documentoBuscar . '%');
+            });
+        }
+
         if ($buscar !== '') {
             $correlativo = ctype_digit($buscar) ? (int) ltrim($buscar, '0') : null;
             $query->where(function ($busqueda) use ($buscar, $correlativo) {
@@ -464,6 +486,10 @@ class MovimientoController extends Controller
                         if ($correlativo !== null) {
                             $venta->orWhere('correlativo', $correlativo);
                         }
+                        $venta->orWhereHas('cliente', function ($cliente) use ($buscar) {
+                            $cliente->where('dni', 'like', "%{$buscar}%")
+                                ->orWhere('ruc', 'like', "%{$buscar}%");
+                        });
                     });
             });
         }
