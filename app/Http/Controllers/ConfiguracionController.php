@@ -18,12 +18,17 @@ class ConfiguracionController extends Controller
         return view('configuracion.index', compact('config', 'taxProfile'));
     }
 
+    public function appearance()
+    {
+        $config = Configuracion::first();
+        return view('configuracion.appearance', compact('config'));
+    }
+
     /**
      * Guardar los cambios en la configuración.
      */
     public function update(Request $request)
     {
-        $colorKeys = ['accent', 'header_from', 'header_to', 'sidebar_from', 'sidebar_to', 'footer_from', 'footer_to', 'table_from', 'table_to', 'modal_from', 'modal_to'];
         $rules = [
             'nombre_empresa' => 'required|string|max:100',
             'ruc'            => 'required|string|max:20',
@@ -33,11 +38,7 @@ class ConfiguracionController extends Controller
             'correo'         => 'nullable|email|max:100',
             'lema'           => 'nullable|string|max:120',
             'logo'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
-            'light_theme'    => 'required|array',
         ];
-        foreach ($colorKeys as $colorKey) {
-            $rules["light_theme.$colorKey"] = ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'];
-        }
         $request->validate($rules);
 
         $config = Configuracion::first();
@@ -61,6 +62,21 @@ class ConfiguracionController extends Controller
         $config->telefono       = $request->telefono;
         $config->correo         = $request->correo;
         $config->lema           = $request->lema;
+        $config->save();
+
+        return redirect()->back()->with('success', 'Configuración general actualizada correctamente.');
+    }
+
+    public function updateAppearance(Request $request)
+    {
+        $colorKeys = ['accent', 'header_from', 'header_to', 'sidebar_from', 'sidebar_to', 'footer_from', 'footer_to', 'table_from', 'table_to', 'modal_from', 'modal_to'];
+        $rules = ['light_theme' => 'required|array'];
+        foreach ($colorKeys as $colorKey) {
+            $rules["light_theme.$colorKey"] = ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'];
+        }
+        $request->validate($rules);
+
+        $config = Configuracion::first();
         $theme = array_merge(Configuracion::lightThemeDefaults(), $request->input('light_theme', []));
         foreach ($colorKeys as $color) {
             $theme[$color] = strtolower($theme[$color]);
@@ -73,6 +89,6 @@ class ConfiguracionController extends Controller
 
         $config->save();
 
-        return redirect()->back()->with('success', 'Configuración actualizada correctamente.');
+        return redirect()->back()->with('success', 'Apariencia actualizada correctamente.');
     }
 }

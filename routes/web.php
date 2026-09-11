@@ -403,6 +403,10 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             ->name('configuracion.index');
         Route::put('/configuracion', [ConfiguracionController::class, 'update'])
             ->name('configuracion.update');
+        Route::get('/configuracion/apariencia', [ConfiguracionController::class, 'appearance'])
+            ->name('configuracion.appearance');
+        Route::put('/configuracion/apariencia', [ConfiguracionController::class, 'updateAppearance'])
+            ->name('configuracion.appearance.update');
         Route::get('/configuracion/facturacion-electronica', [SunatConfigurationController::class, 'edit'])
             ->name('sunat.settings.edit');
         Route::put('/configuracion/facturacion-electronica', [SunatConfigurationController::class, 'update'])
