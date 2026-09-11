@@ -11,6 +11,10 @@
         window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone === true;
 
+    if (isStandalone()) {
+        document.documentElement.classList.add('catalog-pwa-standalone');
+    }
+
     const installationHidden = () => {
         if (isStandalone() || localStorage.getItem(INSTALLED_KEY) === '1') return true;
         const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);

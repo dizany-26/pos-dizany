@@ -405,6 +405,12 @@ body.modal-open{overflow:hidden}
     box-shadow: 0 8px 18px rgba(7, 26, 53, .18);
 }
 
+@media (display-mode: standalone) {
+    .access-link { display:none !important; }
+}
+
+html.catalog-pwa-standalone .access-link { display:none !important; }
+
 .catalog-whatsapp-float {
     position: fixed;
     right: 22px;

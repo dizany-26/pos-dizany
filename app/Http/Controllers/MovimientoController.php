@@ -6,7 +6,6 @@ use App\Exports\MovimientosExport;
 use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\Venta;
-use App\Models\DetalleVenta;
 use App\Models\Caja;
 use App\Models\Gasto;
 use App\Models\User;
@@ -291,6 +290,21 @@ class MovimientoController extends Controller
             $ventas = round($ventasDirectas + $ventasMixtas, 2);
         }
 
+        // Los cobros posteriores de ventas fiadas o a credito son ingresos
+        // reales de la jornada, pero no son una venta nueva. Por eso no deben
+        // inflar "Ventas totales", aunque si deben formar parte del balance.
+        $cobrosPendientes = (float) Movimiento::ingresos()
+            ->pagados()
+            ->activos()
+            ->whereIn('subtipo', ['cobro_fiado', 'cobro_credito'])
+            ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
+            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) =>
+                $q->whereBetween('fecha', [$inicio, $fin])
+            )
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
+            ->sum('monto');
+
         $gastos = Movimiento::egresos()
             ->pagados()
             ->activos()
@@ -316,37 +330,52 @@ class MovimientoController extends Controller
             ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]))
             ->sum('monto');
 
-        $balance = $ventas - $egresos;
+        $balance = $ventas + $cobrosPendientes - $egresos;
 
-        $ventaIdsJornada = $cajaSeleccionada
-            ? Movimiento::where('caja_id', $cajaSeleccionada->id)
-                ->where('referencia_tipo', 'venta')
-                ->whereNotNull('referencia_id')
-                ->pluck('referencia_id')
-                ->unique()
-                ->values()
-            : null;
+        // La utilidad se reconoce conforme ingresa el dinero. Esto distribuye
+        // proporcionalmente la ganancia entre adelantos y cobros posteriores,
+        // y evita contabilizar dos veces una venta fiada o a credito.
+        $gananciasQuery = Movimiento::query()
+            ->join('ventas as v_ganancia', 'v_ganancia.id', '=', 'movimientos.referencia_id')
+            ->join('detalle_ventas as dv_ganancia', 'dv_ganancia.venta_id', '=', 'v_ganancia.id')
+            ->where('movimientos.tipo', 'ingreso')
+            ->where('movimientos.estado', 'pagado')
+            ->whereIn('movimientos.subtipo', ['venta', 'cobro_fiado', 'cobro_credito'])
+            ->when(! $esAdmin, fn ($q) => $q->where('movimientos.usuario_id', $usuarioActual->id))
+            ->when($cajaSeleccionada, fn ($q) => $q->where('movimientos.caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) =>
+                $q->whereBetween('movimientos.fecha', [$inicio, $fin])
+            );
 
-        $ganancias = DetalleVenta::whereHas('venta', function ($q) use ($inicio, $fin, $esAdmin, $usuarioActual, $metodo, $cajaSeleccionada, $ventaIdsJornada) {
-                $q->where('estado', 'pagado')
-                  ->when(! $esAdmin, fn ($q2) => $q2->where('usuario_id', $usuarioActual->id))
-                  ->when($cajaSeleccionada, fn ($q2) => $q2->whereIn('id', $ventaIdsJornada))
-                  ->when($metodo !== '', function ($q2) use ($metodo) {
-                      $q2->where(function ($porMetodo) use ($metodo) {
-                          $porMetodo->whereRaw('LOWER(metodo_pago) = ?', [$metodo]);
-                          if (! in_array($metodo, ['mixto', 'fiado', 'credito'], true)) {
-                              $porMetodo->orWhere(function ($mixto) use ($metodo) {
-                                  $mixto->whereRaw('LOWER(metodo_pago) = ?', ['mixto'])
-                                      ->whereHas('pagos', fn ($pago) => $pago->whereRaw('LOWER(metodo_pago) = ?', [$metodo]));
-                              });
-                          }
-                      });
-                  })
-                  ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q2) =>
-                      $q2->whereBetween('fecha', [$inicio, $fin])
-                  );
-            })
-            ->sum('ganancia');
+        $gananciaPorMonto = 'SUM(CASE WHEN v_ganancia.total > 0 '
+            . 'THEN dv_ganancia.ganancia * movimientos.monto / v_ganancia.total ELSE 0 END)';
+
+        if ($metodo === '') {
+            $ganancias = (float) $gananciasQuery->selectRaw($gananciaPorMonto . ' as total')->value('total');
+        } elseif ($metodo === 'mixto') {
+            $ganancias = (float) $gananciasQuery
+                ->whereRaw('LOWER(movimientos.metodo_pago) = ?', ['mixto'])
+                ->selectRaw($gananciaPorMonto . ' as total')
+                ->value('total');
+        } else {
+            $gananciaDirecta = (float) (clone $gananciasQuery)
+                ->whereRaw('LOWER(movimientos.metodo_pago) = ?', [$metodo])
+                ->selectRaw($gananciaPorMonto . ' as total')
+                ->value('total');
+
+            $gananciaMixta = 0.0;
+            if (! in_array($metodo, ['fiado', 'credito'], true)) {
+                $gananciaMixta = (float) (clone $gananciasQuery)
+                    ->whereRaw('LOWER(movimientos.metodo_pago) = ?', ['mixto'])
+                    ->join('pagos_venta as pv_ganancia', 'pv_ganancia.venta_id', '=', 'v_ganancia.id')
+                    ->whereRaw('LOWER(pv_ganancia.metodo_pago) = ?', [$metodo])
+                    ->selectRaw('SUM(CASE WHEN v_ganancia.total > 0 '
+                        . 'THEN dv_ganancia.ganancia * pv_ganancia.monto / v_ganancia.total ELSE 0 END) as total')
+                    ->value('total');
+            }
+
+            $ganancias = round($gananciaDirecta + $gananciaMixta, 2);
+        }
 
         /* ==========================
         VISTA
