@@ -8,9 +8,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DIZANY">
-    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="apple-mobile-web-app-title" content="Catálogo DIZANY">
+    <link rel="manifest" href="{{ asset('catalogo.webmanifest') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/pwa/apple-touch-icon.png') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/pwa.css') }}?v={{ filemtime(public_path('css/pwa.css')) }}">
+    <script src="{{ asset('js/catalogo-pwa.js') }}?v={{ filemtime(public_path('js/catalogo-pwa.js')) }}" defer></script>
     <script>
         (() => {
             const saved = localStorage.getItem('dizany-catalog-theme');
