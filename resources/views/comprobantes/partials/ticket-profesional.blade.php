@@ -3,7 +3,7 @@
 @page{margin:0}*{box-sizing:border-box}body{margin:0;padding:{{ $ticketWidth<=58?'2.2':'3' }}mm;font-family:DejaVu Sans,sans-serif;font-size:{{ $ticketWidth<=58?'6.8':'8.1' }}px;line-height:1.35;color:#111}table{width:100%;border-collapse:collapse}.header td{vertical-align:middle}.brand{width:43%;padding-right:5px;text-align:center}.issuer{width:57%;padding-left:6px;border-left:1px solid #174b8d;line-height:1.45}.logo img{max-width:{{ $ticketWidth<=58?'34':'44' }}px;max-height:{{ $ticketWidth<=58?'32':'42' }}px}.company{color:#092a59;font-size:{{ $ticketWidth<=58?'9.5':'12' }}px;font-weight:bold}.slogan{color:#6b7280;font-size:{{ $ticketWidth<=58?'4.8':'6.1' }}px}.rule{margin:5px 0;border-top:1px dashed #111}.document{text-align:center}.doc-title{font-size:{{ $ticketWidth<=58?'8.4':'10.2' }}px;font-weight:bold}.doc-number{margin-top:2px;font-size:{{ $ticketWidth<=58?'9':'11' }}px;font-weight:bold}.info td{padding:1px 0;vertical-align:top}.info-label{width:24%;font-weight:bold}.product{padding:4px 1px;border-bottom:1px dashed #555}.product-name{font-weight:bold}.product-line{margin-top:2px}.product-amount{float:right}.right{text-align:right}.totals td{padding:2px 0}.total-row td{padding:5px 0;border-top:1px solid #111;border-bottom:1px solid #111;font-size:{{ $ticketWidth<=58?'9.2':'11.2' }}px;font-weight:bold}.words{padding-top:4px;text-align:center;font-size:{{ $ticketWidth<=58?'5.9':'7' }}px;font-weight:bold}.payment{padding:4px 0;text-align:center}.additional{padding:4px 0}.footer{page-break-inside:avoid;text-align:center}.qr img{width:{{ $ticketWidth<=58?'56':'70' }}px;height:{{ $ticketWidth<=58?'56':'70' }}px}.legal{margin-top:2px;font-size:{{ $ticketWidth<=58?'5.7':'6.8' }}px}.thanks{margin-top:4px;font-style:italic}
 </style></head><body>
 @php
-$currency=$config->moneda?:'S/';$client=$venta->cliente;$clientDocument=$client?->ruc?:($client?->dni?:'Sin documento');$amountWords=app(\App\Services\Sunat\AmountInWords::class)->soles((float)$venta->total);$lineSubtotal=(float)$venta->detalleVentas->sum('subtotal');$discount=max(0,$lineSubtotal-(float)$venta->total);$isPending=$venta->estado==='pendiente';$paymentLabel=$isPending?'Pendiente de pago':($venta->metodo_pago==='mixto'?'Pago mixto':ucfirst($venta->metodo_pago?:'-'));
+$currency=$config->moneda?:'S/';$client=$venta->cliente;$clientDocument=$client?->ruc?:($client?->dni?:'Sin documento');$amountWords=app(\App\Services\Sunat\AmountInWords::class)->soles((float)$venta->total);$lineSubtotal=(float)$venta->detalleVentas->sum('subtotal');$discount=max(0,$lineSubtotal-(float)$venta->total);$isPending=$venta->estado==='pendiente';$isCredit=$venta->estado==='credito';$isDeferred=$isPending||$isCredit;$paymentLabel=$isPending?'Pendiente de pago':($isCredit?'Venta a crédito':($venta->metodo_pago==='mixto'?'Pago mixto':ucfirst($venta->metodo_pago?:'-')));
 @endphp
 <table class="header"><tr><td class="brand">@if($logoBase64)<div class="logo"><img src="{{ $logoBase64 }}" alt="Logo"></div>@endif<div class="company">{{ $config->nombre_empresa?:'DIZANY' }}</div>@if($config->lema)<div class="slogan">{{ $config->lema }}</div>@endif</td><td class="issuer"><strong>RUC: {{ $config->ruc?:'-' }}</strong><br>{{ $config->direccion?:'Dirección no registrada' }}@if($config->telefono)<br>Tel: {{ $config->telefono }}@endif @if($config->correo)<br>{{ $config->correo }}@endif</td></tr></table>
 <div class="rule"></div><div class="document"><div class="doc-title">{{ $documentTitle }}</div><div class="doc-number">{{ $venta->serie }}-{{ str_pad($venta->correlativo,8,'0',STR_PAD_LEFT) }}</div></div><div class="rule"></div>
@@ -13,15 +13,17 @@ $currency=$config->moneda?:'S/';$client=$venta->cliente;$clientDocument=$client?
 <div class="words">SON {{ $amountWords }}</div>
 <div class="payment">
 Pago: {{ $paymentLabel }}
-@if($isPending)
+@if($isDeferred)
     <br>Vencimiento: {{ $venta->credit_due_date?->format('d/m/Y') ?? 'No registrado' }}
 @endif
-@if(!$isPending && $venta->pagos->count() > 1)
+@if(($isCredit && $venta->pagos->isNotEmpty()) || (!$isDeferred && $venta->pagos->count() > 1))
     @foreach($venta->pagos as $pago)
-        <br>{{ ucfirst($pago->metodo_pago) }}: {{ $currency }}{{ number_format($pago->monto,2) }}
+        <br>{{ $isCredit ? 'Adelanto ' : '' }}{{ ucfirst($pago->metodo_pago) }}: {{ $currency }}{{ number_format($pago->monto,2) }}
     @endforeach
 @endif
-@if(!$isPending && $venta->efectivo_recibido !== null)
+@if($isCredit)
+    <br>Saldo pendiente: {{ $currency }}{{ number_format($venta->saldo ?? $venta->total,2) }}
+@elseif(!$isPending && $venta->efectivo_recibido !== null)
     <br>Recibido: {{ $currency }}{{ number_format($venta->efectivo_recibido,2) }} &nbsp; Vuelto: {{ $currency }}{{ number_format($venta->vuelto??0,2) }}
 @endif
 </div>

@@ -16,7 +16,9 @@
     $lineSubtotal=(float)$venta->detalleVentas->sum('subtotal');
     $discount=max(0,$lineSubtotal-(float)$venta->total);
     $isPending=$venta->estado==='pendiente';
-    $paymentLabel=$isPending?'Pendiente de pago':($venta->metodo_pago==='mixto'?'Pago mixto':ucfirst($venta->metodo_pago?:'-'));
+    $isCredit=$venta->estado==='credito';
+    $isDeferred=$isPending||$isCredit;
+    $paymentLabel=$isPending?'Pendiente de pago':($isCredit?'Venta a crédito':($venta->metodo_pago==='mixto'?'Pago mixto':ucfirst($venta->metodo_pago?:'-')));
 @endphp
 <table class="header"><tr>
     <td class="business"><table><tr><td class="logo-cell">@if($logoBase64)<img src="{{ $logoBase64 }}" alt="Logo">@endif</td><td class="business-data"><div class="business-name">{{ $config->nombre_empresa?:'DIZANY' }}</div>@if($config->lema)<div class="slogan">{{ $config->lema }}</div>@endif<strong>RUC:</strong> {{ $config->ruc?:'-' }}<br>{{ $config->direccion?:'Dirección no registrada' }}<br>@if($config->telefono)Tel: {{ $config->telefono }}@endif @if($config->telefono&&$config->correo)&nbsp; | &nbsp;@endif @if($config->correo){{ $config->correo }}@endif</td></tr></table></td>
@@ -34,15 +36,17 @@
 @if($venta->informacion_adicional)<div class="additional"><div class="section-title">INFORMACIÓN ADICIONAL</div><div class="additional-value">{{ $venta->informacion_adicional }}</div></div>@endif
 <table class="summary"><tr><td class="words-cell"><div class="section-title">IMPORTE EN LETRAS</div><div class="words">SON {{ $amountWords }}</div><div class="payment">
 <strong>Forma de pago:</strong> {{ $paymentLabel }}
-@if($isPending)
+@if($isDeferred)
     <br><strong>Fecha de vencimiento:</strong> {{ $venta->credit_due_date?->format('d/m/Y') ?? 'No registrada' }}
 @endif
-@if(!$isPending && $venta->pagos->count() > 1)
+@if(($isCredit && $venta->pagos->isNotEmpty()) || (!$isDeferred && $venta->pagos->count() > 1))
     @foreach($venta->pagos as $pago)
-        <br><strong>{{ ucfirst($pago->metodo_pago) }}:</strong> {{ $currency }} {{ number_format($pago->monto,2) }}
+        <br><strong>{{ $isCredit ? 'Adelanto ' : '' }}{{ ucfirst($pago->metodo_pago) }}:</strong> {{ $currency }} {{ number_format($pago->monto,2) }}
     @endforeach
 @endif
-@if(!$isPending && $venta->efectivo_recibido !== null)
+@if($isCredit)
+    <br><strong>Saldo pendiente:</strong> {{ $currency }} {{ number_format($venta->saldo ?? $venta->total,2) }}
+@elseif(!$isPending && $venta->efectivo_recibido !== null)
     <br><strong>Efectivo recibido:</strong> {{ $currency }} {{ number_format($venta->efectivo_recibido,2) }}
     <br><strong>Vuelto:</strong> {{ $currency }} {{ number_format($venta->vuelto??0,2) }}
 @endif
