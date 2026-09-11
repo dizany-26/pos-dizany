@@ -42,6 +42,10 @@ class MovimientoController extends Controller
         if (! in_array($metodo, $metodosPermitidos, true)) {
             $metodo = '';
         }
+        $buscarEn = strtolower(trim((string) $request->get('buscar_en', 'todos')));
+        if (! in_array($buscarEn, ['todos', 'documento', 'comprobante', 'concepto'], true)) {
+            $buscarEn = 'todos';
+        }
 
         $cajasFiltro = Caja::with('usuario')
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
@@ -196,9 +200,14 @@ class MovimientoController extends Controller
             $buscar = trim((string) $request->buscar);
             $correlativoNumerico = ctype_digit($buscar) ? (int) ltrim($buscar, '0') : null;
 
-            $query->where(function ($busqueda) use ($buscar, $correlativoNumerico) {
-                $busqueda->where('concepto', 'like', '%' . $buscar . '%')
-                    ->orWhere(function ($porComprobante) use ($buscar, $correlativoNumerico) {
+            $query->where(function ($busqueda) use ($buscar, $correlativoNumerico, $buscarEn) {
+                if (in_array($buscarEn, ['todos', 'concepto'], true)) {
+                    $busqueda->where('concepto', 'like', '%' . $buscar . '%');
+                }
+
+                if (in_array($buscarEn, ['todos', 'comprobante'], true)) {
+                    $metodoComprobante = $buscarEn === 'todos' ? 'orWhere' : 'where';
+                    $busqueda->{$metodoComprobante}(function ($porComprobante) use ($buscar, $correlativoNumerico) {
                         $porComprobante->where('referencia_tipo', 'venta')
                             ->whereHas('venta', function ($venta) use ($buscar, $correlativoNumerico) {
                                 $venta->where('serie', 'like', '%' . $buscar . '%')
@@ -208,12 +217,17 @@ class MovimientoController extends Controller
                                     $venta->orWhere('correlativo', $correlativoNumerico);
                                 }
 
-                                $venta->orWhereHas('cliente', function ($cliente) use ($buscar) {
-                                    $cliente->where('dni', 'like', '%' . $buscar . '%')
-                                        ->orWhere('ruc', 'like', '%' . $buscar . '%');
-                                });
                             });
                     });
+                }
+
+                if (in_array($buscarEn, ['todos', 'documento'], true)) {
+                    $metodoDocumento = $buscarEn === 'todos' ? 'orWhereHas' : 'whereHas';
+                    $busqueda->{$metodoDocumento}('venta.cliente', function ($cliente) use ($buscar) {
+                        $cliente->where('dni', 'like', '%' . $buscar . '%')
+                            ->orWhere('ruc', 'like', '%' . $buscar . '%');
+                    });
+                }
             });
         }
 
@@ -405,6 +419,7 @@ class MovimientoController extends Controller
             , 'resumenCaja'
             , 'usuariosCaja'
             , 'metodo'
+            , 'buscarEn'
         ));
     }
 
@@ -422,6 +437,10 @@ class MovimientoController extends Controller
         $fecha = str_replace([' to ', ' | ', ' → '], ' a ', trim((string) $request->get('fecha', '')));
         $metodo = strtolower(trim((string) $request->get('metodo', '')));
         $buscar = trim((string) $request->get('buscar', ''));
+        $buscarEn = strtolower(trim((string) $request->get('buscar_en', 'todos')));
+        if (! in_array($buscarEn, ['todos', 'documento', 'comprobante', 'concepto'], true)) {
+            $buscarEn = 'todos';
+        }
         $cajaId = $request->integer('caja_id');
         $cajaSeleccionada = null;
         $filtroModo = $request->get('filtro_modo', $cajaId > 0 ? 'caja' : 'fecha');
@@ -461,19 +480,27 @@ class MovimientoController extends Controller
 
         if ($buscar !== '') {
             $correlativo = ctype_digit($buscar) ? (int) ltrim($buscar, '0') : null;
-            $query->where(function ($busqueda) use ($buscar, $correlativo) {
-                $busqueda->where('concepto', 'like', "%{$buscar}%")
-                    ->orWhereHas('venta', function ($venta) use ($buscar, $correlativo) {
+            $query->where(function ($busqueda) use ($buscar, $correlativo, $buscarEn) {
+                if (in_array($buscarEn, ['todos', 'concepto'], true)) {
+                    $busqueda->where('concepto', 'like', "%{$buscar}%");
+                }
+                if (in_array($buscarEn, ['todos', 'comprobante'], true)) {
+                    $metodoComprobante = $buscarEn === 'todos' ? 'orWhereHas' : 'whereHas';
+                    $busqueda->{$metodoComprobante}('venta', function ($venta) use ($buscar, $correlativo) {
                         $venta->where('serie', 'like', "%{$buscar}%")
                             ->orWhereRaw("CONCAT(serie, '-', LPAD(correlativo, 6, '0')) LIKE ?", ["%{$buscar}%"]);
                         if ($correlativo !== null) {
                             $venta->orWhere('correlativo', $correlativo);
                         }
-                        $venta->orWhereHas('cliente', function ($cliente) use ($buscar) {
-                            $cliente->where('dni', 'like', "%{$buscar}%")
-                                ->orWhere('ruc', 'like', "%{$buscar}%");
-                        });
                     });
+                }
+                if (in_array($buscarEn, ['todos', 'documento'], true)) {
+                    $metodoDocumento = $buscarEn === 'todos' ? 'orWhereHas' : 'whereHas';
+                    $busqueda->{$metodoDocumento}('venta.cliente', function ($cliente) use ($buscar) {
+                        $cliente->where('dni', 'like', "%{$buscar}%")
+                            ->orWhere('ruc', 'like', "%{$buscar}%");
+                    });
+                }
             });
         }
 

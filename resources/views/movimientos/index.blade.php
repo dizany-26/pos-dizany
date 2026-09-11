@@ -209,12 +209,28 @@ Movimientos
             </div>
             @endif
 
+            @if($tipo === 'transacciones')
+            <div class="col-md-2">
+                <select name="buscar_en" class="form-select ui-input" onchange="if(this.form.buscar.value.trim()){this.form.submit();}">
+                    <option value="todos" @selected($buscarEn === 'todos')>Buscar en todo</option>
+                    <option value="documento" @selected($buscarEn === 'documento')>DNI / RUC</option>
+                    <option value="comprobante" @selected($buscarEn === 'comprobante')>Comprobante</option>
+                    <option value="concepto" @selected($buscarEn === 'concepto')>Concepto</option>
+                </select>
+            </div>
+            @endif
+
             <div class="col-md-3">
                 <input type="text"
                        name="buscar"
                        value="{{ request('buscar') }}"
                        class="form-control ui-input"
-                       placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : 'Buscar concepto, comprobante o DNI/RUC...' }}"
+                       placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : match($buscarEn) {
+                           'documento' => 'Digite DNI o RUC...',
+                           'comprobante' => 'Digite el comprobante...',
+                           'concepto' => 'Digite el concepto...',
+                           default => 'Buscar concepto, comprobante o DNI/RUC...',
+                       } }}"
                        onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
             </div>
 
