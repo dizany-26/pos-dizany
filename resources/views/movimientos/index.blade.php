@@ -207,19 +207,9 @@ Movimientos
                     <option value="credito" @selected($metodo === 'credito')>Crédito</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <input type="search"
-                       name="documento_buscar"
-                       value="{{ $documentoBuscar }}"
-                       class="form-control ui-input"
-                       inputmode="numeric"
-                       autocomplete="off"
-                       placeholder="Filtrar por DNI o RUC..."
-                       onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
-            </div>
             @endif
 
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <input type="text"
                        name="buscar"
                        value="{{ request('buscar') }}"

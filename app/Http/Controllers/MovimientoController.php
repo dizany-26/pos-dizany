@@ -42,7 +42,6 @@ class MovimientoController extends Controller
         if (! in_array($metodo, $metodosPermitidos, true)) {
             $metodo = '';
         }
-        $documentoBuscar = trim((string) $request->get('documento_buscar', ''));
 
         $cajasFiltro = Caja::with('usuario')
             ->when(! $esAdmin, fn ($q) => $q->where('usuario_id', $usuarioActual->id))
@@ -187,13 +186,6 @@ class MovimientoController extends Controller
                             ->whereHas('venta.pagos', fn ($pago) => $pago->whereRaw('LOWER(metodo_pago) = ?', [$metodo]));
                     });
                 }
-            });
-        }
-
-        if ($documentoBuscar !== '') {
-            $query->whereHas('venta.cliente', function ($cliente) use ($documentoBuscar) {
-                $cliente->where('dni', 'like', '%' . $documentoBuscar . '%')
-                    ->orWhere('ruc', 'like', '%' . $documentoBuscar . '%');
             });
         }
 
@@ -413,7 +405,6 @@ class MovimientoController extends Controller
             , 'resumenCaja'
             , 'usuariosCaja'
             , 'metodo'
-            , 'documentoBuscar'
         ));
     }
 
@@ -430,7 +421,6 @@ class MovimientoController extends Controller
         $rango = $request->get('rango', 'diario');
         $fecha = str_replace([' to ', ' | ', ' → '], ' a ', trim((string) $request->get('fecha', '')));
         $metodo = strtolower(trim((string) $request->get('metodo', '')));
-        $documentoBuscar = trim((string) $request->get('documento_buscar', ''));
         $buscar = trim((string) $request->get('buscar', ''));
         $cajaId = $request->integer('caja_id');
         $cajaSeleccionada = null;
@@ -466,13 +456,6 @@ class MovimientoController extends Controller
                             ->whereHas('venta.pagos', fn ($pago) => $pago->whereRaw('LOWER(metodo_pago) = ?', [$metodo]));
                     });
                 }
-            });
-        }
-
-        if ($documentoBuscar !== '') {
-            $query->whereHas('venta.cliente', function ($cliente) use ($documentoBuscar) {
-                $cliente->where('dni', 'like', '%' . $documentoBuscar . '%')
-                    ->orWhere('ruc', 'like', '%' . $documentoBuscar . '%');
             });
         }
 
