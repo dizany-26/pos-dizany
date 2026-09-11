@@ -1126,3 +1126,12 @@
 .client-name-details[open] .show-less {
     display: inline;
 }
+
+.movement-search-group .form-select {
+    flex: 0 0 40%;
+    max-width: 40%;
+}
+
+.movement-search-group .form-control {
+    min-width: 0;
+}

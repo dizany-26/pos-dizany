@@ -124,7 +124,7 @@ Movimientos
             <input type="hidden" name="filtro_modo" value="{{ $filtroModo }}">
 
             @if($tipo === 'transacciones')
-            <div class="col-md-4">
+            <div class="col-lg-3 col-md-6">
                 <select name="caja_id" class="form-select ui-input" onchange="this.form.elements.filtro_modo.value = this.value ? 'caja' : 'fecha'; this.form.submit()">
                     <option value="">Filtrar por fecha</option>
                     @foreach($cajasFiltro as $cajaFiltro)
@@ -140,7 +140,7 @@ Movimientos
             </div>
             @endif
 
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-6">
                 <select name="rango"
                         class="form-select ui-input"
                         onchange="if (this.form.elements.caja_id) this.form.elements.caja_id.value = ''; this.form.elements.filtro_modo.value = 'fecha'; this.form.submit()">
@@ -152,7 +152,7 @@ Movimientos
                 </select>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-6">
                 {{-- Wrapper relativo (CLAVE) --}}
                 <div class="position-relative" id="year-picker-wrapper">
 
@@ -193,7 +193,7 @@ Movimientos
             </div>
 
             @if($tipo === 'transacciones')
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-6">
                 <select name="metodo" class="form-select ui-input" onchange="this.form.submit()">
                     <option value="">Todos los métodos</option>
                     <option value="efectivo" @selected($metodo === 'efectivo')>Efectivo</option>
@@ -209,18 +209,16 @@ Movimientos
             </div>
             @endif
 
-            @if($tipo === 'transacciones')
-            <div class="col-md-2">
+            <div class="{{ $tipo === 'transacciones' ? 'col-lg-3 col-md-6' : 'col-md-3' }}">
+                <div class="{{ $tipo === 'transacciones' ? 'input-group movement-search-group' : '' }}">
+                @if($tipo === 'transacciones')
                 <select name="buscar_en" class="form-select ui-input" onchange="if(this.form.buscar.value.trim()){this.form.submit();}">
-                    <option value="todos" @selected($buscarEn === 'todos')>Buscar en todo</option>
+                    <option value="todos" @selected($buscarEn === 'todos')>Todo</option>
                     <option value="documento" @selected($buscarEn === 'documento')>DNI / RUC</option>
                     <option value="comprobante" @selected($buscarEn === 'comprobante')>Comprobante</option>
                     <option value="concepto" @selected($buscarEn === 'concepto')>Concepto</option>
                 </select>
-            </div>
-            @endif
-
-            <div class="col-md-3">
+                @endif
                 <input type="text"
                        name="buscar"
                        value="{{ request('buscar') }}"
@@ -232,6 +230,7 @@ Movimientos
                            default => 'Buscar concepto, comprobante o DNI/RUC...',
                        } }}"
                        onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
+                </div>
             </div>
 
         </form>
