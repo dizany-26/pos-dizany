@@ -79,14 +79,19 @@ class CajaController extends Controller
     {
         abort_unless($caja->usuario_id === auth()->id() || auth()->user()->esAdmin(), 403);
 
+        $conciliacionValidacion = $caja->calcularConciliacion();
+        $reglasMetodos = collect(Caja::mediosConciliables())
+            ->mapWithKeys(function ($label, $medio) use ($conciliacionValidacion) {
+                $tieneImporteEsperado = (float) ($conciliacionValidacion[$medio]['esperado'] ?? 0) > 0;
+                $presencia = $medio === 'efectivo' || $tieneImporteEsperado ? 'required' : 'nullable';
+
+                return ["metodos.$medio" => "$presencia|numeric|min:0|max:999999999.99"];
+            })
+            ->all();
+
         $data = $request->validate([
             'metodos' => 'required|array',
-            'metodos.efectivo' => 'required|numeric|min:0|max:999999999.99',
-            'metodos.yape' => 'required|numeric|min:0|max:999999999.99',
-            'metodos.plin' => 'required|numeric|min:0|max:999999999.99',
-            'metodos.tarjeta' => 'required|numeric|min:0|max:999999999.99',
-            'metodos.transferencia' => 'required|numeric|min:0|max:999999999.99',
-            'metodos.otro' => 'required|numeric|min:0|max:999999999.99',
+            ...$reglasMetodos,
             'observaciones' => 'nullable|string|max:1000',
         ]);
 
@@ -101,7 +106,7 @@ class CajaController extends Controller
 
             $conciliacion = $caja->calcularConciliacion();
             $declarados = collect(Caja::mediosConciliables())
-                ->mapWithKeys(fn ($label, $medio) => [$medio => round((float) $data['metodos'][$medio], 2)])
+                ->mapWithKeys(fn ($label, $medio) => [$medio => round((float) ($data['metodos'][$medio] ?? 0), 2)])
                 ->all();
             $esperados = collect($conciliacion)
                 ->mapWithKeys(fn ($valores, $medio) => [$medio => round((float) $valores['esperado'], 2)])

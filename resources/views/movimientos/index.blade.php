@@ -728,7 +728,8 @@ Movimientos
                     <strong>Cuadre por medio de pago</strong>
                     <small>Cuenta el efectivo y verifica los demás importes en cada aplicación o cuenta.</small>
                 </div>
-                @php($conciliacionActual = auth()->user()->esAdmin() ? $cajaAbierta->calcularConciliacion() : [])
+                @php($conciliacionCaja = $cajaAbierta->calcularConciliacion())
+                @php($conciliacionActual = auth()->user()->esAdmin() ? $conciliacionCaja : [])
                 <div class="cash-methods-grid">
                     @foreach(\App\Models\Caja::mediosConciliables() as $medio => $etiqueta)
                     <label class="cash-method-field">
@@ -743,7 +744,8 @@ Movimientos
                             <span class="input-group-text">S/</span>
                             <input type="number" name="metodos[{{ $medio }}]"
                                 id="{{ $medio === 'efectivo' ? 'montoContadoCaja' : '' }}"
-                                class="form-control ui-input" min="0" step="0.01" placeholder="0.00" required>
+                                class="form-control ui-input" min="0" step="0.01" placeholder="0.00"
+                                @required($medio === 'efectivo' || ($conciliacionCaja[$medio]['esperado'] ?? 0) > 0)>
                         </div>
                     </label>
                     @endforeach
