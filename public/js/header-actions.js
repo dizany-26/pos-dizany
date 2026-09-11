@@ -150,6 +150,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const action = e.target.closest("button, a");
     if (!action || action.disabled) return;
 
+    // Los botones que despliegan un submenú deben mantener abierto el panel
+    // principal. Los enlaces internos sí lo cerrarán después de seleccionarse.
+    if (action.matches('[data-bs-toggle="dropdown"]')) return;
+
     // Dejamos que el manejador propio abra su modal o panel y luego cerramos
     // el dropdown de acciones para que no quede superpuesto.
     window.setTimeout(() => {
