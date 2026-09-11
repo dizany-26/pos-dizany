@@ -502,6 +502,11 @@ select.form-select-sm,
     font-weight: bold;
 }
 
+.metodo-pago-opciones.is-pending .metodo-pago-item:not(.d-none) {
+    flex: 0 0 calc((100% - 24px) / 7);
+    width: calc((100% - 24px) / 7);
+}
+
 .pago-mixto-resumen {
     border: 1px solid #dbe3ef;
     border-radius: 12px;

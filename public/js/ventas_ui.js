@@ -337,8 +337,10 @@ function manejarEstadoVenta() {
     const items = document.querySelectorAll(".metodo-pago-item");
     const btnIrStep3 = document.getElementById("btn-ir-step3");
     const btnConfirmarDirecto = document.getElementById("btn-confirmar-venta-directo");
+    const opcionesMetodoPago = document.querySelector(".metodo-pago-opciones");
 
     const estado = (estadoPagoSelect?.value || "pagado").toLowerCase();
+    opcionesMetodoPago?.classList.toggle("is-pending", estado === "pendiente");
 
     const labelVuelto = Array.from(
         document.querySelectorAll("label.form-label")

@@ -15,6 +15,8 @@
     $amountWords=app(\App\Services\Sunat\AmountInWords::class)->soles((float)$venta->total);
     $lineSubtotal=(float)$venta->detalleVentas->sum('subtotal');
     $discount=max(0,$lineSubtotal-(float)$venta->total);
+    $isPending=$venta->estado==='pendiente';
+    $paymentLabel=$isPending?'Pendiente de pago':($venta->metodo_pago==='mixto'?'Pago mixto':ucfirst($venta->metodo_pago?:'-'));
 @endphp
 <table class="header"><tr>
     <td class="business"><table><tr><td class="logo-cell">@if($logoBase64)<img src="{{ $logoBase64 }}" alt="Logo">@endif</td><td class="business-data"><div class="business-name">{{ $config->nombre_empresa?:'DIZANY' }}</div>@if($config->lema)<div class="slogan">{{ $config->lema }}</div>@endif<strong>RUC:</strong> {{ $config->ruc?:'-' }}<br>{{ $config->direccion?:'Dirección no registrada' }}<br>@if($config->telefono)Tel: {{ $config->telefono }}@endif @if($config->telefono&&$config->correo)&nbsp; | &nbsp;@endif @if($config->correo){{ $config->correo }}@endif</td></tr></table></td>
@@ -24,13 +26,28 @@
 <div class="client-box"><div class="section-title">DATOS DEL CLIENTE</div><table>
     <tr><td class="client-label">Cliente:</td><td class="client-value">{{ $client?->nombre?:'Público General' }}</td><td class="sale-label">Fecha:</td><td class="sale-value">{{ $venta->fecha->format('d/m/Y H:i') }}</td></tr>
     <tr><td class="client-label">Documento:</td><td class="client-value">{{ $client?$clientDocument:'Sin documento' }}</td><td class="sale-label">Moneda:</td><td class="sale-value">PEN - Soles</td></tr>
-    <tr><td class="client-label">Dirección:</td><td class="client-value">{{ $client?->direccion?:'-' }}</td><td class="sale-label">Pago:</td><td class="sale-value">{{ $venta->metodo_pago === 'mixto' ? 'Pago mixto' : ucfirst($venta->metodo_pago?:'-') }}</td></tr>
+    <tr><td class="client-label">Dirección:</td><td class="client-value">{{ $client?->direccion?:'-' }}</td><td class="sale-label">Pago:</td><td class="sale-value">{{ $paymentLabel }}</td></tr>
 </table></div>
 <table class="items"><thead><tr><th style="width:5%">ÍTEM</th><th style="width:12%">CÓD.</th><th style="width:7%">CANT.</th><th style="width:9%">UNIDAD</th><th>DESCRIPCIÓN</th><th style="width:13%">P. UNIT.</th><th style="width:9%">DTO.</th><th style="width:14%">IMPORTE</th></tr></thead><tbody>
 @foreach($venta->detalleVentas as $i=>$detalle)<tr><td class="center">{{ $i+1 }}</td><td>{{ $detalle->producto?->codigo_barras?:'PROD-'.$detalle->producto_id }}</td><td class="center">{{ rtrim(rtrim(number_format($detalle->cantidad,2),'0'),'.') }}</td><td class="center">{{ strtoupper($detalle->presentacion?:'NIU') }}</td><td>{{ $detalle->producto?->nombre?:'Producto' }}</td><td class="right">{{ number_format($detalle->precio_presentacion,2) }}</td><td class="right">0.00</td><td class="right">{{ number_format($detalle->subtotal,2) }}</td></tr>@endforeach
 </tbody></table>
 @if($venta->informacion_adicional)<div class="additional"><div class="section-title">INFORMACIÓN ADICIONAL</div><div class="additional-value">{{ $venta->informacion_adicional }}</div></div>@endif
-<table class="summary"><tr><td class="words-cell"><div class="section-title">IMPORTE EN LETRAS</div><div class="words">SON {{ $amountWords }}</div><div class="payment"><strong>Forma de pago:</strong> {{ $venta->metodo_pago === 'mixto' ? 'Pago mixto' : ucfirst($venta->metodo_pago?:'-') }}@if($venta->pagos->count() > 1)@foreach($venta->pagos as $pago)<br><strong>{{ ucfirst($pago->metodo_pago) }}:</strong> {{ $currency }} {{ number_format($pago->monto,2) }}@endforeach@endif@if($venta->efectivo_recibido!==null)<br><strong>Efectivo recibido:</strong> {{ $currency }} {{ number_format($venta->efectivo_recibido,2) }}<br><strong>Vuelto:</strong> {{ $currency }} {{ number_format($venta->vuelto??0,2) }}@endif<br><strong>Atendido por:</strong> {{ $venta->usuario?->nombre?:'Personal de venta' }}</div></td><td class="totals-cell"><table class="totals">
+<table class="summary"><tr><td class="words-cell"><div class="section-title">IMPORTE EN LETRAS</div><div class="words">SON {{ $amountWords }}</div><div class="payment">
+<strong>Forma de pago:</strong> {{ $paymentLabel }}
+@if($isPending)
+    <br><strong>Fecha de vencimiento:</strong> {{ $venta->credit_due_date?->format('d/m/Y') ?? 'No registrada' }}
+@endif
+@if(!$isPending && $venta->pagos->count() > 1)
+    @foreach($venta->pagos as $pago)
+        <br><strong>{{ ucfirst($pago->metodo_pago) }}:</strong> {{ $currency }} {{ number_format($pago->monto,2) }}
+    @endforeach
+@endif
+@if(!$isPending && $venta->efectivo_recibido !== null)
+    <br><strong>Efectivo recibido:</strong> {{ $currency }} {{ number_format($venta->efectivo_recibido,2) }}
+    <br><strong>Vuelto:</strong> {{ $currency }} {{ number_format($venta->vuelto??0,2) }}
+@endif
+<br><strong>Atendido por:</strong> {{ $venta->usuario?->nombre?:'Personal de venta' }}
+</div></td><td class="totals-cell"><table class="totals">
     <tr><td>Subtotal</td><td class="right">{{ $currency }} {{ number_format($lineSubtotal,2) }}</td></tr><tr><td>Descuento total</td><td class="right">{{ $currency }} {{ number_format($discount,2) }}</td></tr><tr><td>Operaciones gravadas</td><td class="right">{{ $currency }} {{ number_format($venta->op_gravadas,2) }}</td></tr><tr><td>Operaciones exoneradas</td><td class="right">{{ $currency }} {{ number_format($venta->op_exoneradas,2) }}</td></tr><tr><td>{{ $venta->tax_treatment==='nrus_no_desglosado'?'Valor de venta':'Operaciones inafectas' }}</td><td class="right">{{ $currency }} {{ number_format($venta->tax_treatment==='nrus_no_desglosado'?$venta->op_nrus:$venta->op_inafectas,2) }}</td></tr><tr><td>IGV {{ number_format($venta->igv_rate,0) }}%</td><td class="right">{{ $currency }} {{ number_format($venta->igv,2) }}</td></tr><tr class="total-row"><td>IMPORTE TOTAL</td><td class="right">{{ $currency }} {{ number_format($venta->total,2) }}</td></tr>
 </table></td></tr></table>
 <table class="bottom"><tr><td class="qr-cell"><img src="data:image/svg+xml;base64,{{ $qr }}" alt="Código QR"><div class="qr-caption">CÓDIGO QR DEL COMPROBANTE</div></td><td class="legal-cell">Representación impresa de {{ strtolower($documentTitle) }}.<br>Conserve este documento para sus consultas. La información y el código QR se generan con los datos registrados por el sistema.@if(!$isElectronic)<br><strong>Documento interno de control comercial.</strong>@endif</td></tr></table>
