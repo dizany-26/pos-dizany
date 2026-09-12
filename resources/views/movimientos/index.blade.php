@@ -210,9 +210,9 @@ Movimientos
             @endif
 
             <div class="{{ $tipo === 'transacciones' ? 'col-lg-3 col-md-6' : 'col-md-3' }}">
-                <div class="{{ $tipo === 'transacciones' ? 'input-group movement-search-group' : '' }}">
+                <div class="{{ $tipo === 'transacciones' ? 'movement-search-group' : '' }}">
                 @if($tipo === 'transacciones')
-                <select name="buscar_en" class="form-select ui-input" onchange="if(this.form.buscar.value.trim()){this.form.submit();}">
+                <select name="buscar_en" id="movimiento-buscar-en" class="form-select ui-input">
                     <option value="todos" @selected($buscarEn === 'todos')>Todo</option>
                     <option value="documento" @selected($buscarEn === 'documento')>DNI / RUC</option>
                     <option value="comprobante" @selected($buscarEn === 'comprobante')>Comprobante</option>
@@ -221,6 +221,7 @@ Movimientos
                 @endif
                 <input type="text"
                        name="buscar"
+                       id="movimiento-buscar"
                        value="{{ request('buscar') }}"
                        class="form-control ui-input"
                        placeholder="{{ $tipo === 'cierres' ? 'Buscar cajero...' : match($buscarEn) {
@@ -878,6 +879,25 @@ Movimientos
 
 @push('scripts')
 <script src="{{ asset('js/movimientos.js') }}?v={{ filemtime(public_path('js/movimientos.js')) }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const selector = document.getElementById('movimiento-buscar-en');
+    const buscador = document.getElementById('movimiento-buscar');
+    if (!selector || !buscador) return;
+
+    const placeholders = {
+        todos: 'Concepto, comprobante o DNI/RUC...',
+        documento: 'Digite DNI o RUC...',
+        comprobante: 'Digite el comprobante...',
+        concepto: 'Digite el concepto...',
+    };
+
+    selector.addEventListener('change', () => {
+        buscador.placeholder = placeholders[selector.value] || placeholders.todos;
+        if (buscador.value.trim()) selector.form.submit();
+    });
+});
+</script>
 @if($cajaAbierta)
 <script>
 document.addEventListener('DOMContentLoaded', () => {

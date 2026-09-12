@@ -1127,11 +1127,24 @@
     display: inline;
 }
 
-.movement-search-group .form-select {
-    flex: 0 0 40%;
-    max-width: 40%;
+.movement-search-group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: .4rem;
+    min-width: 0;
 }
 
-.movement-search-group .form-control {
+.movement-search-group > .select2-container,
+.movement-search-group > .form-select {
+    flex: 0 0 38% !important;
+    width: 38% !important;
+    min-width: 0;
+    max-width: 38%;
+}
+
+.movement-search-group > .form-control {
+    flex: 1 1 0;
+    width: 0;
     min-width: 0;
 }
