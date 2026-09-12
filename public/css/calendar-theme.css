@@ -23,4 +23,7 @@
 :root[data-theme='dark'] .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month{background:#0f2038;color:#edf5ff}:root[data-theme='dark'] .flatpickr-calendar:before{border-bottom-color:#35516f}:root[data-theme='dark'] .flatpickr-calendar:after{border-bottom-color:#162c49}
 :root[data-theme='dark'] .flatpickr-monthSelect-month{color:#dce9f8;background:#0f2038}:root[data-theme='dark'] .flatpickr-monthSelect-month:hover,:root[data-theme='dark'] .flatpickr-monthSelect-month:focus{color:#fff;background:#23466c}:root[data-theme='dark'] .flatpickr-monthSelect-month.selected{color:#fff;background:#2377e8}
 :root[data-theme='dark'] .flatpickr-time{border-color:#35516f}:root[data-theme='dark'] .flatpickr-time input,:root[data-theme='dark'] .flatpickr-time .flatpickr-time-separator,:root[data-theme='dark'] .flatpickr-time .flatpickr-am-pm{color:#edf5ff}:root[data-theme='dark'] .flatpickr-time input:hover,:root[data-theme='dark'] .flatpickr-time input:focus,:root[data-theme='dark'] .flatpickr-time .flatpickr-am-pm:hover{background:#203e61}
-@media(max-width:480px){.flatpickr-calendar{max-width:calc(100vw - 24px)}}
+@media(max-width:767px){
+    .flatpickr-calendar{max-width:calc(100vw - 24px);width:calc(100vw - 24px)}
+    .flatpickr-calendar .flatpickr-days,.flatpickr-calendar .dayContainer{width:100%;min-width:0}
+}

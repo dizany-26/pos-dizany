@@ -230,7 +230,7 @@ Movimientos
                            'concepto' => 'Digite el concepto...',
                            default => 'Buscar concepto, comprobante o DNI/RUC...',
                        } }}"
-                       onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
+                       >
                 </div>
             </div>
 
@@ -891,10 +891,39 @@ document.addEventListener('DOMContentLoaded', () => {
         comprobante: 'Digite el comprobante...',
         concepto: 'Digite el concepto...',
     };
+    let valorAplicado = buscador.value.trim();
+
+    const aplicarBusqueda = () => {
+        const valorActual = buscador.value.trim();
+        if (valorActual === valorAplicado) return;
+        valorAplicado = valorActual;
+        selector.form.submit();
+    };
 
     selector.addEventListener('change', () => {
+        const teniaTexto = buscador.value.trim() !== '';
+        buscador.value = '';
+        valorAplicado = '';
         buscador.placeholder = placeholders[selector.value] || placeholders.todos;
-        if (buscador.value.trim()) selector.form.submit();
+        if (teniaTexto) {
+            selector.form.submit();
+        } else {
+            buscador.focus();
+        }
+    });
+
+    buscador.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            aplicarBusqueda();
+        }
+    });
+
+    buscador.addEventListener('blur', () => {
+        // Permite que el selector procese primero el cambio antes de filtrar.
+        setTimeout(() => {
+            if (document.activeElement !== selector) aplicarBusqueda();
+        }, 80);
     });
 });
 </script>
@@ -1158,7 +1187,7 @@ flatpickr.localize(flatpickr.l10ns.es);
         });
     }
 
-    // ===================== PERSONALIZADO (DOBLE) =====================
+    // ===================== PERSONALIZADO =====================
     if (rango === "personalizado") {
 
     if (window.__mov_fp) {
@@ -1183,7 +1212,10 @@ flatpickr.localize(flatpickr.l10ns.es);
         altInput: true,
         altFormat: "j M",
 
-        showMonths: 2,
+        // En móvil vertical mostramos un solo mes; en pantallas amplias
+        // conservamos la vista doble para elegir el rango cómodamente.
+        showMonths: window.matchMedia('(max-width: 767px)').matches ? 1 : 2,
+        disableMobile: true,
         allowInput: false,
 
         // 🔑 USAR EL RANGO REAL QUE VIENE DEL BACKEND
