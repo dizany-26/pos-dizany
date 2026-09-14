@@ -256,7 +256,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // 🔥 LIMPIEZA CORRECTA POS
     const idConfirmada = POS.ventaActivaId;
     delete POS.ventas[idConfirmada];
-    asegurarVentaActiva();
+    // La siguiente venta debe tener su propio ID: asegurarVentaActiva() elegiría
+    // una venta en espera y el reinicio posterior sobrescribiría sus productos.
+    const idNuevaVenta = uidVenta();
+    POS.ventas[idNuevaVenta] = crearVentaVacia(idNuevaVenta);
+    POS.ventaActivaId = idNuevaVenta;
 
     guardarPOSAhora();
 
@@ -412,11 +416,13 @@ function reiniciarDespuesDeVenta() {
     if (!ventaPendienteDeReinicio) return;
     ventaPendienteDeReinicio = false;
 
-    const id = POS.ventaActivaId || uidVenta();
-    POS.ventas[id] = crearVentaVacia(id);
-    POS.ventaActivaId = id;
-    POS.ventas[id].metodo_pago = "efectivo";
-    POS.ventas[id].fase = 1;
+    const venta = ventaActiva();
+    // Si se seleccionó otra venta mientras estaba abierto el comprobante,
+    // conservarla intacta al cerrar el modal.
+    if ((venta.productos || []).length === 0) {
+        venta.metodo_pago = "efectivo";
+        venta.fase = 1;
+    }
     window.cerrarCarritoMovil?.();
 
     // Guardar estado real

@@ -46,24 +46,23 @@ class GastoController extends Controller
             $query->where('usuario_id', '=', $usuario);
         }
 
-        // Obtener los gastos filtrados
-        $gastos = $query->paginate(10)->withQueryString();
+        $totalFiltrado = (clone $query)->sum('monto');
+        $gastos = $query->orderByDesc('fecha')->orderByDesc('id')->paginate(10)->withQueryString();
         $usuarios = User::all(); // Para el filtro de usuario
 
         // Si la solicitud es AJAX, devolver la vista actualizada
         if ($request->ajax()) {
-            return view('gastos.index', compact('gastos', 'usuarios'))->render();
+            return view('gastos.index', compact('gastos', 'usuarios', 'totalFiltrado'))->render();
         }
 
         // Devolver la vista completa
-        return view('gastos.index', compact('gastos', 'usuarios'));
+        return view('gastos.index', compact('gastos', 'usuarios', 'totalFiltrado'));
     }
 
     // Mostrar formulario de creación
     public function create()
     {
-        $usuarios = User::all(); // Carga los usuarios de la tabla 'usuarios'
-        return view('gastos.create', compact('usuarios'));
+        return redirect()->route('gastos.index', ['nuevo' => 1]);
     }
 
     // Guardar gasto en la BD
@@ -71,7 +70,6 @@ class GastoController extends Controller
 {
 
     $request->validate([
-        'usuario_id' => 'required|exists:usuarios,id',
         'descripcion' => 'required|string|max:255',
         'monto' => 'required|numeric|min:0.01',
         'fecha' => 'required|date',
@@ -79,14 +77,18 @@ class GastoController extends Controller
     ]);
 
     if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
-        return back()->withErrors([
+        $error = [
             'caja' => 'Debes abrir tu caja antes de registrar un gasto.',
-        ])->withInput();
+        ];
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $error['caja'], 'errors' => $error], 422);
+        }
+        return back()->withErrors($error)->withInput();
     }
 
     // 1️⃣ Guardar gasto
     $gasto = Gasto::create([
-        'usuario_id'  => $request->usuario_id,
+        'usuario_id'  => auth()->id(),
         'descripcion' => $request->descripcion,
         'monto'       => $request->monto,
         'fecha'       => $request->fecha,
@@ -108,6 +110,10 @@ class GastoController extends Controller
         'referencia_id'   => $gasto->id,
     ]);
 
+    if ($request->expectsJson()) {
+        return response()->json(['success' => true, 'message' => 'Gasto registrado correctamente.']);
+    }
+
     return redirect()
         ->route('gastos.index')
         ->with('success', 'Gasto registrado correctamente.');
@@ -121,9 +127,10 @@ class GastoController extends Controller
 
         // Obtén los gastos con la relación 'usuario'
         $gastos = Gasto::with('usuario')->paginate(10);
+        $totalFiltrado = Gasto::where('estado', 'activo')->sum('monto');
 
         // Pasa ambas variables a la vista
-        return view('gastos.index', compact('gastos', 'usuarios'));
+        return view('gastos.index', compact('gastos', 'usuarios', 'totalFiltrado'));
     }
 
     public function destroy($id)

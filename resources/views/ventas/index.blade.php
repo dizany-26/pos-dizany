@@ -34,10 +34,10 @@ Nueva venta
     </button>
 </div>
 
-<a href="{{ route('gastos.create') }}" class="btn-gasto">
+<button type="button" class="btn-gasto" data-bs-toggle="modal" data-bs-target="#modalNuevoGasto">
     <i class="fas fa-receipt"></i>
     <span class="btn-text">Nuevo gasto</span>
-</a>
+</button>
 
 @endsection
 
@@ -654,6 +654,7 @@ Nueva venta
 
 
 
+@include('gastos._modal_create')
 <script src="{{ asset('js/ventas_dniruc.js') }}?v={{ filemtime(public_path('js/ventas_dniruc.js')) }}"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 @php

@@ -319,3 +319,72 @@ body {
 :root[data-theme='dark'] .gastos-total-resumen .total-value {
     color: #ff8ea0;
 }
+
+/* Presentación de la lista de gastos */
+.gastos-panel { overflow: hidden; border-radius: 18px; }
+.gastos-panel .gastos-panel-header { display: flex; align-items: center; gap: 16px; padding: 24px; text-align: left; }
+.gastos-heading-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: 14px; background: #e9f1ff; color: #2168d9; font-size: 19px; }
+.gastos-eyebrow { display: block; margin-bottom: 3px; color: #2770e5; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.gastos-panel-header h4 { font-size: 1.3rem; }
+.gastos-panel-header p { margin-top: 3px; color: #74849a; font-size: .83rem; }
+.gastos-panel .card-body { padding: 24px; }
+.gastos-panel .filters-group { padding: 18px; border: 1px solid #e0e8f3; border-radius: 14px; background: #f8fbff; }
+.gastos-panel .filters-group .form-label { margin-bottom: 7px; color: #516781; font-size: .78rem; font-weight: 750; }
+.gastos-panel .filters-group :is(.form-control, .form-select) { min-height: 44px; background: #fff; }
+.gastos-summary-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gastos-results { color: #6c7e95; font-size: .84rem; font-weight: 650; }
+.gastos-table-wrap { border: 1px solid #dce6f2; border-radius: 14px; overflow: hidden; }
+.gastos-panel .gastos-table { border-collapse: separate; border-spacing: 0; }
+.gastos-panel .gastos-table thead th { padding: 14px 16px; background: #edf3fc; border: 0; color: #425774; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.gastos-panel .gastos-table tbody tr { transition: background .15s ease; }
+.gastos-panel .gastos-table tbody tr:hover { background: #f3f8ff; box-shadow: none; }
+.gastos-panel .gastos-table tbody td { padding: 16px; border-top: 1px solid #e8eef6; color: #263a55; white-space: normal; }
+.gastos-date { white-space: nowrap !important; font-weight: 700; }
+.gastos-date small { display: block; margin-top: 2px; color: #8a9bb0; font-size: .73rem; font-weight: 500; }
+.gastos-panel .gastos-description strong { color: inherit; font-weight: 750; }
+.gastos-panel .gastos-amount { color: #dc4054; font-weight: 800; white-space: nowrap !important; }
+.gastos-method { display: inline-flex; align-items: center; padding: 5px 10px; border: 1px solid #cde5da; border-radius: 999px; background: #eaf8f0; color: #167a4e; font-size: .76rem; font-weight: 750; }
+.gastos-user { font-weight: 600; }
+.gastos-panel .action-buttons :is(.btn-warning, .btn-danger) { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; }
+.gastos-panel .action-buttons .btn-warning { background: #fff4d9; color: #a46700; }
+.gastos-panel .action-buttons .btn-danger { background: #ffe5e8; color: #cd3048; }
+.gastos-empty-row td { height: 180px; text-align: center; }
+.gastos-empty-row td i, .gastos-empty-row td strong, .gastos-empty-row td span { display: block; }
+.gastos-empty-row td i { margin-bottom: 10px; color: #8da6c8; font-size: 24px; }
+.gastos-empty-row td span { margin-top: 4px; color: #8190a5; font-size: .83rem; }
+:root[data-theme='dark'] .gastos-heading-icon { background: #183864; color: #76a9ff; }
+:root[data-theme='dark'] .gastos-panel-header p, :root[data-theme='dark'] .gastos-results { color: #a7bddb; }
+:root[data-theme='dark'] .gastos-panel .filters-group { background: #122640; border-color: #345173; }
+:root[data-theme='dark'] .gastos-panel .filters-group .form-label { color: #c0d4ef; }
+:root[data-theme='dark'] .gastos-panel .filters-group :is(.form-control, .form-select) { background: #0e1d33; border-color: #3a5579; color: #eaf2ff; }
+:root[data-theme='dark'] .gastos-table-wrap { border-color: #345173; }
+:root[data-theme='dark'] .gastos-panel .gastos-table thead th { background: #1d3554; color: #c3d6ed; }
+:root[data-theme='dark'] .gastos-panel .gastos-table tbody td { border-color: #314968; color: #eaf2ff; }
+:root[data-theme='dark'] .gastos-panel .gastos-table tbody tr:hover { background: #1a3150; }
+:root[data-theme='dark'] .gastos-panel .gastos-amount { color: #ff8da0; }
+:root[data-theme='dark'] .gastos-date small { color: #abc1df; }
+:root[data-theme='dark'] .gastos-method { background: #133f38; border-color: #2a735d; color: #8ae4bb; }
+
+@media (max-width: 768px) {
+    .gastos-panel .gastos-panel-header { padding: 20px; }
+    .gastos-panel .card-body { padding: 18px; }
+    .gastos-summary-row { align-items: stretch; flex-direction: column; }
+    .gastos-total-resumen { width: 100%; }
+    .gastos-table-wrap { border: 0; overflow: visible; }
+    .gastos-panel .gastos-table, .gastos-panel .gastos-table tbody { display: block; width: 100%; }
+    .gastos-panel .gastos-table tbody tr { display: block; margin: 0 0 14px; padding: 15px; border: 1px solid #dce6f2; border-radius: 14px; background: #fff; box-shadow: 0 8px 22px rgba(22, 48, 81, .06); }
+    .gastos-panel .gastos-table tbody tr:hover { box-shadow: 0 8px 22px rgba(22, 48, 81, .06); }
+    .gastos-panel .gastos-table tbody td { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 9px 0; border-top: 0; border-bottom: 1px solid #edf1f7; text-align: right !important; }
+    .gastos-panel .gastos-table tbody td:last-child { border-bottom: 0; }
+    .gastos-panel .gastos-table tbody td::before { content: attr(data-label); flex: 0 0 83px; color: #72849b; font-size: .73rem; font-weight: 700; text-align: left; }
+    .gastos-panel .gastos-table tbody td.gastos-description { align-items: flex-start; }
+    .gastos-panel .gastos-table tbody td.gastos-description strong { overflow-wrap: anywhere; }
+    .gastos-panel .gastos-table tbody td.gastos-date { white-space: normal !important; }
+    .gastos-panel .gastos-table tbody td.gastos-amount { font-size: 1rem; }
+    .gastos-panel .gastos-table .action-buttons { justify-content: flex-end !important; }
+    .gastos-panel .gastos-table .gastos-empty-row td { display: block; height: auto; text-align: center !important; }
+    .gastos-panel .gastos-table .gastos-empty-row td::before { display: none; }
+    :root[data-theme='dark'] .gastos-panel .gastos-table tbody tr { background: #152942; border-color: #345173; box-shadow: none; }
+    :root[data-theme='dark'] .gastos-panel .gastos-table tbody td { border-bottom-color: #314968; }
+    :root[data-theme='dark'] .gastos-panel .gastos-table tbody td::before { color: #a7bddb; }
+}

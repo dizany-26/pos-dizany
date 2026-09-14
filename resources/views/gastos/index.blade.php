@@ -23,36 +23,34 @@ Gastos
 
 {{-- BOTONES DERECHA --}}
 @section('header-buttons')
-<a href="{{ route('gastos.create') }}" class="btn-gasto">
+<button type="button" class="btn-gasto" data-bs-toggle="modal" data-bs-target="#modalNuevoGasto">
     <i class="fa-solid fa-plus"></i>
     <span class="btn-text">Nuevo gasto</span>
-</a>
+</button>
 @endsection
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/gastos.css') }}">
+<link rel="stylesheet" href="{{ asset('css/gastos.css') }}?v={{ filemtime(public_path('css/gastos.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/flatpickr.min.css') }}">
 <div class="container-fluid px-3">
-    <div class="card ui-card container-card my-4">
-        <div class="card-header text-center pt-4">
-            <h4 class="mb-0 fw-semibold">
-                <i class="fas fa-money-bill-wave me-2 text-primary"></i>
-                Lista de Gastos
-            </h4>
+    <div class="card ui-card container-card my-4 gastos-panel">
+        <div class="card-header gastos-panel-header">
+            <div class="gastos-heading-icon"><i class="fas fa-receipt"></i></div>
+            <div><span class="gastos-eyebrow">CONTROL DE EGRESOS</span><h4 class="mb-0 fw-semibold">Gastos registrados</h4><p class="mb-0">Consulta y administra los movimientos de tu caja.</p></div>
         </div>
         <div class="card-body px-4 pb-4">
             <!-- Filtros Dinámicos -->
             <form method="GET" action="{{ route('gastos.index') }}" id="filtrosGastos" class="row g-3 mb-3 filters-group">
                 <div class="col-12 col-md-4">
-                    <label for="filter-date" class="form-label">: Por Fecha:</label>
+                    <label for="filter-date" class="form-label">Fecha</label>
                     <input type="text" id="filter-date" name="fecha" value="{{ request('fecha', now()->toDateString()) }}" class="form-control" placeholder="Selecciona una fecha">
                 </div>
                 <div class="col-12 col-md-4">
-                    <label for="filter-descripcion" class="form-label">: Por Descripción:</label>
+                    <label for="filter-descripcion" class="form-label">Descripción</label>
                     <input type="text" id="filter-descripcion" name="descripcion" value="{{ request('descripcion') }}" class="form-control" placeholder="Filtrar por descripción">
                 </div>
                 <div class="col-12 col-md-4">
-                    <label for="filter-usuario" class="form-label">: Por Usuario:</label>
+                    <label for="filter-usuario" class="form-label">Usuario</label>
                     <select id="filter-usuario" name="usuario" class="form-select">
                         <option value="">Seleccione un usuario</option>
                         @foreach($usuarios as $usuario)
@@ -62,22 +60,18 @@ Gastos
                 </div>
             </form>
 
-            <!-- Mensaje de no encontrados -->
-            <div id="no-gastos-msg" class="alert alert-warning d-none">
-                No se encontraron gastos para los filtros aplicados.
-            </div>
-
-            <div class="d-flex justify-content-end mb-3">
+            <div class="gastos-summary-row mb-3">
+                <span class="gastos-results">{{ $gastos->total() }} {{ $gastos->total() === 1 ? 'gasto encontrado' : 'gastos encontrados' }}</span>
                 <div class="gastos-total-resumen">
-                    <span class="total-label">Total del día</span>
-                    <span id="total-gastos" class="total-value">S/ 0.00</span>
+                    <span class="total-label">Total filtrado</span>
+                    <span id="total-gastos" class="total-value">S/ {{ number_format($totalFiltrado, 2) }}</span>
                 </div>
             </div>
 
             <!-- Tabla Gastos -->
-            <div class="table-responsive ui-scroll">
-                <table class="table table-hover align-middle mb-0 ui-table text-nowrap">
-                    <thead class="table-light">
+            <div class="table-responsive ui-scroll gastos-table-wrap">
+                <table class="table table-hover align-middle mb-0 ui-table gastos-table">
+                    <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Descripción</th>
@@ -89,31 +83,31 @@ Gastos
                     </thead>
 
                     <tbody id="tabla-gastos">
-                    @foreach($gastos as $gasto)
+                    @forelse($gastos as $gasto)
                         <tr>
-                            <td class="text-muted">
-                                {{ date('d/m/Y H:i', strtotime($gasto->fecha)) }}
+                            <td data-label="Fecha" class="gastos-date">
+                                <span>{{ date('d/m/Y', strtotime($gasto->fecha)) }}</span><small>{{ date('H:i', strtotime($gasto->fecha)) }}</small>
                             </td>
 
-                            <td>
+                            <td data-label="Descripción" class="gastos-description">
                                 <strong>{{ $gasto->descripcion }}</strong>
                             </td>
 
-                            <td class="text-end text-danger fw-semibold">
+                            <td data-label="Monto" class="text-end gastos-amount">
                                 - S/ {{ number_format($gasto->monto, 2) }}
                             </td>
 
-                            <td>
-                                <span class="badge bg-secondary text-capitalize">
+                            <td data-label="Método">
+                                <span class="gastos-method text-capitalize">
                                     {{ $gasto->metodo_pago }}
                                 </span>
                             </td>
 
-                            <td>
+                            <td data-label="Usuario" class="gastos-user">
                                 {{ $gasto->usuario->nombre ?? '—' }}
                             </td>
 
-                            <td class="text-center">
+                            <td data-label="Acciones" class="text-center">
                                 @if(auth()->user()->esAdmin())
                                     <div class="d-flex justify-content-center gap-2 action-buttons">
                                         <a href="{{ route('gastos.edit', $gasto->id) }}"
@@ -139,7 +133,9 @@ Gastos
                                 @endif
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr class="gastos-empty-row"><td colspan="6"><i class="fas fa-receipt"></i><strong>Sin gastos para estos filtros</strong><span>Prueba con otra fecha, descripción o usuario.</span></td></tr>
+                    @endforelse
                     </tbody>
                 </table>
             </div>
@@ -151,6 +147,7 @@ Gastos
         </div>
     </div>
 </div>
+@include('gastos._modal_create')
 @endsection
 
 @push('scripts')
@@ -160,7 +157,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const inputFecha         = document.getElementById("filter-date");
     const filterDescripcion  = document.getElementById("filter-descripcion");
     const filterUsuario      = document.getElementById("filter-usuario");
-    const totalGastosEl      = document.getElementById("total-gastos");
     const initialDescription = filterDescripcion.value;
 
     // Usar flatpickr para seleccionar la fecha
@@ -172,18 +168,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Suma los montos de las filas visibles
-    function calcularTotal() {
-        let suma = 0;
-        document.querySelectorAll("#tabla-gastos tr").forEach(row => {
-            if (row.style.display !== 'none') {
-                const texto = row.cells[2].textContent.replace(/[^\d.]/g, '');
-                suma += parseFloat(texto) || 0;
-            }
-        });
-        totalGastosEl.textContent = `S/ ${suma.toFixed(2)}`;
-    }
-
     filterDescripcion.addEventListener("keydown", event => {
         if (event.key !== "Enter") return;
         event.preventDefault();
@@ -193,7 +177,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (filterDescripcion.value !== initialDescription) form.requestSubmit();
     });
     filterUsuario.addEventListener("change", () => form.requestSubmit());
-    calcularTotal();
 });
 </script>
 
