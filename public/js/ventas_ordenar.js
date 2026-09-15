@@ -38,62 +38,56 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================
     // ORDENAR PRODUCTOS
     // ============================
-    function ordenarProductos(tipo) {
+    function datoProducto(producto, campo) {
+        const completo = (window.PRODUCTOS_SNAPSHOT || [])
+            .find(p => Number(p.id) === Number(producto.id));
+        return producto[campo] ?? completo?.[campo];
+    }
 
-        if (
-            !window.PRODUCTOS_INICIALES ||
-            !Array.isArray(window.PRODUCTOS_INICIALES)
-        ) return;
-
-        const btnActivo =
-            document.querySelector(".btn-filtro-categoria.active");
-
-        const catID =
-            btnActivo ? Number(btnActivo.dataset.cat) : 0;
-
-        let base = [...window.PRODUCTOS_INICIALES];
-
-        if (catID !== 0) {
-            base = base.filter(
-                p => Number(p.categoria_id) === catID
-            );
-        }
-
+    function valorOrden(producto, tipo) {
         switch (tipo) {
             case "az":
-                base.sort((a,b) => a.nombre.localeCompare(b.nombre));
-                break;
             case "za":
-                base.sort((a,b) => b.nombre.localeCompare(a.nombre));
-                break;
+                return String(datoProducto(producto, "nombre") || "");
             case "precio_asc":
-                base.sort((a,b) => (a.precio_venta||0) - (b.precio_venta||0));
-                break;
             case "precio_desc":
-                base.sort((a,b) => (b.precio_venta||0) - (a.precio_venta||0));
-                break;
+                return Number(producto.lotes_fifo?.[0]?.precio_unidad
+                    ?? (window.PRODUCTOS_SNAPSHOT || []).find(p => Number(p.id) === Number(producto.id))?.lotes_fifo?.[0]?.precio_unidad
+                    ?? producto.precio_venta ?? 0);
             case "stock_asc":
-                base.sort((a,b) => (a.stock||0) - (b.stock||0));
-                break;
             case "stock_desc":
-                base.sort((a,b) => (b.stock||0) - (a.stock||0));
-                break;
+                return Number(datoProducto(producto, "stock") || 0);
             case "menos_vendidos":
-                base.sort((a,b) => (a.total_vendido||0) - (b.total_vendido||0));
-                break;
             case "mas_vendidos":
-                base.sort((a,b) => (b.total_vendido||0) - (a.total_vendido||0));
-                break;
+                return Number(datoProducto(producto, "total_vendido_30d") || 0);
             case "fecha_asc":
-                base.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-                break;
             case "fecha_desc":
-                base.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-                break;
+                return Date.parse(datoProducto(producto, "created_at") || "") || 0;
+            default:
+                return 0;
         }
-
-        renderGrillaProductos(base);
     }
+
+    function aplicarOrden(lista) {
+        if (!ordenSeleccionada || !Array.isArray(lista)) return lista;
+        const descendente = ["za", "precio_desc", "stock_desc", "mas_vendidos", "fecha_desc"]
+            .includes(ordenSeleccionada);
+        return [...lista].sort((a, b) => {
+            const primero = valorOrden(a, ordenSeleccionada);
+            const segundo = valorOrden(b, ordenSeleccionada);
+            const diferencia = typeof primero === "string"
+                ? primero.localeCompare(segundo, "es", { sensitivity: "base" })
+                : primero - segundo;
+            return descendente ? -diferencia : diferencia;
+        });
+    }
+
+    function ordenarProductos(tipo) {
+        ordenSeleccionada = tipo;
+        renderGrillaProductos(window.obtenerListaVisiblePOS?.() || []);
+    }
+
+    window.aplicarOrdenProductosPOS = aplicarOrden;
 
     // ============================
     // LIMPIAR ORDEN
@@ -109,26 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 .querySelectorAll(".orden-btn")
                 .forEach(b => b.classList.remove("active"));
 
-            const btnActivo =
-                document.querySelector(".btn-filtro-categoria.active");
-
-            const catID =
-                btnActivo ? Number(btnActivo.dataset.cat) : 0;
-
-            if (
-                window.PRODUCTOS_INICIALES &&
-                Array.isArray(window.PRODUCTOS_INICIALES)
-            ) {
-                if (catID === 0) {
-                    renderGrillaProductos(window.PRODUCTOS_INICIALES);
-                } else {
-                    renderGrillaProductos(
-                        window.PRODUCTOS_INICIALES.filter(
-                            p => Number(p.categoria_id) === catID
-                        )
-                    );
-                }
-            }
+            renderGrillaProductos(window.obtenerListaVisiblePOS?.() || []);
 
             if (modalOrdenar) modalOrdenar.hide();
         });

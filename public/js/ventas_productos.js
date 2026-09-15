@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultadosDiv = document.getElementById("resultados-busqueda");
     const esEscritorioPOS = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     let versionBusqueda = 0;
+    let listaVisible = [];
 
     function actualizarBotonLimpiarBusqueda() {
         if (!limpiarBusquedaBtn || !buscarInput) return;
@@ -166,6 +167,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderGrillaProductos(lista) {
         if (!resultadosDiv) return;
 
+        listaVisible = Array.isArray(lista) ? lista : [];
+        const productosOrdenados = typeof window.aplicarOrdenProductosPOS === "function"
+            ? window.aplicarOrdenProductosPOS(listaVisible)
+            : listaVisible;
+
         resultadosDiv.classList.remove("d-none");
         resultadosDiv.innerHTML = "";
 
@@ -191,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        if (!lista || lista.length === 0) {
+        if (productosOrdenados.length === 0) {
             resultadosDiv.insertAdjacentHTML("beforeend", `
                 <div class="col-12 text-center text-muted py-3">
                     No se encontraron productos
@@ -200,9 +206,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        cacheProductos(lista);
+        cacheProductos(productosOrdenados);
 
-        lista.forEach((prod, idx) => {
+        productosOrdenados.forEach((prod, idx) => {
             resultadosDiv.insertAdjacentHTML("beforeend", crearCardProducto(prod));
             const col = resultadosDiv.lastElementChild;
             const card = col?.querySelector(".product-card");
@@ -443,6 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // EXPONER
     // ============================
     window.renderGrillaProductos = renderGrillaProductos;
+    window.obtenerListaVisiblePOS = () => listaVisible;
     window.actualizarProductosStock = actualizarProductosStock;
     window.buscarProductosPOS = buscarProductosApi;
     window.posResolverYAgregarProducto = resolverBusquedaPOS;

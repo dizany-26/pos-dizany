@@ -563,6 +563,11 @@ public function productosIniciales()
         ->orderBy('fecha_ingreso', 'asc')        // desempate
         ->orderBy('id', 'asc');                  // último desempate
     }])
+    ->withSum(['detalleVentas as total_vendido_30d' => function ($q) {
+        $q->whereHas('venta', function ($venta) {
+            $venta->where('activo', 1)->where('fecha', '>=', now()->subDays(30));
+        });
+    }], 'unidades_afectadas')
 
     ->where('activo', 1)
     ->where('visible_en_catalogo', 1)
@@ -576,6 +581,9 @@ public function productosIniciales()
         'imagen' => $p->imagen,
         'descripcion' => $p->descripcion,
         'categoria_id' => $p->categoria_id,
+        'codigo_barras' => $p->codigo_barras,
+        'created_at' => $p->created_at,
+        'total_vendido_30d' => (float) ($p->total_vendido_30d ?? 0),
 
         // 👇 STOCK TOTAL
         'stock' => $p->lotes->sum('stock_actual'),
