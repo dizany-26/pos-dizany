@@ -225,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .querySelectorAll(".product-card.agregar-carrito")
             .forEach(card => {
 
-                card.addEventListener("click", () => {
+                card.addEventListener("click", async () => {
                     const id = Number(card.dataset.id);
                     const prod = productosCache.get(id);
 
@@ -235,20 +235,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         );
                     }
 
-                    if (Number(prod.stock || 0) <= 0) {
-                        return mostrarAlerta(
-                            `No hay stock para "${prod.nombre}".`
-                        );
+                    try {
+                        await agregarProductoDesdeBusqueda(prod);
+                    } catch (error) {
+                        console.error(error);
+                        mostrarAlerta("No se pudo agregar el producto.");
                     }
-
-                    const v = ventaActiva();
-                    if (v.productos.some(it => Number(it.id) === id)) {
-                        return mostrarAlerta(
-                            `El producto "${prod.nombre}" ya está en la canasta.`
-                        );
-                    }
-
-                    agregarProductoAVentaActiva(prod);
                 });
             });
     }
@@ -282,7 +274,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return { added: false, reason: "duplicate" };
         }
 
-        await agregarProductoAVentaActiva(prod);
+        const agregado = await agregarProductoAVentaActiva(prod);
+        if (!agregado) {
+            enfocarBuscadorPOS();
+            return { added: false, reason: "unavailable" };
+        }
 
         const carritoLista = document.getElementById("carrito-lista");
         carritoLista?.scrollTo({ top: 0, behavior: "smooth" });

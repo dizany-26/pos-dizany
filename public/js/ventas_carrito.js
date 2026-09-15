@@ -244,7 +244,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const loteFIFO = Array.isArray(lotes) ? lotes[0] : null;
     if (!loteFIFO) {
-        return mostrarAlerta(`No hay lotes con stock para "${producto.nombre}".`);
+        mostrarAlerta(`No hay lotes con stock para "${producto.nombre}".`);
+        return false;
     }
 
     const item = {
@@ -288,7 +289,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Validación stock (tu lógica actual)
     const prodActual = productosCache.get(item.id) || producto;
     if (stockDisponible(prodActual) < unidadesRealesDeItem(item)) {
-        return mostrarAlerta("No hay stock suficiente.");
+        mostrarAlerta("No hay stock suficiente.");
+        return false;
     }
 
     v.productos.push(item);
@@ -296,6 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
     posSaveDebounced(snapshotPOS, 10);
     actualizarContadorVentasEspera();
     renderCarritoTreinta();
+    return true;
 }
 
     // ============================
