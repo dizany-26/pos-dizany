@@ -6,8 +6,8 @@ window.toggleUsuarioPassword = function (button) {
     const icon = button.querySelector('i');
     if (!input || !icon) return;
 
-    const mostrar = input.type === 'password';
-    input.type = mostrar ? 'text' : 'password';
+    const mostrar = !input.classList.contains('clave-visible');
+    input.classList.toggle('clave-visible', mostrar);
     icon.classList.toggle('fa-eye', !mostrar);
     icon.classList.toggle('fa-eye-slash', mostrar);
     button.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
@@ -512,7 +512,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (passwordInput) {
                 passwordInput.value = '';
-                passwordInput.type = 'password';
                 passwordInput.classList.remove('clave-visible');
                 passwordInput.setAttribute('autocomplete', 'off');
             }
@@ -560,7 +559,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const toggle = document.querySelector('#modalCambiarClave .toggle-password-btn');
             if (visible) {
                 visible.value = '';
-                visible.type = 'password';
                 visible.classList.remove('clave-visible');
             }
             if (payload) payload.value = '';
