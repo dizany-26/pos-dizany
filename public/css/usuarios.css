@@ -314,14 +314,6 @@
     }
 }
 
-.usuario-clave-protegida {
-    -webkit-text-security: disc;
-}
-
-.usuario-clave-protegida.clave-visible {
-    -webkit-text-security: none;
-}
-
 .password-security-help {
     color: #64748b;
     font-size: .78rem;

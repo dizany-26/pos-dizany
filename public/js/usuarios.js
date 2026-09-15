@@ -1,3 +1,18 @@
+window.toggleUsuarioPassword = function (button) {
+    const targetId = button.getAttribute('aria-controls');
+    const input = targetId
+        ? document.getElementById(targetId)
+        : button.parentElement?.querySelector('input');
+    const icon = button.querySelector('i');
+    if (!input || !icon) return;
+
+    const mostrar = input.type === 'password';
+    input.type = mostrar ? 'text' : 'password';
+    icon.classList.toggle('fa-eye', !mostrar);
+    icon.classList.toggle('fa-eye-slash', mostrar);
+    button.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     const buscador = document.getElementById('buscadorUsuarios');
     const filas = document.querySelectorAll('#tablaUsuarios tbody tr');
@@ -13,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnLimpiar = document.getElementById('limpiarPermisos');
     const btnEditarMarcarTodos = document.getElementById('editarMarcarTodosPermisos');
     const btnEditarLimpiar = document.getElementById('editarLimpiarPermisos');
-    const togglePasswordButtons = document.querySelectorAll('.toggle-password-btn');
     const deleteUserForms = document.querySelectorAll('.eliminar-usuario-form');
     const changePasswordForm = document.querySelector('#modalCambiarClave form');
     const changePasswordInput = document.getElementById('cambiar-clave-visible');
@@ -498,8 +512,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (passwordInput) {
                 passwordInput.value = '';
+                passwordInput.type = 'password';
                 passwordInput.classList.remove('clave-visible');
-                passwordInput.setAttribute('autocomplete', 'one-time-code');
+                passwordInput.setAttribute('autocomplete', 'off');
             }
 
             updateNewUserPasswordRequirements();
@@ -542,11 +557,19 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('modalCambiarClave')?.addEventListener('show.bs.modal', () => {
             const visible = document.getElementById('cambiar-clave-visible');
             const payload = document.getElementById('cambiar-clave-payload');
+            const toggle = document.querySelector('#modalCambiarClave .toggle-password-btn');
             if (visible) {
                 visible.value = '';
+                visible.type = 'password';
                 visible.classList.remove('clave-visible');
             }
             if (payload) payload.value = '';
+            if (toggle) {
+                const icon = toggle.querySelector('i');
+                icon?.classList.add('fa-eye');
+                icon?.classList.remove('fa-eye-slash');
+                toggle.setAttribute('aria-label', 'Mostrar contraseña');
+            }
             updateChangePasswordRequirements();
         });
     }
@@ -628,17 +651,4 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    togglePasswordButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            const input = button.parentElement?.querySelector('input');
-            const icon = button.querySelector('i');
-            if (!input || !icon) return;
-
-            const isHidden = !input.classList.contains('clave-visible');
-            input.classList.toggle('clave-visible', isHidden);
-            icon.classList.toggle('fa-eye', !isHidden);
-            icon.classList.toggle('fa-eye-slash', isHidden);
-            button.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
-        });
-    });
 });

@@ -191,9 +191,9 @@ Usuarios
                             <div class="mb-3">
                                 <label class="form-label">Contraseña</label>
                                 <div class="usuario-password-group position-relative">
-                                    <input type="text" id="nuevo-password-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida pe-5" autocomplete="one-time-code" value="" required data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Contraseña nueva" aria-describedby="nuevo-password-requisitos">
+                                    <input type="password" id="nuevo-password-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida pe-5" autocomplete="off" value="" required data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other" spellcheck="false" autocapitalize="none" aria-label="Contraseña nueva" aria-describedby="nuevo-password-requisitos">
                                     <input type="hidden" name="password" id="nuevo-password-payload" value="">
-                                    <button type="button" class="toggle-password-btn" data-target="password" aria-label="Mostrar contraseña">
+                                    <button type="button" class="toggle-password-btn" data-target="password" aria-label="Mostrar contraseña" onclick="toggleUsuarioPassword(this)">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
                                 </div>
@@ -410,8 +410,8 @@ Usuarios
                 <div class="mb-3">
                     <label class="form-label" for="cambiar-clave-visible">Nueva Contraseña</label>
                     <div class="usuario-password-group">
-                        <input type="text" id="cambiar-clave-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida" required autocomplete="one-time-code" data-lpignore="true" data-1p-ignore data-bwignore spellcheck="false" autocapitalize="none" aria-label="Nueva contraseña" aria-describedby="cambiar-clave-requisitos">
-                        <button type="button" class="toggle-password-btn" aria-label="Mostrar contraseña" aria-controls="cambiar-clave-visible">
+                        <input type="password" id="cambiar-clave-visible" class="form-control ui-input usuario-password-input usuario-clave-protegida" required autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other" spellcheck="false" autocapitalize="none" aria-label="Nueva contraseña" aria-describedby="cambiar-clave-requisitos">
+                        <button type="button" class="toggle-password-btn" aria-label="Mostrar contraseña" aria-controls="cambiar-clave-visible" onclick="toggleUsuarioPassword(this)">
                             <i class="fa-solid fa-eye" aria-hidden="true"></i>
                         </button>
                     </div>
