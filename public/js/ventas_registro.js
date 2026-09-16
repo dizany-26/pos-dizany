@@ -229,6 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pagos: pagos,
         productos: productosEnviar,
         pedido_catalogo_id: v.pedido_catalogo_id || null,
+        request_key: v.id,
         formato: formato,
         credit_due_date: ["credito", "pendiente"].includes(estadoPago) ? document.getElementById("credito-vencimiento")?.value : null
     })

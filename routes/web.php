@@ -366,6 +366,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/cajas/{caja}/solicitar-cierre', [CajaController::class, 'solicitarCierre'])
             ->name('cajas.solicitar-cierre');
         Route::middleware('role:Administrador')->group(function () {
+            Route::post('/ventas/{venta}/anular', [VentaController::class, 'anular'])
+                ->name('ventas.anular');
             Route::post('/cajas/abrir', [CajaController::class, 'abrir'])
                 ->name('cajas.abrir');
             Route::post('/cajas/{caja}/aprobar', [CajaController::class, 'aprobar'])

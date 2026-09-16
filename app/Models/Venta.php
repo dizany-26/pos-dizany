@@ -12,6 +12,7 @@ class Venta extends Model
 
     protected $fillable = [
         'cliente_id',
+        'request_key',
         'usuario_id',
         'tax_profile_id',
         'fecha',
@@ -35,7 +36,10 @@ class Venta extends Model
         'saldo',
         'efectivo_recibido',
         'vuelto',
-        'activo'
+        'activo',
+        'anulada_por',
+        'anulada_at',
+        'motivo_anulacion',
     ];
     
     public function cliente()
@@ -57,6 +61,7 @@ class Venta extends Model
         'credit_due_date' => 'date',
         'efectivo_recibido' => 'decimal:2',
         'vuelto' => 'decimal:2',
+        'anulada_at' => 'datetime',
     ];
 
     public function usuario()

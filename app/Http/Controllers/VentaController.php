@@ -95,7 +95,13 @@ public function registrarVenta(Request $request)
             'formato'          => 'nullable|in:a4,ticket,ticket_80,ticket_58',
             'credit_due_date'  => 'nullable|date|after_or_equal:fecha',
             'pedido_catalogo_id' => 'nullable|integer|exists:pedidos_catalogo,id',
+            'request_key'      => 'required|string|max:100',
         ]);
+
+        $requestKey = (string) $request->input('request_key');
+        if ($ventaExistente = Venta::where('request_key', $requestKey)->first()) {
+            return $this->saleSuccessResponse($ventaExistente, false, true);
+        }
 
         if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
             return response()->json([
@@ -212,6 +218,7 @@ public function registrarVenta(Request $request)
 
             /* ================= VENTA BASE ================= */
             $venta = Venta::create([
+                'request_key'      => $requestKey,
                 'cliente_id'       => $cliente?->id,
                 'usuario_id'       => auth()->id(),
                 'tax_profile_id'   => $taxProfile?->id,
@@ -616,24 +623,22 @@ $pdf = Pdf::setOptions([
                 }
             }
 
-            return response()->json([
-                'success'        => true,
-                'message'        => 'Venta registrada correctamente.',
-                'serie'          => $serie,
-                'correlativo'    => str_pad($correlativo, 6, '0', STR_PAD_LEFT),
-                'pdf_url'        => $pdfUrl,
-                'nombre_archivo' => $nombreArchivo,
-                'estado'         => $estado,
-                'saldo'          => $saldo,
-                'monto_pagado'   => $montoPagado,
-                'efectivo_recibido' => $efectivoRecibido,
-                'vuelto'         => $vuelto ?? 0,
-                'pedido_catalogo_atendido' => (bool) $pedidoCatalogo,
-            ]);
+            return $this->saleSuccessResponse($venta, (bool) $pedidoCatalogo);
 
         } catch (\Exception $e) {
 
             DB::rollBack();
+
+            if ($request->filled('request_key')) {
+                $ventaConfirmada = Venta::where('request_key', (string) $request->input('request_key'))->first();
+                if ($ventaConfirmada) {
+                    Log::warning('Respuesta de venta recuperada mediante idempotencia', [
+                        'venta_id' => $ventaConfirmada->id,
+                        'request_key' => (string) $request->input('request_key'),
+                    ]);
+                    return $this->saleSuccessResponse($ventaConfirmada, false, true);
+                }
+            }
 
             $msg = $e->getMessage();
 
@@ -701,6 +706,73 @@ $pdf = Pdf::setOptions([
                 'message' => $publicMessage,
             ], 500);
         }
+    }
+
+    private function saleSuccessResponse(Venta $venta, bool $pedidoCatalogoAtendido = false, bool $recovered = false)
+    {
+        $venta->loadMissing('pagos');
+        $archivo = $venta->pdf_url ? basename((string) parse_url($venta->pdf_url, PHP_URL_PATH)) : null;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Venta registrada correctamente.',
+            'serie' => $venta->serie,
+            'correlativo' => str_pad((string) $venta->correlativo, 6, '0', STR_PAD_LEFT),
+            'pdf_url' => $venta->pdf_url,
+            'nombre_archivo' => $archivo,
+            'estado' => $venta->estado,
+            'saldo' => (float) $venta->saldo,
+            'monto_pagado' => (float) $venta->pagos->sum('monto'),
+            'efectivo_recibido' => $venta->efectivo_recibido !== null ? (float) $venta->efectivo_recibido : null,
+            'vuelto' => (float) ($venta->vuelto ?? 0),
+            'pedido_catalogo_atendido' => $pedidoCatalogoAtendido,
+            'recovered' => $recovered,
+        ]);
+    }
+
+    public function anular(Request $request, Venta $venta)
+    {
+        $data = $request->validate([
+            'motivo' => ['required', 'string', 'min:10', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($venta, $data) {
+            $venta = Venta::whereKey($venta->id)->lockForUpdate()->firstOrFail();
+            abort_if(! $venta->activo || $venta->estado === 'anulada', 422, 'La venta ya se encuentra anulada.');
+            abort_if(
+                $venta->electronicDocument()->whereIn('status', ['accepted', 'observed'])->exists()
+                    || $venta->manualTaxDocument()->exists(),
+                422,
+                'Este comprobante ya tiene validez tributaria y debe corregirse mediante una nota de crédito.'
+            );
+
+            $detalles = DetalleVenta::where('venta_id', $venta->id)->lockForUpdate()->get();
+            foreach ($detalles as $detalle) {
+                $asignaciones = DB::table('detalle_lote_ventas')
+                    ->where('detalle_venta_id', $detalle->id)
+                    ->get();
+                foreach ($asignaciones as $asignacion) {
+                    $lote = Lote::whereKey($asignacion->lote_id)->lockForUpdate()->firstOrFail();
+                    $lote->increment('stock_actual', (int) $asignacion->cantidad);
+                }
+                $detalle->update(['activo' => 0]);
+            }
+
+            Movimiento::where('referencia_tipo', 'venta')
+                ->where('referencia_id', $venta->id)
+                ->update(['estado' => 'anulado']);
+
+            $venta->update([
+                'estado' => 'anulada',
+                'activo' => 0,
+                'saldo' => 0,
+                'anulada_por' => auth()->id(),
+                'anulada_at' => now(),
+                'motivo_anulacion' => trim($data['motivo']),
+            ]);
+        });
+
+        return back()->with('success', 'Venta '.$venta->serie.'-'.str_pad((string) $venta->correlativo, 6, '0', STR_PAD_LEFT).' anulada. El stock y el cuadre fueron corregidos.');
     }
 
 

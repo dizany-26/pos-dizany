@@ -442,6 +442,16 @@ Movimientos
                                 <button class="btn-soft btn-soft-primary btn-soft-icon btn-sm">
                                     <i class="fas fa-eye"></i>
                                 </button>
+                                @if(auth()->user()->esAdmin() && $movimiento->referencia_tipo === 'venta' && $movimiento->venta?->activo && $movimiento->venta?->estado !== 'anulada')
+                                    <form method="POST" action="{{ route('ventas.anular', $movimiento->venta) }}" class="d-inline-block ms-1"
+                                          onsubmit="const motivo = window.prompt('Motivo de la anulación (mínimo 10 caracteres):', 'Venta duplicada por reintento tras error de conexión'); if (!motivo || motivo.trim().length < 10) return false; this.elements.motivo.value = motivo.trim(); return window.confirm('Se repondrá el stock y se retirará esta venta del cuadre. ¿Confirmas?');">
+                                        @csrf
+                                        <input type="hidden" name="motivo" value="">
+                                        <button type="submit" class="btn-soft btn-soft-danger btn-soft-icon btn-sm" title="Anular venta y reponer stock" aria-label="Anular venta">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @empty
