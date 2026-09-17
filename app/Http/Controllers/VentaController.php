@@ -775,6 +775,118 @@ $pdf = Pdf::setOptions([
         return back()->with('success', 'Venta '.$venta->serie.'-'.str_pad((string) $venta->correlativo, 6, '0', STR_PAD_LEFT).' anulada. El stock y el cuadre fueron corregidos.');
     }
 
+    public function cambiarMetodoPago(Request $request, Venta $venta)
+    {
+        $data = $request->validate([
+            'metodo_pago' => ['required', 'in:efectivo,yape,plin,transferencia,tarjeta,otro,mixto'],
+            'motivo' => ['required', 'string', 'min:10', 'max:500'],
+            'pagos' => ['nullable', 'required_if:metodo_pago,mixto', 'array', 'min:2'],
+            'pagos.*.metodo_pago' => ['required_with:pagos', 'distinct', 'in:efectivo,yape,plin,transferencia,tarjeta,otro'],
+            'pagos.*.monto' => ['required_with:pagos', 'numeric', 'min:0.01'],
+        ]);
+
+        $resultado = DB::transaction(function () use ($venta, $data) {
+            $venta = Venta::whereKey($venta->id)->lockForUpdate()->firstOrFail();
+
+            abort_if(! $venta->activo || $venta->estado === 'anulada', 422, 'No se puede modificar una venta anulada.');
+            abort_if($venta->estado !== 'pagado' || (float) $venta->saldo > 0, 422, 'Solo se puede corregir una venta totalmente pagada.');
+
+            $esComprobanteTributario = in_array($venta->tipo_comprobante, ['boleta', 'factura'], true);
+            $tieneValidezTributaria = $venta->electronicDocument()
+                    ->whereIn('status', ['accepted', 'observed'])
+                    ->exists()
+                || $venta->manualTaxDocument()->exists();
+
+            abort_if(
+                $esComprobanteTributario && $tieneValidezTributaria,
+                422,
+                'Esta boleta o factura ya tiene validez tributaria. La corrección debe realizarse mediante el procedimiento tributario correspondiente.'
+            );
+
+            $pagos = PagoVenta::where('venta_id', $venta->id)->lockForUpdate()->get();
+            abort_if($pagos->isEmpty(), 422, 'La venta no tiene un pago registrado que pueda corregirse.');
+
+            $metodoAnterior = strtolower((string) ($venta->metodo_pago ?: ($pagos->count() > 1 ? 'mixto' : $pagos->first()->metodo_pago)));
+            $metodoSolicitado = strtolower($data['metodo_pago']);
+
+            if ($metodoSolicitado === 'mixto') {
+                $pagosNuevos = collect($data['pagos'] ?? [])->map(fn (array $pago) => [
+                    'metodo_pago' => strtolower($pago['metodo_pago']),
+                    'monto' => round((float) $pago['monto'], 2),
+                ])->values();
+                abort_if($pagosNuevos->count() < 2, 422, 'El pago mixto requiere por lo menos dos métodos.');
+                abort_if(abs((float) $pagosNuevos->sum('monto') - (float) $venta->total) > 0.009, 422, 'La distribución del pago mixto debe sumar exactamente el total de la venta.');
+                $metodoNuevo = 'mixto';
+            } else {
+                abort_if($metodoAnterior === $metodoSolicitado, 422, 'Selecciona un método distinto al actual.');
+                $pagosNuevos = collect([[
+                    'metodo_pago' => $metodoSolicitado,
+                    'monto' => round((float) $venta->total, 2),
+                ]]);
+                $metodoNuevo = $metodoSolicitado;
+            }
+
+            $movimientos = Movimiento::where('referencia_tipo', 'venta')
+                ->where('referencia_id', $venta->id)
+                ->where('estado', 'pagado')
+                ->lockForUpdate()
+                ->get();
+            abort_if($movimientos->count() !== 1, 422, 'Esta venta posee varios cobros. Corrige cada cobro mediante un flujo especializado.');
+
+            $movimiento = $movimientos->first();
+            abort_if($movimiento->caja?->estado === 'cerrada', 422, 'La caja de esta venta ya está cerrada. Reabre la caja antes de corregir el método de pago.');
+
+            $fechaPagoOriginal = $pagos->min('fecha_pago') ?: now();
+            PagoVenta::where('venta_id', $venta->id)->delete();
+            foreach ($pagosNuevos as $pagoNuevo) {
+                $esEfectivo = $pagoNuevo['metodo_pago'] === 'efectivo';
+                PagoVenta::create([
+                    'venta_id' => $venta->id,
+                    'usuario_id' => auth()->id(),
+                    'monto' => $pagoNuevo['monto'],
+                    'metodo_pago' => $pagoNuevo['metodo_pago'],
+                    'efectivo_recibido' => $esEfectivo ? $pagoNuevo['monto'] : null,
+                    'vuelto' => $esEfectivo ? 0 : null,
+                    'fecha_pago' => $fechaPagoOriginal,
+                ]);
+            }
+
+            $pagoEfectivo = $pagosNuevos->firstWhere('metodo_pago', 'efectivo');
+            $efectivoRecibido = $pagoEfectivo ? (float) $pagoEfectivo['monto'] : null;
+            $vuelto = $pagoEfectivo ? 0 : null;
+
+            $venta->update([
+                'metodo_pago' => $metodoNuevo,
+                'efectivo_recibido' => $efectivoRecibido,
+                'vuelto' => $vuelto,
+            ]);
+
+            $movimiento->update(['metodo_pago' => $metodoNuevo]);
+
+            DB::table('venta_metodo_pago_cambios')->insert([
+                'venta_id' => $venta->id,
+                'movimiento_id' => $movimiento->id,
+                'cambiado_por' => auth()->id(),
+                'metodo_anterior' => $metodoAnterior,
+                'metodo_nuevo' => $metodoNuevo,
+                'motivo' => trim($data['motivo']),
+                'created_at' => now(),
+            ]);
+
+            return [
+                'anterior' => $metodoAnterior,
+                'nuevo' => $metodoNuevo,
+                'comprobante' => $venta->serie.'-'.str_pad((string) $venta->correlativo, 6, '0', STR_PAD_LEFT),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Método de pago corregido correctamente.',
+            'data' => $resultado,
+        ]);
+    }
+
 
 // VentaController.php
 public function detalle($id)

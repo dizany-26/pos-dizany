@@ -368,6 +368,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::middleware('role:Administrador')->group(function () {
             Route::post('/ventas/{venta}/anular', [VentaController::class, 'anular'])
                 ->name('ventas.anular');
+            Route::post('/ventas/{venta}/cambiar-metodo-pago', [VentaController::class, 'cambiarMetodoPago'])
+                ->name('ventas.cambiar-metodo-pago');
             Route::post('/cajas/abrir', [CajaController::class, 'abrir'])
                 ->name('cajas.abrir');
             Route::post('/cajas/{caja}/aprobar', [CajaController::class, 'aprobar'])

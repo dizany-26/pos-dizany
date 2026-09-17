@@ -63,6 +63,223 @@ document.addEventListener('DOMContentLoaded', () => {
     const toastWarn = (text) => toast('warning', text);
     const toastError = (text) => toast('error', text);
 
+    document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('.js-annul-sale-form');
+        if (!form || form.dataset.confirmed === '1') return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (typeof Swal === 'undefined') {
+            const motivo = window.prompt(
+                'Motivo de la anulación (mínimo 10 caracteres):',
+                'Venta duplicada por reintento tras error de conexión'
+            );
+            if (!motivo || motivo.trim().length < 10) return;
+            if (!window.confirm('Se repondrá el stock y se retirará esta venta del cuadre. ¿Confirmas?')) return;
+            form.elements.motivo.value = motivo.trim();
+            form.dataset.confirmed = '1';
+            form.submit();
+            return;
+        }
+
+        const result = await Swal.fire({
+            icon: 'warning',
+            title: 'Anular venta',
+            customClass: {
+                popup: 'movement-swal payment-annul-swal'
+            },
+            html: 'La venta quedará registrada como <strong>anulada</strong>, se repondrá el stock y se retirará del cuadre.',
+            input: 'textarea',
+            inputLabel: 'Motivo de la anulación',
+            inputValue: 'Venta duplicada por reintento tras error de conexión',
+            inputPlaceholder: 'Escribe el motivo (mínimo 10 caracteres)',
+            inputAttributes: {
+                maxlength: '500',
+                autocapitalize: 'sentences'
+            },
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-ban me-1"></i> Sí, anular venta',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc3545',
+            reverseButtons: true,
+            focusCancel: true,
+            preConfirm: (value) => {
+                const motivo = String(value || '').trim();
+                if (motivo.length < 10) {
+                    Swal.showValidationMessage('El motivo debe tener al menos 10 caracteres.');
+                    return false;
+                }
+                return motivo;
+            }
+        });
+
+        if (!result.isConfirmed) return;
+
+        form.elements.motivo.value = result.value;
+        form.dataset.confirmed = '1';
+        form.submit();
+    });
+
+    document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('.js-change-payment-form');
+        if (!form) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const currentMethod = String(form.dataset.currentMethod || '').toLowerCase();
+        const documentNumber = form.dataset.document || 'la venta';
+        const saleTotal = Number(form.dataset.total || 0);
+        const methodLabels = {
+            efectivo: 'Efectivo',
+            yape: 'Yape',
+            plin: 'Plin',
+            transferencia: 'Transferencia',
+            tarjeta: 'Tarjeta',
+            otro: 'Otro',
+            mixto: 'Pago mixto'
+        };
+
+        if (typeof Swal === 'undefined') {
+            toastError('No se pudo abrir el formulario de corrección.');
+            return;
+        }
+
+        const options = Object.entries(methodLabels)
+            .map(([value, label]) => `<option value="${value}" ${value === currentMethod && value !== 'mixto' ? 'disabled' : ''}>${label}</option>`)
+            .join('');
+        const mixedMethods = Object.entries(methodLabels)
+            .filter(([value]) => value !== 'mixto')
+            .map(([value, label]) => `
+                <div class="input-group input-group-sm swal-mixed-item">
+                    <span class="input-group-text flex-grow-1">${label}</span>
+                    <span class="input-group-text">S/</span>
+                    <input type="number" class="form-control swal-mixed-amount" data-method="${value}" min="0" step="0.01" value="0.00" inputmode="decimal" style="max-width:110px">
+                </div>`)
+            .join('');
+
+        const result = await Swal.fire({
+            icon: 'question',
+            title: 'Corregir método de pago',
+            width: 'min(560px, calc(100vw - 24px))',
+            customClass: {
+                popup: 'movement-swal payment-method-swal',
+                htmlContainer: 'payment-method-swal-content'
+            },
+            html: `
+                <div class="text-start">
+                    <p class="mb-3">Comprobante <strong>${documentNumber}</strong><br>Método actual: <strong>${methodLabels[currentMethod] || currentMethod}</strong></p>
+                    <label for="swal-payment-method" class="form-label fw-semibold">Método correcto</label>
+                    <select id="swal-payment-method" class="form-select mb-3">
+                        <option value="">Selecciona una opción</option>
+                        ${options}
+                    </select>
+                    <div id="swal-mixed-payment" class="d-none mb-3 p-2 rounded border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Distribución del pago</strong>
+                            <span>Total: S/ ${saleTotal.toFixed(2)}</span>
+                        </div>
+                        <div class="swal-mixed-grid">${mixedMethods}</div>
+                        <div class="text-end small">Distribuido: <strong id="swal-mixed-sum">S/ 0.00</strong></div>
+                    </div>
+                    <label for="swal-payment-reason" class="form-label fw-semibold">Motivo de la corrección</label>
+                    <textarea id="swal-payment-reason" class="form-control" rows="3" maxlength="500" placeholder="Ejemplo: Se registró efectivo por error; el cliente pagó con Yape"></textarea>
+                    <small class="text-muted d-block mt-2">Se actualizarán el pago y el cuadre, sin modificar productos, stock ni importe.</small>
+                </div>`,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-save me-1"></i> Guardar corrección',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#1769ff',
+            reverseButtons: true,
+            focusCancel: true,
+            didOpen: () => {
+                const selector = document.getElementById('swal-payment-method');
+                const mixedPanel = document.getElementById('swal-mixed-payment');
+                const amounts = Array.from(document.querySelectorAll('.swal-mixed-amount'));
+                const updateMixed = () => {
+                    const total = amounts.reduce((sum, input) => sum + Number(input.value || 0), 0);
+                    const sumLabel = document.getElementById('swal-mixed-sum');
+                    if (sumLabel) sumLabel.textContent = `S/ ${total.toFixed(2)}`;
+                };
+                selector?.addEventListener('change', () => {
+                    mixedPanel?.classList.toggle('d-none', selector.value !== 'mixto');
+                });
+                amounts.forEach(input => input.addEventListener('input', updateMixed));
+            },
+            preConfirm: () => {
+                const metodo = document.getElementById('swal-payment-method')?.value || '';
+                const motivo = document.getElementById('swal-payment-reason')?.value.trim() || '';
+                if (!metodo) {
+                    Swal.showValidationMessage('Selecciona el método de pago correcto.');
+                    return false;
+                }
+                if (motivo.length < 10) {
+                    Swal.showValidationMessage('El motivo debe tener al menos 10 caracteres.');
+                    return false;
+                }
+                if (metodo === 'mixto') {
+                    const pagos = Array.from(document.querySelectorAll('.swal-mixed-amount'))
+                        .map(input => ({ metodo_pago: input.dataset.method, monto: Number(input.value || 0) }))
+                        .filter(pago => pago.monto > 0);
+                    const total = pagos.reduce((sum, pago) => sum + pago.monto, 0);
+                    if (pagos.length < 2) {
+                        Swal.showValidationMessage('El pago mixto requiere por lo menos dos métodos.');
+                        return false;
+                    }
+                    if (Math.abs(total - saleTotal) > 0.009) {
+                        Swal.showValidationMessage(`La distribución debe sumar exactamente S/ ${saleTotal.toFixed(2)}.`);
+                        return false;
+                    }
+                    return { metodo, motivo, pagos };
+                }
+                return { metodo, motivo, pagos: [] };
+            }
+        });
+
+        if (!result.isConfirmed) return;
+
+        const body = new FormData(form);
+        body.set('metodo_pago', result.value.metodo);
+        body.set('motivo', result.value.motivo);
+        result.value.pagos.forEach((pago, index) => {
+            body.append(`pagos[${index}][metodo_pago]`, pago.metodo_pago);
+            body.append(`pagos[${index}][monto]`, pago.monto.toFixed(2));
+        });
+
+        Swal.fire({
+            title: 'Guardando corrección...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || Object.values(data.errors || {})[0]?.[0] || 'No se pudo corregir el método de pago.');
+            }
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Método corregido',
+                text: `${methodLabels[data.data.anterior] || data.data.anterior} → ${methodLabels[data.data.nuevo] || data.data.nuevo}`,
+                confirmButtonText: 'Entendido'
+            });
+            window.location.reload();
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo corregir',
+                text: error.message
+            });
+        }
+    });
+
     const money = (n) => `S/ ${Number(n || 0).toFixed(2)}`;
 
     const renderDescripcionProducto = (descripcion) => {
@@ -143,10 +360,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ===== Click en fila de movimientos =====
+    // ===== Abrir detalle solamente desde el botón del ojo =====
     document.addEventListener('click', async (e) => {
+        const detailButton = e.target.closest('.js-open-movement-detail');
+        if (!detailButton) return;
 
-        const row = e.target.closest('.mov-row');
+        e.preventDefault();
+        e.stopPropagation();
+
+        const row = detailButton.closest('.mov-row');
         if (!row) return;
 
         const ventaId = row.dataset.refId;

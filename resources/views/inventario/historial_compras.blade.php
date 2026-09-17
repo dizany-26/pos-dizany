@@ -73,7 +73,7 @@
                         $saldo = $compra['saldo'];
                         $estado = $compra['estado'];
                     @endphp
-                    <tr class="mov-row compra-history-row" style="cursor:pointer"
+                    <tr class="mov-row compra-history-row"
                         data-ref-tipo="lote" data-ref-id="{{ $lote->id }}"
                         data-mov-id=""
                         data-search="{{ strtolower(($lote->codigo_comprobante ?? '').' '.($lote->proveedor->nombre ?? '').' '.$compra['lotes']->pluck('producto.nombre')->filter()->implode(' ')) }}"
@@ -90,7 +90,7 @@
                             @elseif($estado === 'parcial')<span class="ui-badge ui-badge-warning">Pago parcial</span>
                             @else<span class="ui-badge ui-badge-danger">Pendiente</span>@endif
                         </td>
-                        <td data-label="Detalle" class="text-center"><button type="button" class="btn-soft btn-soft-primary btn-soft-icon btn-sm"><i class="fas fa-eye"></i></button></td>
+                        <td data-label="Detalle" class="text-center"><button type="button" class="btn-soft btn-soft-primary btn-soft-icon btn-sm js-open-movement-detail" title="Ver detalle" aria-label="Ver detalle"><i class="fas fa-eye"></i></button></td>
                     </tr>
                 @empty
                     <tr><td colspan="9" class="text-center text-muted py-5"><i class="fas fa-receipt d-block fs-2 mb-2"></i>No hay compras para los filtros seleccionados.</td></tr>

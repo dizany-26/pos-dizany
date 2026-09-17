@@ -1148,3 +1148,125 @@
     width: 0;
     min-width: 0;
 }
+
+/* Alertas de acciones administrativas: compactas y compatibles con ambos temas. */
+.swal2-popup.movement-swal {
+    border: 1px solid var(--border-color, #d7e1ee);
+    border-radius: 18px;
+    padding: 1rem 1.15rem 1.05rem;
+}
+
+.movement-swal .swal2-icon {
+    height: 3.3rem;
+    width: 3.3rem;
+    margin: .35rem auto .55rem;
+}
+
+.movement-swal .swal2-icon .swal2-icon-content {
+    font-size: 2.15rem;
+}
+
+.movement-swal .swal2-title {
+    padding: .15rem 0 0;
+    font-size: 1.3rem;
+}
+
+.movement-swal .swal2-html-container {
+    margin: .65rem 0 0;
+    font-size: .9rem;
+}
+
+.movement-swal .swal2-actions {
+    margin-top: .85rem;
+}
+
+.payment-method-swal-content .form-label {
+    margin-bottom: .3rem;
+    font-size: .82rem;
+}
+
+.payment-method-swal-content .form-select,
+.payment-method-swal-content .form-control {
+    min-height: 38px;
+    padding-top: .4rem;
+    padding-bottom: .4rem;
+    font-size: .88rem;
+}
+
+.payment-method-swal-content textarea.form-control {
+    min-height: 62px;
+    resize: vertical;
+}
+
+.swal-mixed-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .4rem;
+}
+
+.swal-mixed-item {
+    margin: 0;
+}
+
+.swal-mixed-item .input-group-text,
+.swal-mixed-item .form-control {
+    min-height: 34px;
+    padding: .3rem .45rem;
+    font-size: .78rem;
+}
+
+body.dark-mode .swal2-popup.movement-swal {
+    background: #101d32;
+    border-color: #304966;
+    color: #e8f0fb;
+    box-shadow: 0 22px 55px rgba(0, 0, 0, .5);
+}
+
+body.dark-mode .movement-swal .swal2-title,
+body.dark-mode .movement-swal .swal2-html-container,
+body.dark-mode .movement-swal strong,
+body.dark-mode .movement-swal .form-label {
+    color: #f1f5f9;
+}
+
+body.dark-mode .movement-swal .text-muted,
+body.dark-mode .movement-swal small {
+    color: #9fb0c7 !important;
+}
+
+body.dark-mode .movement-swal .form-select,
+body.dark-mode .movement-swal .form-control,
+body.dark-mode .movement-swal .input-group-text,
+body.dark-mode #swal-mixed-payment {
+    background-color: #0c192c;
+    border-color: #365373 !important;
+    color: #f3f7fc;
+}
+
+body.dark-mode .movement-swal .form-control::placeholder {
+    color: #71839b;
+}
+
+body.dark-mode .movement-swal .form-select:focus,
+body.dark-mode .movement-swal .form-control:focus {
+    border-color: #4d8eff !important;
+    box-shadow: 0 0 0 .15rem rgba(77, 142, 255, .2);
+}
+
+@media (max-width: 480px) {
+    .swal2-popup.movement-swal {
+        padding: .85rem;
+    }
+
+    .swal-mixed-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .3rem;
+    }
+
+    .swal-mixed-item .input-group-text:first-child {
+        max-width: 74px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

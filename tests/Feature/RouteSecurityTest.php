@@ -23,6 +23,7 @@ class RouteSecurityTest extends TestCase
             'lotes.ajustar' => ['auth', 'role:Administrador'],
             'gastos.destroy' => ['auth', 'role:Administrador'],
             'movimientos.compras.pagos' => ['auth', 'permission:movimientos', 'role:Administrador'],
+            'ventas.cambiar-metodo-pago' => ['auth', 'permission:movimientos', 'role:Administrador'],
             'catalogo.admin.config.update' => ['auth', 'permission:catalogo.config'],
             'backups.index' => ['auth', 'permission:backups'],
             'backups.store' => ['auth', 'permission:backups'],

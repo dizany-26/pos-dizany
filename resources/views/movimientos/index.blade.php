@@ -371,7 +371,6 @@ Movimientos
 
                     @forelse ($movimientos as $movimiento)
                         <tr class="mov-row"
-                            style="cursor:pointer"
                             data-ref-id="{{ $movimiento->referencia_id }}"
                             data-ref-tipo="{{ $movimiento->referencia_tipo }}"
                             data-mov-id="{{ $movimiento->id }}">
@@ -439,12 +438,26 @@ Movimientos
                             </td>
 
                             <td data-label="Acciones" class="text-center">
-                                <button class="btn-soft btn-soft-primary btn-soft-icon btn-sm">
+                                <button type="button" class="btn-soft btn-soft-primary btn-soft-icon btn-sm js-open-movement-detail" title="Ver detalle" aria-label="Ver detalle">
                                     <i class="fas fa-eye"></i>
                                 </button>
+                                @if(auth()->user()->esAdmin() && $movimiento->referencia_tipo === 'venta' && $movimiento->estado === 'pagado' && $movimiento->venta?->activo && $movimiento->venta?->estado === 'pagado')
+                                    <form method="POST"
+                                          action="{{ route('ventas.cambiar-metodo-pago', $movimiento->venta) }}"
+                                          class="d-inline-block ms-1 js-change-payment-form"
+                                          data-current-method="{{ $metodoPago }}"
+                                          data-total="{{ number_format((float) $movimiento->venta->total, 2, '.', '') }}"
+                                          data-document="{{ $movimiento->venta->serie }}-{{ str_pad((string) $movimiento->venta->correlativo, 6, '0', STR_PAD_LEFT) }}">
+                                        @csrf
+                                        <input type="hidden" name="metodo_pago" value="">
+                                        <input type="hidden" name="motivo" value="">
+                                        <button type="submit" class="btn-soft btn-soft-warning btn-soft-icon btn-sm" title="Corregir método de pago" aria-label="Corregir método de pago">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                    </form>
+                                @endif
                                 @if(auth()->user()->esAdmin() && $movimiento->referencia_tipo === 'venta' && $movimiento->venta?->activo && $movimiento->venta?->estado !== 'anulada')
-                                    <form method="POST" action="{{ route('ventas.anular', $movimiento->venta) }}" class="d-inline-block ms-1"
-                                          onsubmit="const motivo = window.prompt('Motivo de la anulación (mínimo 10 caracteres):', 'Venta duplicada por reintento tras error de conexión'); if (!motivo || motivo.trim().length < 10) return false; this.elements.motivo.value = motivo.trim(); return window.confirm('Se repondrá el stock y se retirará esta venta del cuadre. ¿Confirmas?');">
+                                    <form method="POST" action="{{ route('ventas.anular', $movimiento->venta) }}" class="d-inline-block ms-1 js-annul-sale-form">
                                         @csrf
                                         <input type="hidden" name="motivo" value="">
                                         <button type="submit" class="btn-soft btn-soft-danger btn-soft-icon btn-sm" title="Anular venta y reponer stock" aria-label="Anular venta">
