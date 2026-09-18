@@ -1041,8 +1041,12 @@
 
     .detalle-venta-panel .listado-productos {
         min-height: 0;
-        max-height: none;
-        overflow-y: visible;
+        max-height: min(42dvh, 360px);
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+        scrollbar-gutter: stable;
     }
 
     .detalle-venta-panel .producto-desc {
