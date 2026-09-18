@@ -178,7 +178,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- JS HEADER ACTIONS (NUEVO SISTEMA) -->
     <script src="{{ asset('js/header-actions.js') }}?v={{ filemtime(public_path('js/header-actions.js')) }}"></script>
-    @stack('scripts')
 
     <!-- Script: Toggle Sidebar -->
     <script>
