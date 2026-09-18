@@ -61,8 +61,8 @@ Movimientos del lote
             Historial de movimientos
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+        <div class="table-responsive lote-movimientos-scroll">
+            <table class="table table-hover align-middle mb-0 lote-movimientos-table">
                 <thead class="table-light">
                     <tr>
                         <th>Fecha</th>
@@ -96,19 +96,19 @@ Movimientos del lote
                             };
                         @endphp
 
-                        <tr>
-                            <td>
+                        <tr class="lote-movimiento-card">
+                            <td data-label="Fecha">
                                 {{ \Carbon\Carbon::parse($m->creado_en)->format('d/m/Y H:i') }}
                             </td>
 
-                            <td>
+                            <td data-label="Tipo">
                                 <span class="badge bg-{{ $badge }}">
                                     <i class="fas {{ $icon }} me-1"></i>
                                     {{ ucfirst($m->tipo) }}
                                 </span>
                             </td>
 
-                            <td class="text-center fw-semibold">
+                            <td data-label="Cantidad" class="text-center fw-semibold">
                                 @if($m->cantidad > 0)
                                     <span class="text-success">+{{ $m->cantidad }}</span>
                                 @elseif($m->cantidad < 0)
@@ -118,25 +118,25 @@ Movimientos del lote
                                 @endif
                             </td>
 
-                            <td class="text-center">
+                            <td data-label="Stock antes" class="text-center">
                                 {{ $m->stock_antes }}
                             </td>
 
-                            <td class="text-center fw-bold">
+                            <td data-label="Stock después" class="text-center fw-bold">
                                 {{ $m->stock_despues }}
                             </td>
 
-                            <td>
+                            <td data-label="Motivo">
                                 {{ $m->motivo ?? '—' }}
                             </td>
 
-                            <td>
+                            <td data-label="Usuario">
                                 {{ $m->usuario->nombre ?? 'Sistema' }}
                             </td>
                         </tr>
 
                     @empty
-                        <tr>
+                        <tr class="lote-movimiento-empty">
                             <td colspan="7" class="text-center py-4 text-muted">
                                 No hay movimientos registrados
                             </td>
@@ -156,3 +156,87 @@ Movimientos del lote
 
 </div>
 @endsection
+
+@push('styles')
+<style>
+@media (max-width: 767.98px) {
+    .lote-movimientos-scroll {
+        overflow: visible;
+        padding: .75rem;
+    }
+
+    .lote-movimientos-table,
+    .lote-movimientos-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .lote-movimientos-table thead {
+        display: none;
+    }
+
+    .lote-movimientos-table .lote-movimiento-card {
+        display: block;
+        margin-bottom: .85rem;
+        padding: .75rem 1rem;
+        border: 1px solid var(--border-color, #dbe5f0);
+        border-radius: 14px;
+        background: var(--card-bg, #fff);
+        box-shadow: 0 6px 18px rgba(15, 42, 76, .07);
+    }
+
+    .lote-movimientos-table .lote-movimiento-card:last-child {
+        margin-bottom: 0;
+    }
+
+    .lote-movimientos-table .lote-movimiento-card td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        width: 100%;
+        padding: .65rem 0;
+        border: 0;
+        border-bottom: 1px dashed var(--border-color, #e4ebf3);
+        text-align: right !important;
+        overflow-wrap: anywhere;
+    }
+
+    .lote-movimientos-table .lote-movimiento-card td:last-child {
+        border-bottom: 0;
+    }
+
+    .lote-movimientos-table .lote-movimiento-card td::before {
+        content: attr(data-label);
+        flex: 0 0 42%;
+        color: var(--muted-color, #64748b);
+        font-size: .75rem;
+        font-weight: 700;
+        text-align: left;
+    }
+
+    .lote-movimientos-table .lote-movimiento-empty {
+        display: block;
+    }
+
+    .lote-movimientos-table .lote-movimiento-empty td {
+        display: block;
+        width: 100%;
+    }
+
+    :root[data-theme='dark'] .lote-movimientos-table .lote-movimiento-card {
+        border-color: #2f4c70;
+        background: #102039;
+        box-shadow: none;
+    }
+
+    :root[data-theme='dark'] .lote-movimientos-table .lote-movimiento-card td {
+        border-bottom-color: #2b4362;
+    }
+
+    :root[data-theme='dark'] .lote-movimientos-table .lote-movimiento-card td::before {
+        color: #a9bdd8;
+    }
+}
+</style>
+@endpush

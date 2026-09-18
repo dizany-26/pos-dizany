@@ -575,9 +575,14 @@
     document.addEventListener('click', function (event) {
         const productButton = event.target.closest('.lot-product-toggle');
         if (productButton) {
+            event.preventDefault();
+            event.stopPropagation();
+
             const cell = productButton.closest('.lot-product');
-            const shortDescription = cell.querySelector('.lot-product-short');
-            const fullDescription = cell.querySelector('.lot-product-full');
+            const shortDescription = cell?.querySelector('.lot-product-short');
+            const fullDescription = cell?.querySelector('.lot-product-full');
+            if (!shortDescription || !fullDescription) return;
+
             const expanded = productButton.getAttribute('aria-expanded') === 'true';
 
             shortDescription.classList.toggle('d-none', !expanded);
@@ -590,16 +595,21 @@
         const button = event.target.closest('.lot-provider-toggle');
         if (!button) return;
 
+        event.preventDefault();
+        event.stopPropagation();
+
         const cell = button.closest('.lot-provider');
-        const shortName = cell.querySelector('.lot-provider-short');
-        const fullName = cell.querySelector('.lot-provider-full');
+        const shortName = cell?.querySelector('.lot-provider-short');
+        const fullName = cell?.querySelector('.lot-provider-full');
+        if (!shortName || !fullName) return;
+
         const expanded = button.getAttribute('aria-expanded') === 'true';
 
         shortName.classList.toggle('d-none', !expanded);
         fullName.classList.toggle('d-none', expanded);
         button.setAttribute('aria-expanded', String(!expanded));
         button.textContent = expanded ? 'Ver más' : 'Ver menos';
-    });
+    }, true);
 </script>
 
 <script>

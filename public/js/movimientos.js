@@ -310,9 +310,12 @@ document.addEventListener('DOMContentLoaded', () => {
         </span>
     `;
 
-    contenido.addEventListener('click', (event) => {
+    document.addEventListener('click', (event) => {
         const boton = event.target.closest('.producto-desc-toggle');
         if (!boton) return;
+
+        event.preventDefault();
+        event.stopPropagation();
 
         const producto = boton.closest('.producto-info');
         const resumen = producto?.querySelector('.producto-desc-short');
@@ -324,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         descripcionCompleta.classList.toggle('d-none', expandido);
         boton.setAttribute('aria-expanded', String(!expandido));
         boton.textContent = expandido ? 'Ver más' : 'Ver menos';
-    });
+    }, true);
 
     function renderEstadoBadge(estado) {
         switch (estado) {
