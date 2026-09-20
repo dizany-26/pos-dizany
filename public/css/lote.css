@@ -626,3 +626,18 @@ input[type="date"]::-moz-focus-inner {
 :root[data-theme='dark'] .inventory-entry-card .select2-container--default .select2-selection--single .select2-selection__rendered {
     color: #edf4ff;
 }
+
+:root[data-theme='dark'] #modalProductoInventario .ui-section-title {
+    color: #edf4ff;
+    border-bottom-color: #36506e;
+}
+
+:root[data-theme='dark'] #modalProductoInventario .ui-section-box {
+    background: #172a45;
+    border-color: #36506e !important;
+}
+
+:root[data-theme='dark'] #modalProductoInventario .text-muted,
+:root[data-theme='dark'] #modalProveedorInventario .text-muted {
+    color: #9fb4d0 !important;
+}

@@ -30,8 +30,30 @@ function calcularSubtotal() {
     return (v.productos || []).reduce(
         (s, it) =>
             s +
-            (parseFloat(it.precio_unitario || 0) *
+            (precioBaseConDescuento(it) *
              (parseInt(it.cantidad) || 0)),
+        0
+    );
+}
+
+function descuentoPublicoUnitario(it) {
+    const valor = Math.max(0, parseFloat(it.descuento_valor || 0));
+    if (!valor) return 0;
+    const precioPublico = calcularPrecioFinal(parseFloat(it.precio_unitario || 0));
+    return it.descuento_tipo === "porcentaje"
+        ? precioPublico * Math.min(valor, 99.99) / 100
+        : Math.min(valor, Math.max(0, precioPublico - 0.01));
+}
+
+function precioBaseConDescuento(it) {
+    const precioBase = parseFloat(it.precio_unitario || 0);
+    const factorImpuesto = 1 + (obtenerIGVPercent() / 100);
+    return Math.max(0, precioBase - (descuentoPublicoUnitario(it) / factorImpuesto));
+}
+
+function descuentoTotalCarrito() {
+    return (ventaActiva().productos || []).reduce(
+        (total, it) => total + descuentoPublicoUnitario(it) * (parseInt(it.cantidad) || 0),
         0
     );
 }
@@ -101,6 +123,7 @@ function factorPresentacion(it) {
 
 // 👉 EXPONER TOTALES
 window.calcularTotal = calcularTotal;
+window.descuentoTotalCarrito = descuentoTotalCarrito;
 // ===============================
 // CARRITO / ITEMS / CANTIDADES
 // ===============================
@@ -336,6 +359,18 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
   const baseProducto = buildBaseProductoFromItem(baseItem);
 
   const nuevosItems = await descomponerFIFO(baseProducto, totalDeseado, nuevoTipo);
+  const conservarDescuento = nuevoTipo === baseItem.tipo_venta;
+  if (conservarDescuento && baseItem.descuento_tipo === 'monto' && Number(baseItem.descuento_valor || 0) > 0) {
+    const nuevoPrecio = calcularPrecioFinal(Number(nuevosItems[0]?.precio_unitario || 0));
+    if (Number(baseItem.descuento_valor) >= nuevoPrecio) {
+      throw new Error('El descuento fijo supera el precio de la nueva presentación. Edita o quita el descuento primero.');
+    }
+  }
+  nuevosItems.forEach(item => {
+    item.descuento_tipo = conservarDescuento ? (baseItem.descuento_tipo || null) : null;
+    item.descuento_valor = conservarDescuento ? Number(baseItem.descuento_valor || 0) : 0;
+    item.descuento_motivo = conservarDescuento ? (baseItem.descuento_motivo || "") : "";
+  });
 
   // borrar filas antiguas del grupo
   grupo.idxs.sort((a, b) => b - a).forEach(idx => items.splice(idx, 1));
@@ -426,7 +461,9 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
             const imgSrc = p.imagen ? `/uploads/productos/${p.imagen}` : "/img/sin-imagen.png";
 
             const precioUnitario = parseFloat(p.precio_unitario || 0); // FIJO
-            const precioUnitarioFinal = calcularPrecioFinal(precioUnitario);
+            const precioPublicoOriginal = calcularPrecioFinal(precioUnitario);
+            const descuentoUnitario = descuentoPublicoUnitario(p);
+            const precioUnitarioFinal = Math.max(0, precioPublicoOriginal - descuentoUnitario);
             const subtotal = precioUnitarioFinal * (parseInt(p.cantidad) || 0);
 
 
@@ -465,9 +502,14 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn-outline-danger btn-sm rounded-circle eliminar-item" data-index="${index}">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            ${window.POS_PUEDE_DESCONTAR ? `<button type="button" class="btn btn-sm ${descuentoUnitario > 0 ? 'btn-success' : 'btn-outline-primary'} btn-descuento carrito-descuento-icono" data-index="${index}" title="${descuentoUnitario > 0 ? 'Editar descuento' : 'Aplicar descuento'}" aria-label="${descuentoUnitario > 0 ? 'Editar descuento' : 'Aplicar descuento'}">
+                                <i class="fas fa-tag" aria-hidden="true"></i>
+                            </button>` : ''}
+                            <button class="btn btn-outline-danger btn-sm rounded-circle eliminar-item" data-index="${index}" title="Quitar producto" aria-label="Quitar producto">
+                                <i class="fas fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="carrito-item-controles mt-2">
@@ -513,9 +555,10 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                         </div>
                     </div>
 
-                    <div class="mt-2 small">
+                    <div class="mt-2 small carrito-precio-resumen">
                         <span class="text-muted">Precio por <strong>${unidades}</strong> unidades:</span>
                         <span class="fw-semibold"> S/ ${subtotalFormateado}</span>
+                        ${descuentoUnitario > 0 ? `<span class="text-success ms-1" title="Descuento aplicado a esta presentación">(− S/ ${formatPrecioDinamico(descuentoUnitario * (parseInt(p.cantidad) || 0))} dto.)</span>` : ''}
                     </div>
                 </div>
             `;
@@ -660,6 +703,76 @@ carritoLista.addEventListener("blur", async (e) => {
             const btnSumar = e.target.closest(".btn-sumar");
             const btnRestar = e.target.closest(".btn-restar");
             const btnEliminar = e.target.closest(".eliminar-item");
+            const btnDescuento = e.target.closest(".btn-descuento");
+
+            if (btnDescuento) {
+                const i = Number(btnDescuento.dataset.index);
+                const it = v.productos[i];
+                if (!it) return;
+                if (window.POS_PUEDE_DESCONTAR === false) {
+                    mostrarAlerta("Solo un administrador puede aplicar descuentos.");
+                    return;
+                }
+
+                const precioOriginal = calcularPrecioFinal(parseFloat(it.precio_unitario || 0));
+                const resultado = await Swal.fire({
+                    title: `Descuento · ${it.nombre}`,
+                    width: 430,
+                    html: `
+                        <div class="text-start">
+                            <div class="border rounded py-2 px-3 mb-3">Precio original por ${it.tipo_venta}: <strong>S/ ${formatPrecioDinamico(precioOriginal)}</strong></div>
+                            <label class="form-label small fw-bold">Tipo de descuento</label>
+                            <select id="swal-descuento-tipo" class="form-select mb-3">
+                                <option value="monto" ${it.descuento_tipo !== 'porcentaje' ? 'selected' : ''}>Monto en soles por ${it.tipo_venta}</option>
+                                <option value="porcentaje" ${it.descuento_tipo === 'porcentaje' ? 'selected' : ''}>Porcentaje</option>
+                            </select>
+                            <label class="form-label small fw-bold">Valor</label>
+                            <input id="swal-descuento-valor" class="form-control mb-3" type="number" min="0" step="0.01" value="${Number(it.descuento_valor || 0)}" placeholder="0.00">
+                            <label class="form-label small fw-bold">Motivo</label>
+                            <input id="swal-descuento-motivo" class="form-control" maxlength="255" value="${String(it.descuento_motivo || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" placeholder="Ej.: cliente frecuente">
+                            <div id="swal-descuento-preview" class="small text-primary fw-bold mt-3"></div>
+                        </div>`,
+                    showCancelButton: true,
+                    showDenyButton: Number(it.descuento_valor || 0) > 0,
+                    confirmButtonText: "Aplicar",
+                    denyButtonText: "Quitar descuento",
+                    cancelButtonText: "Cancelar",
+                    didOpen: () => {
+                        const actualizar = () => {
+                            const tipo = document.getElementById('swal-descuento-tipo').value;
+                            const valor = Number(document.getElementById('swal-descuento-valor').value || 0);
+                            const rebaja = tipo === 'porcentaje' ? precioOriginal * valor / 100 : valor;
+                            document.getElementById('swal-descuento-preview').textContent = `Precio final: S/ ${formatPrecioDinamico(Math.max(0, precioOriginal - rebaja))}`;
+                        };
+                        document.getElementById('swal-descuento-tipo').addEventListener('change', actualizar);
+                        document.getElementById('swal-descuento-valor').addEventListener('input', actualizar);
+                        actualizar();
+                    },
+                    preConfirm: () => {
+                        const tipo = document.getElementById('swal-descuento-tipo').value;
+                        const valor = Number(document.getElementById('swal-descuento-valor').value || 0);
+                        const motivo = document.getElementById('swal-descuento-motivo').value.trim();
+                        const rebaja = tipo === 'porcentaje' ? precioOriginal * valor / 100 : valor;
+                        if (valor <= 0 || rebaja >= precioOriginal) return Swal.showValidationMessage('El descuento debe ser mayor a cero y menor al precio.');
+                        if (!motivo) return Swal.showValidationMessage('Ingresa el motivo del descuento.');
+                        return { tipo, valor, motivo };
+                    }
+                });
+
+                if (resultado.isDenied) {
+                    delete it.descuento_tipo;
+                    delete it.descuento_valor;
+                    delete it.descuento_motivo;
+                } else if (resultado.isConfirmed) {
+                    it.descuento_tipo = resultado.value.tipo;
+                    it.descuento_valor = resultado.value.valor;
+                    it.descuento_motivo = resultado.value.motivo;
+                } else return;
+
+                posSaveDebounced(snapshotPOS, 10);
+                renderCarritoTreinta();
+                return;
+            }
 
             if (btnSumar) {
                 const i = Number(btnSumar.dataset.index);
@@ -701,6 +814,14 @@ carritoLista.addEventListener("blur", async (e) => {
                         totalDeseado,
                         grupo.tipo
                     );
+                    if (it.descuento_tipo === 'monto' && Number(it.descuento_valor || 0) >= calcularPrecioFinal(Number(nuevosItems[0]?.precio_unitario || 0))) {
+                        throw new Error('El descuento fijo supera el precio actualizado. Edita o quita el descuento primero.');
+                    }
+                    nuevosItems.forEach(item => {
+                        item.descuento_tipo = it.descuento_tipo || null;
+                        item.descuento_valor = Number(it.descuento_valor || 0);
+                        item.descuento_motivo = it.descuento_motivo || "";
+                    });
 
                     // borrar filas antiguas del grupo
                     grupo.idxs.sort((a, b) => b - a).forEach(idx =>

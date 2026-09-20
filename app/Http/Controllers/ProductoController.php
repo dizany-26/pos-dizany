@@ -169,6 +169,13 @@ class ProductoController extends Controller
     $producto = Producto::create($validated);
     $this->guardarImagenesCatalogo($request, $producto);
 
+    if ($request->expectsJson()) {
+        return response()->json(['producto' => $producto->only([
+            'id', 'nombre', 'descripcion', 'maneja_vencimiento', 'precio_venta',
+            'precio_paquete', 'precio_caja', 'stock_minimo',
+        ])], 201);
+    }
+
     return redirect()
         ->route('productos.create')
         ->with('success', 'Producto creado correctamente.');

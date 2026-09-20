@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Producto;
 use Carbon\Carbon;
 use App\Models\Categoria;
+use App\Models\Marca;
 use App\Models\Proveedor;
 use App\Models\Movimiento;
 use App\Models\Lote;
@@ -173,9 +174,11 @@ public function lote()
         ->get();
 
     $proveedores = Proveedor::orderBy('nombre')->get();
+    $categorias = Categoria::orderBy('nombre')->get(['id', 'nombre']);
+    $marcas = Marca::orderBy('nombre')->get(['id', 'nombre']);
     $compraEnCurso = session('inventario_compra_en_curso', []);
 
-    return view('inventario.lote', compact('productos', 'proveedores', 'compraEnCurso'));
+    return view('inventario.lote', compact('productos', 'proveedores', 'categorias', 'marcas', 'compraEnCurso'));
 }
 
 public function limpiarCompraEnCurso()

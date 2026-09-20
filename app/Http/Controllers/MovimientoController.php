@@ -236,6 +236,8 @@ class MovimientoController extends Controller
         ========================== */
         $movimientos = $query
             ->orderByDesc('fecha')
+            ->orderByDesc('hora')
+            ->orderByDesc('id')
             ->paginate(15);
 
         $movimientos->getCollection()->each(function (Movimiento $movimiento) use ($metodo) {
@@ -504,7 +506,7 @@ class MovimientoController extends Controller
             });
         }
 
-        $movimientos = $query->orderByDesc('fecha')->orderByDesc('created_at')->get();
+        $movimientos = $query->orderByDesc('fecha')->orderByDesc('hora')->orderByDesc('id')->get();
         $ingresos = (float) $movimientos->where('tipo', 'ingreso')->sum('monto');
         $egresos = (float) $movimientos->where('tipo', 'egreso')->sum('monto');
         $balance = $ingresos - $egresos;

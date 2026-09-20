@@ -13,8 +13,8 @@
     $client=$venta->cliente;
     $clientDocument=$client?->ruc?:($client?->dni?:'Sin documento');
     $amountWords=app(\App\Services\Sunat\AmountInWords::class)->soles((float)$venta->total);
-    $lineSubtotal=(float)$venta->detalleVentas->sum('subtotal');
-    $discount=max(0,$lineSubtotal-(float)$venta->total);
+    $discount=(float)$venta->detalleVentas->sum('descuento_monto');
+    $lineSubtotal=round((float)$venta->total+$discount,2);
     $isPending=$venta->estado==='pendiente';
     $isCredit=$venta->estado==='credito';
     $isDeferred=$isPending||$isCredit;
@@ -31,7 +31,7 @@
     <tr><td class="client-label">Dirección:</td><td class="client-value">{{ $client?->direccion?:'-' }}</td><td class="sale-label">Pago:</td><td class="sale-value">{{ $paymentLabel }}</td></tr>
 </table></div>
 <table class="items"><thead><tr><th style="width:5%">ÍTEM</th><th style="width:12%">CÓD.</th><th style="width:7%">CANT.</th><th style="width:9%">UNIDAD</th><th>DESCRIPCIÓN</th><th style="width:13%">P. UNIT.</th><th style="width:9%">DTO.</th><th style="width:14%">IMPORTE</th></tr></thead><tbody>
-@foreach($venta->detalleVentas as $i=>$detalle)<tr><td class="center">{{ $i+1 }}</td><td>{{ $detalle->producto?->codigo_barras?:'PROD-'.$detalle->producto_id }}</td><td class="center">{{ rtrim(rtrim(number_format($detalle->cantidad,2),'0'),'.') }}</td><td class="center">{{ strtoupper($detalle->presentacion?:'NIU') }}</td><td>{{ $detalle->producto?->nombre?:'Producto' }}</td><td class="right">{{ number_format($detalle->precio_presentacion,2) }}</td><td class="right">0.00</td><td class="right">{{ number_format($detalle->subtotal,2) }}</td></tr>@endforeach
+@foreach($venta->detalleVentas as $i=>$detalle)<tr><td class="center">{{ $i+1 }}</td><td>{{ $detalle->producto?->codigo_barras?:'PROD-'.$detalle->producto_id }}</td><td class="center">{{ rtrim(rtrim(number_format($detalle->cantidad,2),'0'),'.') }}</td><td class="center">{{ strtoupper($detalle->presentacion?:'NIU') }}</td><td>{{ $detalle->producto?->nombre?:'Producto' }}</td><td class="right">{{ number_format(($detalle->precio_original_presentacion ?? $detalle->precio_presentacion)*(1+((float)$venta->igv_rate/100)),2) }}</td><td class="right">{{ number_format($detalle->descuento_monto??0,2) }}</td><td class="right">{{ number_format($detalle->subtotal*(1+((float)$venta->igv_rate/100)),2) }}</td></tr>@endforeach
 </tbody></table>
 @if($venta->informacion_adicional)<div class="additional"><div class="section-title">INFORMACIÓN ADICIONAL</div><div class="additional-value">{{ $venta->informacion_adicional }}</div></div>@endif
 <table class="summary"><tr><td class="words-cell"><div class="section-title">IMPORTE EN LETRAS</div><div class="words">SON {{ $amountWords }}</div><div class="payment">

@@ -157,6 +157,7 @@ function actualizarResumen() {
     if (typeof calcularTotal !== "function") return;
 
     const { subtotal, igv, total, igvPercent } = calcularTotal();
+    const descuento = typeof descuentoTotalCarrito === "function" ? descuentoTotalCarrito() : 0;
 
     const opEl   = document.getElementById("resumen-op-gravadas");
     const igvEl  = document.getElementById("resumen-igv-monto");
@@ -164,6 +165,10 @@ function actualizarResumen() {
     const igvPEl = document.getElementById("resumen-igv-porcentaje");
 
     if (opEl)   opEl.innerText   = "S/ " + subtotal.toFixed(2);
+    const descuentoEl = document.getElementById("resumen-descuento-monto");
+    const descuentoRow = document.getElementById("resumen-descuento-row");
+    if (descuentoEl) descuentoEl.innerText = "- S/ " + descuento.toFixed(2);
+    if (descuentoRow) descuentoRow.style.display = descuento > 0 ? "flex" : "none";
     if (igvEl)  igvEl.innerText  = "S/ " + igv.toFixed(2);
     if (totEl)  totEl.innerText  = "S/ " + total.toFixed(2);
     if (igvPEl) igvPEl.innerText = igvPercent.toFixed(0) + "%";

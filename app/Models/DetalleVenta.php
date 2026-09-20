@@ -18,6 +18,11 @@ class DetalleVenta extends Model
         'cantidad',
         'unidades_afectadas',  // ✅ CORRECTO
         'precio_presentacion', // ✅ CORRECTO
+        'precio_original_presentacion',
+        'descuento_tipo',
+        'descuento_valor',
+        'descuento_monto',
+        'descuento_motivo',
         'precio_unitario',
         'subtotal',
         'ganancia',

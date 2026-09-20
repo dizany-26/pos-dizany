@@ -70,9 +70,9 @@ Ingreso de inventario
                                 </option>
                             @endforeach
                         </select>
-                        <a href="{{ route('proveedores.index') }}" class="btn-soft btn-soft-success btn-soft-icon" title="Nuevo proveedor">
+                        <button type="button" class="btn-soft btn-soft-success btn-soft-icon" title="Nuevo proveedor" aria-label="Nuevo proveedor" data-bs-toggle="modal" data-bs-target="#modalProveedorInventario">
                             <i class="fas fa-plus"></i>
-                        </a>
+                        </button>
                     </div>
                     <small class="field-help">Obligatorio si la compra queda pendiente de pago.</small>
                 </div>
@@ -163,9 +163,9 @@ Ingreso de inventario
                                 </option>
                             @endforeach
                         </select>
-                        <a href="{{ route('productos.create', ['from' => 'lotes']) }}" class="btn-soft btn-soft-primary btn-soft-icon" title="Nuevo producto">
+                        <button type="button" class="btn-soft btn-soft-primary btn-soft-icon" title="Nuevo producto" aria-label="Nuevo producto" data-bs-toggle="modal" data-bs-target="#modalProductoInventario">
                             <i class="fas fa-plus"></i>
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -284,6 +284,63 @@ Ingreso de inventario
         </div>
     </form>
 </div>
+
+<div class="modal fade" id="modalProveedorInventario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <form id="formNuevoProveedor" class="modal-content" action="{{ route('proveedores.store') }}" method="POST">
+            @csrf
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-truck me-2 text-success"></i>Nuevo proveedor</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+            <div class="modal-body provider-modal-body">
+                <div class="alert alert-danger d-none inventory-modal-error" role="alert"></div>
+                <section class="provider-form-section">
+                    <div class="provider-section-heading"><span class="provider-section-icon"><i class="fas fa-id-card"></i></span><div><strong>Identificación del proveedor</strong><small>Consulta el documento para completar sus datos automáticamente.</small></div></div>
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label" for="inv-proveedor-tipo">Tipo de documento</label><select id="inv-proveedor-tipo" name="tipo_documento" class="form-select ui-input" required><option value="RUC">RUC</option><option value="DNI">DNI</option><option value="OTRO">OTRO</option></select></div>
+                        <div class="col-md-8"><label class="form-label" for="inv-proveedor-documento">Número de documento</label><div class="input-group provider-document-input"><input id="inv-proveedor-documento" name="numero_documento" class="form-control ui-input" maxlength="11" autocomplete="off" required><button type="button" id="inv-consultar-proveedor" class="btn btn-primary"><i class="fas fa-search"></i><span>Consultar</span></button></div><div id="inv-proveedor-estado" class="provider-query-status" aria-live="polite"></div></div>
+                        <div class="col-12"><label class="form-label" for="inv-proveedor-nombre">Razón social o nombre</label><div class="input-icon-field"><i class="fas fa-building"></i><input id="inv-proveedor-nombre" name="nombre" class="form-control ui-input" maxlength="150" required></div></div>
+                    </div>
+                </section>
+                <section class="provider-form-section">
+                    <div class="provider-section-heading"><span class="provider-section-icon provider-section-icon-green"><i class="fas fa-address-book"></i></span><div><strong>Datos de contacto</strong><small>Información para comunicarse con el proveedor.</small></div></div>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Persona de contacto</label><input name="contacto" class="form-control ui-input" maxlength="255"></div>
+                        <div class="col-md-6"><label class="form-label">Teléfono</label><input name="telefono" type="tel" class="form-control ui-input" maxlength="30"></div>
+                        <div class="col-md-6"><label class="form-label">Correo electrónico</label><input name="email" type="email" class="form-control ui-input" maxlength="255"></div>
+                        <div class="col-md-6"><label class="form-label">Dirección fiscal</label><input id="inv-proveedor-direccion" name="direccion" class="form-control ui-input" maxlength="255"></div>
+                    </div>
+                </section>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn-soft btn-soft-success">Guardar proveedor</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProductoInventario" tabindex="-1" aria-hidden="true" data-bs-focus="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <form id="formProductoInventario" class="modal-content" action="{{ route('productos.store') }}" method="POST">
+            @csrf
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-box-open me-2 text-primary"></i>Nuevo producto</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-danger d-none inventory-modal-error" role="alert"></div>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Código de barras</label><input id="inv-producto-codigo" name="codigo_barras" class="form-control ui-input" inputmode="numeric" autocomplete="off" maxlength="50"></div>
+                    <div class="col-md-4"><label class="form-label" for="inv-producto-nombre">Nombre</label><input id="inv-producto-nombre" name="nombre" class="form-control ui-input" maxlength="255" required></div>
+                    <div class="col-md-4"><label class="form-label">Ubicación</label><input name="ubicacion" class="form-control ui-input" maxlength="255"></div>
+                    <div class="col-12"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control ui-input" rows="2"></textarea></div>
+                    <div class="col-12"><div class="ui-section-box p-3 rounded-4 border"><div class="ui-section-title mb-2"><i class="fas fa-layer-group me-2 text-primary"></i>Presentaciones</div><label class="form-check-label d-block mb-2"><input type="checkbox" class="form-check-input me-2" checked disabled>Unidad (siempre disponible)</label><label class="form-check-label me-4"><input type="checkbox" id="inv-chk-paquete" class="form-check-input me-2">Paquete</label><label class="form-check-label"><input type="checkbox" id="inv-chk-caja" class="form-check-input me-2">Caja</label><div class="row g-3 mt-1"><div class="col-md-4 d-none" id="inv-grupo-paquete"><label class="form-label">Unidades por paquete</label><input name="unidades_por_paquete" type="number" min="1" class="form-control ui-input"></div><div class="col-md-4 d-none" id="inv-grupo-paquetes-caja"><label class="form-label">Paquetes por caja</label><input name="paquetes_por_caja" type="number" min="1" class="form-control ui-input"></div><div class="col-md-4 d-none" id="inv-grupo-caja-directa"><label class="form-label">Unidades por caja</label><input name="unidades_por_caja" type="number" min="1" class="form-control ui-input"></div></div></div></div>
+                    <div class="col-md-4"><label class="form-check-label"><input type="checkbox" name="maneja_vencimiento" value="1" class="form-check-input me-2">Maneja fecha de vencimiento</label></div>
+                    <div class="col-md-4"><label class="form-label d-flex justify-content-between align-items-center">Categoría <button type="button" class="btn-soft btn-soft-primary btn-soft-icon" data-inv-nuevo-param="categoria" title="Nueva categoría"><i class="fas fa-plus"></i></button></label><select id="inv-producto-categoria" name="categoria_id" class="form-select ui-input" required><option value="">Seleccionar...</option>@foreach($categorias as $categoria)<option value="{{ $categoria->id }}">{{ $categoria->nombre }}</option>@endforeach</select></div>
+                    <div class="col-md-4"><label class="form-label d-flex justify-content-between align-items-center">Marca <button type="button" class="btn-soft btn-soft-primary btn-soft-icon" data-inv-nuevo-param="marca" title="Nueva marca"><i class="fas fa-plus"></i></button></label><select id="inv-producto-marca" name="marca_id" class="form-select ui-input"><option value="">Seleccionar...</option>@foreach($marcas as $marca)<option value="{{ $marca->id }}">{{ $marca->nombre }}</option>@endforeach</select></div>
+                    <div class="col-md-4"><label class="form-label">Imagen principal</label><input name="imagen" type="file" accept="image/*" class="form-control ui-input"><img id="inv-producto-imagen-preview" class="ui-product-preview d-none mt-2" alt="Vista previa de imagen"></div>
+                    <div class="col-md-4"><label class="form-label">Imágenes adicionales del catálogo</label><input name="imagenes_catalogo[]" type="file" accept="image/*" multiple class="form-control ui-input"><small class="text-muted">Máximo 2 imágenes.</small></div>
+                    <div class="col-md-4"><label class="form-check-label d-block mb-2"><input type="checkbox" name="activo" value="1" class="form-check-input me-2" checked>Activo</label><label class="form-check-label"><input type="checkbox" name="visible_en_catalogo" value="1" class="form-check-input me-2" checked>Visible en catálogo</label></div>
+                </div>
+                <small class="text-muted d-block mt-3">El costo, los precios y el stock se registran en este ingreso de inventario.</small>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn-soft btn-soft-info" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn-soft btn-soft-success">Guardar producto</button></div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @push('styles')
@@ -292,6 +349,8 @@ Ingreso de inventario
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 <link rel="stylesheet" href="{{ asset('css/calendar-theme.css') }}?v={{ filemtime(public_path('css/calendar-theme.css')) }}">
 <link rel="stylesheet" href="{{ asset('css/lote.css') }}?v={{ filemtime(public_path('css/lote.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/proveedor.css') }}?v={{ filemtime(public_path('css/proveedor.css')) }}">
+<link rel="stylesheet" href="{{ asset('css/crear_productos.css') }}?v={{ filemtime(public_path('css/crear_productos.css')) }}">
 @endpush
 
 @push('scripts')
@@ -337,6 +396,213 @@ document.addEventListener('DOMContentLoaded', () => {
     const product = document.getElementById('producto-select');
     const quantity = document.getElementById('stock_inicial');
     const cost = document.getElementById('precio_compra');
+
+    const tipoProveedor = document.getElementById('inv-proveedor-tipo');
+    const documentoProveedor = document.getElementById('inv-proveedor-documento');
+    const estadoProveedor = document.getElementById('inv-proveedor-estado');
+    const botonConsulta = document.getElementById('inv-consultar-proveedor');
+    const botonGuardarProveedor = document.querySelector('#formNuevoProveedor [type="submit"]');
+    let consultaProveedorTimer;
+    let ultimaConsultaProveedor = '';
+    function configurarDocumentoProveedor() {
+        const tipo = tipoProveedor.value;
+        const longitud = tipo === 'DNI' ? 8 : tipo === 'RUC' ? 11 : 20;
+        documentoProveedor.maxLength = longitud;
+        documentoProveedor.inputMode = tipo === 'OTRO' ? 'text' : 'numeric';
+        documentoProveedor.placeholder = tipo === 'OTRO' ? 'Ingresa el documento' : `Ingresa ${longitud} dígitos`;
+        botonConsulta.classList.toggle('d-none', tipo === 'OTRO');
+        estadoProveedor.textContent = tipo === 'OTRO' ? 'Completa los datos manualmente.' : 'La consulta se realizará al completar el documento.';
+        estadoProveedor.className = 'provider-query-status';
+        botonGuardarProveedor.disabled = false;
+        ultimaConsultaProveedor = '';
+    }
+    async function consultarProveedor() {
+        const tipo = tipoProveedor.value;
+        const numero = documentoProveedor.value.trim();
+        const longitud = tipo === 'DNI' ? 8 : tipo === 'RUC' ? 11 : 0;
+        if (!longitud || !new RegExp(`^\\d{${longitud}}$`).test(numero)) {
+            estadoProveedor.textContent = `El ${tipo} debe tener ${longitud} dígitos.`;
+            estadoProveedor.className = 'provider-query-status is-warning';
+            return;
+        }
+        if (`${tipo}-${numero}` === ultimaConsultaProveedor) return;
+        ultimaConsultaProveedor = `${tipo}-${numero}`;
+        botonConsulta.disabled = true;
+        estadoProveedor.textContent = 'Consultando información oficial…';
+        estadoProveedor.className = 'provider-query-status is-loading';
+        try {
+            const registrado = await fetch(`{{ route('proveedores.verificar-documento') }}?numero=${encodeURIComponent(numero)}`, { headers: { Accept: 'application/json' } });
+            if (!registrado.ok) throw new Error('No se pudo verificar el documento.');
+            const duplicado = await registrado.json();
+            if (duplicado.existe) {
+                botonGuardarProveedor.disabled = true;
+                estadoProveedor.textContent = `Este documento ya está registrado para ${duplicado.proveedor.nombre}.`;
+                estadoProveedor.className = 'provider-query-status is-error';
+                return;
+            }
+            const response = await fetch(`/consulta-documento/${tipo.toLowerCase()}/${numero}`, { headers: { Accept: 'application/json' } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Documento no encontrado.');
+            document.getElementById('inv-proveedor-nombre').value = data.nombre || '';
+            if (data.direccion) document.getElementById('inv-proveedor-direccion').value = data.direccion;
+            estadoProveedor.textContent = tipo === 'RUC' ? `Proveedor encontrado${data.estado ? ` · Estado: ${data.estado}` : ''}` : 'Persona encontrada correctamente.';
+            estadoProveedor.className = 'provider-query-status is-success';
+        } catch (error) {
+            ultimaConsultaProveedor = '';
+            estadoProveedor.textContent = error.message || 'No se pudo consultar el documento.';
+            estadoProveedor.className = 'provider-query-status is-error';
+        } finally {
+            botonConsulta.disabled = false;
+        }
+    }
+    tipoProveedor.addEventListener('change', () => {
+        documentoProveedor.value = '';
+        document.getElementById('inv-proveedor-nombre').value = '';
+        document.getElementById('inv-proveedor-direccion').value = '';
+        configurarDocumentoProveedor();
+    });
+    documentoProveedor.addEventListener('input', () => {
+        if (tipoProveedor.value !== 'OTRO') documentoProveedor.value = documentoProveedor.value.replace(/\D/g, '');
+        botonGuardarProveedor.disabled = false;
+        ultimaConsultaProveedor = '';
+        clearTimeout(consultaProveedorTimer);
+        const longitud = tipoProveedor.value === 'DNI' ? 8 : 11;
+        if (tipoProveedor.value !== 'OTRO' && documentoProveedor.value.length === longitud) {
+            consultaProveedorTimer = setTimeout(consultarProveedor, 350);
+        }
+    });
+    botonConsulta.addEventListener('click', consultarProveedor);
+    configurarDocumentoProveedor();
+
+    const formProductoModal = document.getElementById('formProductoInventario');
+    const chkPaquete = document.getElementById('inv-chk-paquete');
+    const chkCaja = document.getElementById('inv-chk-caja');
+    function actualizarPresentaciones() {
+        const grupos = [
+            ['inv-grupo-paquete', chkPaquete.checked],
+            ['inv-grupo-paquetes-caja', chkPaquete.checked && chkCaja.checked],
+            ['inv-grupo-caja-directa', !chkPaquete.checked && chkCaja.checked]
+        ];
+        grupos.forEach(([id, visible]) => {
+            const grupo = document.getElementById(id);
+            grupo.classList.toggle('d-none', !visible);
+            const campo = grupo.querySelector('input');
+            campo.required = visible;
+            if (!visible) campo.value = '';
+        });
+    }
+    [chkPaquete, chkCaja].forEach(input => input.addEventListener('change', actualizarPresentaciones));
+    actualizarPresentaciones();
+    document.getElementById('modalProductoInventario').addEventListener('hidden.bs.modal', () => {
+        formProductoModal.reset();
+        actualizarPresentaciones();
+        document.getElementById('inv-producto-imagen-preview').classList.add('d-none');
+        formProductoModal.querySelector('.inventory-modal-error').classList.add('d-none');
+    });
+    document.getElementById('modalProveedorInventario').addEventListener('hidden.bs.modal', () => {
+        document.getElementById('formNuevoProveedor').reset();
+        configurarDocumentoProveedor();
+        document.getElementById('formNuevoProveedor').querySelector('.inventory-modal-error').classList.add('d-none');
+    });
+
+    formProductoModal.elements['imagen'].addEventListener('change', event => {
+        const preview = document.getElementById('inv-producto-imagen-preview');
+        const archivo = event.target.files[0];
+        preview.classList.toggle('d-none', !archivo);
+        if (archivo) preview.src = URL.createObjectURL(archivo);
+    });
+    document.querySelectorAll('[data-inv-nuevo-param]').forEach(button => button.addEventListener('click', async () => {
+        const tipo = button.dataset.invNuevoParam;
+        const { value: nombre } = await Swal.fire({
+            title: `Nueva ${tipo}`,
+            input: 'text',
+            inputLabel: 'Nombre',
+            inputAttributes: { maxlength: 255 },
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            inputValidator: value => value?.trim() ? null : 'El nombre es obligatorio.'
+        });
+        if (!nombre?.trim()) return;
+        const formData = new FormData();
+        formData.set('_token', '{{ csrf_token() }}');
+        formData.set('nombre', nombre.trim().toLocaleUpperCase('es-PE'));
+        try {
+            const response = await fetch(tipo === 'categoria' ? `{{ route('categoria.ajax.store') }}` : `{{ route('marca.ajax.store') }}`, {
+                method: 'POST', body: formData, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin'
+            });
+            const result = await response.json();
+            if (!response.ok || result.error) throw new Error(result.message || 'No se pudo guardar.');
+            const select = document.getElementById(tipo === 'categoria' ? 'inv-producto-categoria' : 'inv-producto-marca');
+            select.add(new Option(result.data.nombre, result.data.id, true, true));
+        } catch (error) {
+            formProductoModal.querySelector('.inventory-modal-error').textContent = error.message;
+            formProductoModal.querySelector('.inventory-modal-error').classList.remove('d-none');
+        }
+    }));
+
+    async function guardarDesdeModal(form, onCreated) {
+        const errorBox = form.querySelector('.inventory-modal-error');
+        const submit = form.querySelector('[type="submit"]');
+        errorBox.classList.add('d-none');
+        submit.disabled = true;
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin'
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                const errors = Object.values(result.errors || {}).flat();
+                throw new Error(errors.join(' ') || result.message || 'No se pudo guardar el registro.');
+            }
+            onCreated(result);
+            bootstrap.Modal.getInstance(form.closest('.modal'))?.hide();
+            form.reset();
+        } catch (error) {
+            errorBox.textContent = error.message || 'No se pudo guardar. Inténtalo nuevamente.';
+            errorBox.classList.remove('d-none');
+        } finally {
+            submit.disabled = false;
+        }
+    }
+
+    document.getElementById('formNuevoProveedor').addEventListener('submit', event => {
+        event.preventDefault();
+        guardarDesdeModal(event.currentTarget, ({ proveedor }) => {
+            const option = new Option(proveedor.nombre, proveedor.id, true, true);
+            option.dataset.doc = `${proveedor.tipo_documento} ${proveedor.numero_documento}`;
+            $('#proveedor-select').append(option).trigger('change');
+        });
+    });
+
+    document.getElementById('formProductoInventario').addEventListener('submit', event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const paquete = Number(form.elements['unidades_por_paquete'].value || 0);
+        const paquetesCaja = Number(form.elements['paquetes_por_caja'].value || 0);
+        const cajaDirecta = Number(form.elements['unidades_por_caja'].value || 0);
+        if ((paquetesCaja && !paquete) || (paquete && cajaDirecta)) {
+            const errorBox = form.querySelector('.inventory-modal-error');
+            errorBox.textContent = paquetesCaja && !paquete
+                ? 'Indica primero las unidades por paquete.'
+                : 'Elige caja directa o caja compuesta por paquetes, no ambas.';
+            errorBox.classList.remove('d-none');
+            return;
+        }
+        guardarDesdeModal(form, ({ producto }) => {
+            const option = new Option(producto.nombre, producto.id, true, true);
+            option.dataset.vencimiento = producto.maneja_vencimiento ? '1' : '0';
+            option.dataset.precioUnidad = producto.precio_venta || '';
+            option.dataset.precioPaquete = producto.precio_paquete || '';
+            option.dataset.precioCaja = producto.precio_caja || '';
+            option.dataset.stockMinimo = producto.stock_minimo || '10';
+            option.dataset.descripcion = producto.descripcion || '';
+            $('#producto-select').append(option).trigger('change');
+        });
+    });
 
     function syncProduct() {
         const option = product.options[product.selectedIndex];

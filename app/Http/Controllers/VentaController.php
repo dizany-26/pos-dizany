@@ -83,6 +83,9 @@ public function registrarVenta(Request $request)
             'productos.*.producto_id' => 'required|integer|exists:productos,id',
             'productos.*.cantidad' => 'required|integer|min:1',
             'productos.*.presentacion' => 'required|in:unidad,paquete,caja',
+            'productos.*.descuento_tipo' => 'nullable|in:monto,porcentaje',
+            'productos.*.descuento_valor' => 'nullable|numeric|min:0',
+            'productos.*.descuento_motivo' => 'nullable|string|max:255',
 
             'monto_pagado'     => 'required|numeric|min:0',
             'efectivo_recibido'=> 'nullable|numeric|min:0',
@@ -283,7 +286,45 @@ public function registrarVenta(Request $request)
                 );
 
                 $unidadesAfectadas = $calculation['required_units'];
-                $subtotal = $calculation['subtotal'];
+                $subtotalOriginal = $calculation['subtotal'];
+                $descuentoTipo = $item['descuento_tipo'] ?? null;
+                $descuentoValor = round((float) ($item['descuento_valor'] ?? 0), 4);
+                $descuentoMotivo = trim((string) ($item['descuento_motivo'] ?? ''));
+                $factorImpuesto = 1 + ($igvPercent / 100);
+                $precioPresentacionOriginal = (float) $calculation['average_presentation_price'];
+                $precioPublicoOriginal = $precioPresentacionOriginal * $factorImpuesto;
+                $descuentoPublicoUnitario = 0.0;
+
+                if ($descuentoValor > 0) {
+                    if (! in_array($descuentoTipo, ['monto', 'porcentaje'], true)) {
+                        throw new \Exception("Selecciona un tipo de descuento válido para {$producto->nombre}.");
+                    }
+                    if ($descuentoTipo === 'porcentaje' && $descuentoValor >= 100) {
+                        throw new \Exception("El porcentaje de descuento de {$producto->nombre} debe ser menor que 100%.");
+                    }
+                    if (! auth()->user()->esAdmin()) {
+                        throw new \Exception('Solo un administrador puede aplicar descuentos.');
+                    }
+                    if ($descuentoMotivo === '') {
+                        throw new \Exception("Indica el motivo del descuento para {$producto->nombre}.");
+                    }
+                    $descuentoPublicoUnitario = $descuentoTipo === 'porcentaje'
+                        ? round($precioPublicoOriginal * ($descuentoValor / 100), 4)
+                        : $descuentoValor;
+                    if ($descuentoPublicoUnitario <= 0 || $descuentoPublicoUnitario >= $precioPublicoOriginal) {
+                        throw new \Exception("El descuento de {$producto->nombre} debe ser menor que su precio.");
+                    }
+                } else {
+                    $descuentoTipo = null;
+                    $descuentoValor = 0;
+                    $descuentoMotivo = '';
+                }
+
+                $descuentoBaseTotal = round(($descuentoPublicoUnitario / $factorImpuesto) * $cantidadPresentaciones, 2);
+                $descuentoPublicoTotal = round($descuentoPublicoUnitario * $cantidadPresentaciones, 2);
+                $subtotal = round($subtotalOriginal - $descuentoBaseTotal, 2);
+                $precioPresentacionFinal = round($subtotal / $cantidadPresentaciones, 4);
+                $ganancia = round($calculation['profit'] - $descuentoBaseTotal, 2);
                 $operationBase += $subtotal;
 
                 $detalle = DetalleVenta::create([
@@ -292,10 +333,15 @@ public function registrarVenta(Request $request)
                     'presentacion'        => $presentacion,
                     'cantidad'            => $cantidadPresentaciones, // ✅ YA NO ES 1
                     'unidades_afectadas'  => $unidadesAfectadas,
-                    'precio_presentacion' => $calculation['average_presentation_price'],
-                    'precio_unitario'     => $calculation['average_unit_price'],
+                    'precio_presentacion' => $precioPresentacionFinal,
+                    'precio_original_presentacion' => $precioPresentacionOriginal,
+                    'descuento_tipo'      => $descuentoTipo,
+                    'descuento_valor'     => $descuentoValor,
+                    'descuento_monto'     => $descuentoPublicoTotal,
+                    'descuento_motivo'    => $descuentoMotivo ?: null,
+                    'precio_unitario'     => round($subtotal / $unidadesAfectadas, 4),
                     'subtotal'            => $subtotal,
-                    'ganancia'            => $calculation['profit'],
+                    'ganancia'            => $ganancia,
                     'activo'              => 1
                 ]);
 
@@ -525,6 +571,7 @@ $pdf = Pdf::setOptions([
                     : 0;
                 $alto = $baseHeight
                     + count($venta->detalleVentas) * $lineHeight
+                    + $venta->detalleVentas->filter(fn ($detalle) => (float) $detalle->descuento_monto > 0)->count() * 10
                     + $additionalLines * ($ticketWidth === 58 ? 10 : 9)
                     + ($additionalLines > 0 ? 10 : 0)
                     + max(0, $venta->pagos->count() - 1) * ($ticketWidth === 58 ? 10 : 11)

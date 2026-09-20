@@ -200,7 +200,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 lote_id: it.lote_id,
                 cantidad: cantidad,
                 unidades: cantidad * factor,
-                presentacion: it.tipo_venta
+                presentacion: it.tipo_venta,
+                descuento_tipo: it.descuento_tipo || null,
+                descuento_valor: Number(it.descuento_valor || 0),
+                descuento_motivo: it.descuento_motivo || null
             };
         });
 

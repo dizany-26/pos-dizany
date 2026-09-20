@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function totalVentaRapido(v) {
         return (v.productos || []).reduce(
-            (s, it) => s + (parseFloat(it.precio_unitario || 0) * (parseInt(it.cantidad) || 0)),
+            (s, it) => s + (precioBaseConDescuento(it) * (parseInt(it.cantidad) || 0)),
             0
         );
     }

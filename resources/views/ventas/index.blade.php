@@ -263,6 +263,10 @@ Nueva venta
                         <input type="hidden" id="tax-treatment" value="{{ $taxProfile?->default_tax_treatment ?? 'nrus_no_desglosado' }}">
 
                         <div class="resumen-box mb-3">
+                            <div class="resumen-row" id="resumen-descuento-row" style="display:none">
+                                <div class="resumen-label">Descuento total:</div>
+                                <div class="resumen-value text-success" id="resumen-descuento-monto">- S/ 0.00</div>
+                            </div>
                             <div class="resumen-row">
                                 <div class="resumen-label" id="resumen-operacion-label">{{ match($taxProfile?->default_tax_treatment) {'exonerada'=>'Op. Exoneradas:', 'inafecta'=>'Op. Inafectas:', 'nrus_no_desglosado'=>'Valor de venta:', default=>'Op. Gravadas:'} }}</div>
                                 <div class="resumen-value" id="resumen-op-gravadas">S/ 0.00</div>
@@ -664,6 +668,7 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 @endphp
 <script>
   window.PRODUCTOS_INICIALES = @json($productos); // productos activos con imagen, etc.
+  window.POS_PUEDE_DESCONTAR = @json(auth()->user()->esAdmin());
   window.USUARIO_ES_ADMIN = @json(Auth::user()->rol_id == 1);
 </script>
 

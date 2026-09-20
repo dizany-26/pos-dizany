@@ -73,7 +73,7 @@ public function verificarDocumento(Request $request)
             'direccion' => 'nullable|string|max:255',
         ]);
 
-        Proveedor::create([
+        $proveedor = Proveedor::create([
             'nombre' => $request->nombre,
             'tipo_documento' => $request->tipo_documento,
             'numero_documento' => $request->numero_documento,
@@ -83,6 +83,10 @@ public function verificarDocumento(Request $request)
             'direccion' => $request->direccion,
             'estado' => 1
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['proveedor' => $proveedor->only(['id', 'nombre', 'tipo_documento', 'numero_documento'])], 201);
+        }
 
         return redirect()->route('proveedores.index')
             ->with('success', 'Proveedor registrado correctamente');
