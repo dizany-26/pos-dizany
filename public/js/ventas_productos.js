@@ -342,6 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     window.PRODUCTOS_INICIALES = lista;
                     window.PRODUCTOS_SNAPSHOT = [...lista]; // 🔥 CLAVE
                     renderGrillaProductos(lista);
+                    window.renderCarritoTreinta?.();
                 }
             });
     }

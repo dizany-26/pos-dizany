@@ -281,8 +281,11 @@ document.addEventListener("DOMContentLoaded", () => {
         imagen: producto.imagen || "",
         descripcion: producto.descripcion || "",
 
-        // 🔥 stock del LOTE (no del producto)
-        stock_lote: parseInt(loteFIFO.stock || 0),
+        // Stock total disponible entre todos los lotes; lote_id conserva el FEFO.
+        stock_lote: lotes.reduce(
+            (total, lote) => total + (parseInt(lote.stock) || 0),
+            0
+        ),
 
         cantidad: 1,
         tipo_venta: "unidad",
@@ -390,6 +393,15 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
         const v = ventaActiva();
         const items = v.productos || [];
 
+        const unidadesCarritoPorProducto = new Map();
+        items.forEach(item => {
+            const pid = Number(item.producto_id || item.id);
+            unidadesCarritoPorProducto.set(
+                pid,
+                (unidadesCarritoPorProducto.get(pid) || 0) + unidadesRealesDeItem(item)
+            );
+        });
+
         carritoLista.innerHTML = "";
 
         if (!items.length) {
@@ -478,9 +490,10 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
             let stockMostrar = 0;
             let stockClase = "bg-success";
 
-            const stockLote = parseInt(p.stock_lote || 0);
-            const unidadesConsumidas = unidadesRealesDeItem(p);
-            const queda = Math.max(0, stockLote - unidadesConsumidas);
+            const pid = Number(p.producto_id || p.id);
+            const stockTotal = stockRealProducto(p);
+            const unidadesConsumidas = unidadesCarritoPorProducto.get(pid) || 0;
+            const queda = Math.max(0, stockTotal - unidadesConsumidas);
 
             stockMostrar = queda;
 
@@ -689,8 +702,17 @@ carritoLista.addEventListener("blur", async (e) => {
         await recalcularYReemplazarGrupo(v.productos, i, cant, it.tipo_venta);
         renderCarritoTreinta();
     } catch (err) {
-        mostrarAlerta(err.message || "Stock insuficiente");
+        const mensaje = err.message || "Stock insuficiente";
+
+        try {
+            await recalcularYReemplazarGrupo(v.productos, i, 1, it.tipo_venta);
+        } catch (resetError) {
+            it.cantidad = 1;
+            posSaveDebounced(snapshotPOS, 10);
+        }
+
         renderCarritoTreinta();
+        mostrarAlerta(mensaje);
     }
 
 }, true);
@@ -794,6 +816,13 @@ carritoLista.addEventListener("blur", async (e) => {
                 const unidadesTotalesDeseadas = totalDeseado * factor;
 
                 if (unidadesTotalesDeseadas > stockTotal) {
+                    try {
+                        await recalcularYReemplazarGrupo(v.productos, i, 1, it.tipo_venta);
+                    } catch (resetError) {
+                        it.cantidad = 1;
+                        posSaveDebounced(snapshotPOS, 10);
+                    }
+                    renderCarritoTreinta();
                     mostrarAlerta("Cantidad excede el stock disponible");
                     return;
                 }
@@ -836,6 +865,13 @@ carritoLista.addEventListener("blur", async (e) => {
                     return;
 
                 } catch (err) {
+                    try {
+                        await recalcularYReemplazarGrupo(v.productos, i, 1, it.tipo_venta);
+                    } catch (resetError) {
+                        it.cantidad = 1;
+                        posSaveDebounced(snapshotPOS, 10);
+                    }
+                    renderCarritoTreinta();
                     mostrarAlerta(err.message || "Stock insuficiente");
                     return;
                 }
