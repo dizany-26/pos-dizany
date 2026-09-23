@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\PedidoCatalogoNotificationService;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,18 @@ class NotificacionController extends Controller
     public function caja(PedidoCatalogoNotificationService $catalogNotifications): JsonResponse
     {
         $unread = $catalogNotifications->unreadFor(auth()->user());
+        $inicioAlertas = session('notificaciones_popup_desde');
+
+        // En sesiones que ya estaban abiertas antes de esta mejora, la primera
+        // consulta establece el punto de partida sin anunciar alertas antiguas.
+        if (! $inicioAlertas) {
+            $inicioAlertas = now()->toIso8601String();
+            session()->put('notificaciones_popup_desde', $inicioAlertas);
+        }
+
+        $desde = Carbon::parse($inicioAlertas);
         $notificaciones = $unread
+            ->filter(fn ($notificacion) => $notificacion->created_at?->greaterThanOrEqualTo($desde))
             ->take(10)
             ->map(fn ($notificacion) => [
                 'id' => $notificacion->id,

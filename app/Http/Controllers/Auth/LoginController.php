@@ -37,6 +37,7 @@ class LoginController extends Controller
 
         if (Auth::attempt(['email' => mb_strtolower(trim($credentials['email'])), 'password' => $credentials['password']])) {
             $request->session()->regenerate();
+            $request->session()->put('notificaciones_popup_desde', now()->toIso8601String());
 
             return redirect()->intended(route($request->user()->rutaInicio()));
         }
@@ -66,6 +67,7 @@ public function loginAjax(Request $request)
 
     if (Auth::attempt(['email' => mb_strtolower(trim($credentials['email'])), 'password' => $credentials['password']])) {
         $request->session()->regenerate();
+        $request->session()->put('notificaciones_popup_desde', now()->toIso8601String());
 
         return response()->json([
             'success' => true,
