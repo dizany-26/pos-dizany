@@ -260,16 +260,16 @@ Movimientos
         {{-- ================= KPIs ================= --}}
         <div class="row mb-4 g-3">
 
-            <div class="{{ auth()->user()->esAdmin() ? 'col-md-3' : 'col-12' }}">
+            <div class="{{ auth()->user()->esAdmin() ? 'col-md-3' : 'col-md-6' }}">
                 <div class="card ui-card dashboard-card rounded-4 h-100">
                     <div class="card-body d-flex align-items-center gap-3">
                         <div class="icon-soft icon-soft-primary">
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <div>
-                            <small class="text-muted">{{ auth()->user()->esAdmin() ? 'Balance' : 'Tus ventas' }}</small>
+                            <small class="text-muted">Balance</small>
                             <h5 class="fw-bold mb-0">
-                                S/ {{ number_format(auth()->user()->esAdmin() ? ($balance ?? 0) : ($ventas ?? 0), 2) }}
+                                S/ {{ number_format($balance ?? 0, 2) }}
                             </h5>
                         </div>
                     </div>
@@ -324,6 +324,22 @@ Movimientos
                     </div>
                 </div>
             </div>
+            @else
+            <div class="col-md-6">
+                <div class="card ui-card dashboard-card rounded-4 h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-soft icon-soft-danger">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Tus gastos</small>
+                            <h5 class="fw-bold text-danger mb-0">
+                                S/ {{ number_format($gastos ?? 0, 2) }}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
             @endif
 
         </div>
@@ -332,13 +348,7 @@ Movimientos
         @if($tipo === 'transacciones')
         {{-- ================= SUBTABS ================= --}}
         @php
-            $tabs = [
-                'ingresos'   => 'Ingresos',
-                'por_cobrar' => 'Por cobrar',
-            ];
-            if (auth()->user()->esAdmin() || auth()->user()->tienePermiso('gastos')) {
-                $tabs = ['ingresos' => 'Ingresos', 'egresos' => 'Egresos', 'por_cobrar' => 'Por cobrar'];
-            }
+            $tabs = ['ingresos' => 'Ingresos', 'egresos' => 'Egresos', 'por_cobrar' => 'Por cobrar'];
         @endphp
 
         <div class="d-flex flex-wrap gap-2 mb-3">
@@ -779,7 +789,7 @@ Movimientos
                 </div>
                 @else
                 <div class="cash-explanation">
-                    Realiza el conteo físico sin consultar el total esperado. Después de enviarlo no podrás registrar más ventas hasta que un administrador revise el cierre.
+                    Realiza el conteo físico sin consultar el total esperado. Los gastos indicados abajo ya están registrados y descontados por el sistema; no los sumes nuevamente al declarar cada método. Después de enviarlo no podrás registrar más ventas hasta que un administrador revise el cierre.
                 </div>
                 @endif
                 <div class="cash-methods-heading mt-3">
@@ -796,6 +806,10 @@ Movimientos
                             {{ $etiqueta }}
                             @if(auth()->user()->esAdmin())
                                 <small class="ms-auto">Sistema: S/ {{ number_format($conciliacionActual[$medio]['esperado'] ?? 0, 2) }}</small>
+                            @elseif(($conciliacionCaja[$medio]['egresos'] ?? 0) > 0)
+                                <small class="ms-auto text-danger">
+                                    Gasto: − S/ {{ number_format($conciliacionCaja[$medio]['egresos'], 2) }} · ya descontado
+                                </small>
                             @endif
                         </span>
                         <div class="input-group">

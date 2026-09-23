@@ -20,6 +20,162 @@ function formatPrecioDinamico(precio) {
     }
 }
 
+function productosParaAutorizarDescuento(venta) {
+    return (venta?.productos || [])
+        .filter(item => Number(item.descuento_valor || 0) > 0)
+        .map(item => ({
+            producto_id: Number(item.producto_id || item.id),
+            cantidad: parseInt(item.cantidad) || 0,
+            presentacion: item.tipo_venta || "unidad",
+            descuento_tipo: item.descuento_tipo || "monto",
+            descuento_valor: Number(item.descuento_valor || 0),
+            descuento_motivo: String(item.descuento_motivo || "").trim(),
+            nombre: item.nombre || "Producto",
+            precio_original: calcularPrecioFinal(Number(item.precio_unitario || 0))
+        }));
+}
+
+function firmaDescuentosVenta(venta) {
+    return JSON.stringify(productosParaAutorizarDescuento(venta).map(item => ({
+        producto_id: item.producto_id,
+        cantidad: item.cantidad,
+        presentacion: item.presentacion,
+        descuento_tipo: item.descuento_tipo,
+        descuento_valor: Number(item.descuento_valor).toFixed(4),
+        descuento_motivo: item.descuento_motivo
+    })));
+}
+
+function escaparHtmlDescuento(valor) {
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+async function solicitarAutorizacionDescuentos(venta) {
+    const productos = productosParaAutorizarDescuento(venta);
+    if (!productos.length) return true;
+
+    const filas = productos.map(item => {
+        const descuentoUnitario = item.descuento_tipo === "porcentaje"
+            ? item.precio_original * item.descuento_valor / 100
+            : item.descuento_valor / Math.max(1, item.cantidad);
+        const descuentoTotal = item.descuento_tipo === "porcentaje"
+            ? descuentoUnitario * item.cantidad
+            : item.descuento_valor;
+        const precioFinal = Math.max(0, item.precio_original - descuentoUnitario);
+        const etiqueta = item.descuento_tipo === "porcentaje"
+            ? `${formatPrecioDinamico(item.descuento_valor)}%`
+            : `S/ ${formatPrecioDinamico(item.descuento_valor)} total`;
+
+        return `<div class="border rounded-3 p-2 mb-2 text-start">
+            <div class="d-flex justify-content-between gap-2 fw-bold small">
+                <span>${escaparHtmlDescuento(item.nombre)}</span>
+                <span class="text-success text-nowrap">− S/ ${formatPrecioDinamico(descuentoTotal)}</span>
+            </div>
+            <div class="small text-muted mt-1">${item.cantidad} ${escaparHtmlDescuento(item.presentacion)} · S/ ${formatPrecioDinamico(item.precio_original)} → S/ ${formatPrecioDinamico(precioFinal)} · ${etiqueta}</div>
+            <div class="small mt-1">Motivo: ${escaparHtmlDescuento(item.descuento_motivo)}</div>
+        </div>`;
+    }).join("");
+
+    const totalDescuento = productos.reduce((total, item) => {
+        const unitario = item.descuento_tipo === "porcentaje"
+            ? item.precio_original * item.descuento_valor / 100
+            : 0;
+        return total + (item.descuento_tipo === "porcentaje"
+            ? unitario * item.cantidad
+            : item.descuento_valor);
+    }, 0);
+
+    const resultado = await Swal.fire({
+        icon: "warning",
+        title: "Autorizar descuentos",
+        width: 520,
+        html: `<div class="text-start">
+            <p class="small mb-2">Revisa los descuentos preparados por el vendedor. La clave aprobará únicamente esta lista.</p>
+            <div style="max-height:220px;overflow:auto" class="pe-1">${filas}</div>
+            <div class="d-flex justify-content-between fw-bold border-top pt-2 mt-2 mb-3"><span>Descuento total</span><span class="text-success">− S/ ${formatPrecioDinamico(totalDescuento)}</span></div>
+            <label class="form-label small fw-bold" for="swal-admin-usuario">Usuario o correo del administrador</label>
+            <input type="text" tabindex="-1" aria-hidden="true" autocomplete="username" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+            <input type="password" tabindex="-1" aria-hidden="true" autocomplete="current-password" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+            <input id="swal-admin-usuario" name="discount-admin-identity" class="form-control mb-2" autocomplete="one-time-code" autocapitalize="none" spellcheck="false" data-lpignore="true" data-1p-ignore="true" maxlength="100" value="" readonly>
+            <label class="form-label small fw-bold" for="swal-admin-clave">Contraseña</label>
+            <div class="position-relative">
+                <input id="swal-admin-clave" name="discount-admin-secret" class="form-control pe-5" type="password" autocomplete="one-time-code" data-lpignore="true" data-1p-ignore="true" maxlength="255" value="" readonly>
+                <button id="swal-admin-ver-clave" class="btn position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent shadow-none text-muted me-1" type="button" tabindex="-1" title="Mostrar contraseña" aria-label="Mostrar contraseña">
+                    <i class="fas fa-eye" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>`,
+        showCancelButton: true,
+        confirmButtonText: "Autorizar y continuar",
+        cancelButtonText: "Cancelar",
+        showLoaderOnConfirm: true,
+        allowOutsideClick: () => !Swal.isLoading(),
+        didOpen: () => {
+            const usuario = document.getElementById("swal-admin-usuario");
+            const clave = document.getElementById("swal-admin-clave");
+            const botonVer = document.getElementById("swal-admin-ver-clave");
+
+            usuario.value = "";
+            clave.value = "";
+            const habilitarEscritura = (campo) => {
+                campo.addEventListener("focus", () => campo.removeAttribute("readonly"), { once: true });
+                campo.addEventListener("pointerdown", () => campo.removeAttribute("readonly"), { once: true });
+            };
+            habilitarEscritura(usuario);
+            habilitarEscritura(clave);
+
+            botonVer.addEventListener("click", () => {
+                const visible = clave.type === "text";
+                clave.type = visible ? "password" : "text";
+                botonVer.title = visible ? "Mostrar contraseña" : "Ocultar contraseña";
+                botonVer.setAttribute("aria-label", botonVer.title);
+                botonVer.querySelector("i")?.classList.toggle("fa-eye", visible);
+                botonVer.querySelector("i")?.classList.toggle("fa-eye-slash", !visible);
+                clave.focus();
+            });
+        },
+        preConfirm: async () => {
+            const usuario = document.getElementById("swal-admin-usuario")?.value.trim() || "";
+            const clave = document.getElementById("swal-admin-clave")?.value || "";
+            if (!usuario || !clave) {
+                return Swal.showValidationMessage("Ingresa el usuario o correo y la contraseña del administrador.");
+            }
+
+            try {
+                const response = await fetch("/ventas/autorizar-descuentos", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || ""
+                    },
+                    body: JSON.stringify({ usuario, clave, productos })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "No se pudo autorizar el descuento.");
+                }
+                return data;
+            } catch (error) {
+                return Swal.showValidationMessage(error.message || "No se pudo validar al administrador.");
+            }
+        }
+    });
+
+    if (!resultado.isConfirmed) return false;
+
+    venta.descuento_autorizacion_token = resultado.value.token;
+    venta.descuento_autorizacion_firma = firmaDescuentosVenta(venta);
+    venta.descuento_autorizado_por_nombre = resultado.value.admin;
+    guardarPOSAhora();
+    return true;
+}
+
 // ===============================
 // UI / STEPS / CLIENTE / PAGO / VUELTO / SERIE-CORRELATIVO
 // ===============================
@@ -502,13 +658,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnIrStep3 = document.getElementById("btn-ir-step3");
     const btnVolverStep2 = document.getElementById("btn-volver-step2") || document.getElementById("btn-vuelto-atras");
 
-    btnIrStep2?.addEventListener("click", () => {
+    btnIrStep2?.addEventListener("click", async () => {
         const v = ventaActiva();
         if (!v.productos.length) return mostrarAlerta("Agrega al menos un producto antes de continuar.");
         // 🔥 VALIDAR STOCK ANTES DE CONTINUAR
         if (!validarStockVentaActiva()) {
             return; // 🚫 no avanzar
         }
+        const descuentos = productosParaAutorizarDescuento(v);
+        if (descuentos.length && !window.USUARIO_ES_ADMIN) {
+            const firmaActual = firmaDescuentosVenta(v);
+            const autorizacionVigente = v.descuento_autorizacion_token
+                && v.descuento_autorizacion_firma === firmaActual;
+
+            if (!autorizacionVigente && !await solicitarAutorizacionDescuentos(v)) {
+                return;
+            }
+        } else if (!descuentos.length) {
+            delete v.descuento_autorizacion_token;
+            delete v.descuento_autorizacion_firma;
+            delete v.descuento_autorizado_por_nombre;
+        }
+
         showStep(2);
     });
 

@@ -40,6 +40,8 @@ class Venta extends Model
         'anulada_por',
         'anulada_at',
         'motivo_anulacion',
+        'descuento_autorizado_por',
+        'descuento_autorizado_at',
     ];
     
     public function cliente()
@@ -62,11 +64,17 @@ class Venta extends Model
         'efectivo_recibido' => 'decimal:2',
         'vuelto' => 'decimal:2',
         'anulada_at' => 'datetime',
+        'descuento_autorizado_at' => 'datetime',
     ];
 
     public function usuario()
     {
         return $this->belongsTo(User::class, 'usuario_id');
+    }
+
+    public function descuentoAutorizadoPor()
+    {
+        return $this->belongsTo(User::class, 'descuento_autorizado_por');
     }
 
     public function electronicDocument()

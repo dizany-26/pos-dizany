@@ -86,6 +86,7 @@ public function registrarVenta(Request $request)
             'productos.*.descuento_tipo' => 'nullable|in:monto,porcentaje',
             'productos.*.descuento_valor' => 'nullable|numeric|min:0',
             'productos.*.descuento_motivo' => 'nullable|string|max:255',
+            'descuento_autorizacion_token' => 'nullable|string|size:40',
 
             'monto_pagado'     => 'required|numeric|min:0',
             'efectivo_recibido'=> 'nullable|numeric|min:0',
@@ -104,6 +105,33 @@ public function registrarVenta(Request $request)
         $requestKey = (string) $request->input('request_key');
         if ($ventaExistente = Venta::where('request_key', $requestKey)->first()) {
             return $this->saleSuccessResponse($ventaExistente, false, true);
+        }
+
+        $descuentoAutorizadoPor = null;
+        $descuentoAutorizacionToken = (string) $request->input('descuento_autorizacion_token', '');
+        $tieneDescuentos = collect($request->input('productos', []))
+            ->contains(fn ($item) => (float) ($item['descuento_valor'] ?? 0) > 0);
+
+        if ($tieneDescuentos) {
+            if (auth()->user()->esAdmin()) {
+                $descuentoAutorizadoPor = auth()->id();
+            } else {
+                $autorizacion = $request->session()->get("discount_authorizations.{$descuentoAutorizacionToken}");
+                $fingerprint = $this->discountAuthorizationFingerprint($request->input('productos', []));
+
+                if (! is_array($autorizacion)
+                    || (int) ($autorizacion['seller_id'] ?? 0) !== (int) auth()->id()
+                    || (int) ($autorizacion['expires_at'] ?? 0) < now()->timestamp
+                    || ! hash_equals((string) ($autorizacion['fingerprint'] ?? ''), $fingerprint)) {
+                    return response()->json([
+                        'success' => false,
+                        'type' => 'discount_authorization_required',
+                        'message' => 'Los descuentos requieren una autorización vigente del administrador.',
+                    ], 422);
+                }
+
+                $descuentoAutorizadoPor = (int) $autorizacion['admin_id'];
+            }
         }
 
         if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
@@ -224,6 +252,8 @@ public function registrarVenta(Request $request)
                 'request_key'      => $requestKey,
                 'cliente_id'       => $cliente?->id,
                 'usuario_id'       => auth()->id(),
+                'descuento_autorizado_por' => $descuentoAutorizadoPor,
+                'descuento_autorizado_at' => $descuentoAutorizadoPor ? now() : null,
                 'tax_profile_id'   => $taxProfile?->id,
                 'fecha'            => $fechaHora,
                 'tipo_comprobante' => $tipo,
@@ -302,7 +332,7 @@ public function registrarVenta(Request $request)
                     if ($descuentoTipo === 'porcentaje' && $descuentoValor >= 100) {
                         throw new \Exception("El porcentaje de descuento de {$producto->nombre} debe ser menor que 100%.");
                     }
-                    if (! auth()->user()->esAdmin()) {
+                    if (! $descuentoAutorizadoPor) {
                         throw new \Exception('Solo un administrador puede aplicar descuentos.');
                     }
                     if ($descuentoMotivo === '') {
@@ -310,9 +340,13 @@ public function registrarVenta(Request $request)
                     }
                     $descuentoPublicoUnitario = $descuentoTipo === 'porcentaje'
                         ? round($precioPublicoOriginal * ($descuentoValor / 100), 4)
-                        : $descuentoValor;
-                    if ($descuentoPublicoUnitario <= 0 || $descuentoPublicoUnitario >= $precioPublicoOriginal) {
-                        throw new \Exception("El descuento de {$producto->nombre} debe ser menor que su precio.");
+                        : round($descuentoValor / $cantidadPresentaciones, 4);
+                    $descuentoPublicoTotalCalculado = $descuentoTipo === 'porcentaje'
+                        ? round($descuentoPublicoUnitario * $cantidadPresentaciones, 2)
+                        : round($descuentoValor, 2);
+                    $totalPublicoOriginal = round($precioPublicoOriginal * $cantidadPresentaciones, 2);
+                    if ($descuentoPublicoTotalCalculado <= 0 || $descuentoPublicoTotalCalculado >= $totalPublicoOriginal) {
+                        throw new \Exception("El descuento de {$producto->nombre} debe ser menor que el total de la línea.");
                     }
                 } else {
                     $descuentoTipo = null;
@@ -321,7 +355,9 @@ public function registrarVenta(Request $request)
                 }
 
                 $descuentoBaseTotal = round(($descuentoPublicoUnitario / $factorImpuesto) * $cantidadPresentaciones, 2);
-                $descuentoPublicoTotal = round($descuentoPublicoUnitario * $cantidadPresentaciones, 2);
+                $descuentoPublicoTotal = $descuentoTipo === 'monto'
+                    ? round($descuentoValor, 2)
+                    : round($descuentoPublicoUnitario * $cantidadPresentaciones, 2);
                 $subtotal = round($subtotalOriginal - $descuentoBaseTotal, 2);
                 $precioPresentacionFinal = round($subtotal / $cantidadPresentaciones, 4);
                 $ganancia = round($calculation['profit'] - $descuentoBaseTotal, 2);
@@ -654,6 +690,10 @@ $pdf = Pdf::setOptions([
 
             DB::commit();
 
+            if ($descuentoAutorizacionToken !== '') {
+                $request->session()->forget("discount_authorizations.{$descuentoAutorizacionToken}");
+            }
+
             if ($pedidoCatalogo) {
                 app(\App\Services\PedidoCatalogoNotificationService::class)
                     ->markAsRead($pedidoCatalogo);
@@ -947,6 +987,11 @@ public function detalle($id)
         'taxProfile.capabilities',
     ])->findOrFail($id);
 
+    abort_if(
+        ! auth()->user()->esAdmin() && (int) $venta->usuario_id !== (int) auth()->id(),
+        403
+    );
+
     $taxProfiles = app(TaxProfileService::class);
     $esBoletaSol = $venta->tipo_comprobante === 'boleta'
         && $venta->emission_system === 'see_sol'
@@ -1015,7 +1060,9 @@ public function detalle($id)
         'vendedor' => $venta->usuario->nombre ?? '—',
 
         // === Ganancia ===
-        'ganancia' => (float) $venta->detalleVentas->sum('ganancia'),
+        'ganancia' => auth()->user()->esAdmin()
+            ? (float) $venta->detalleVentas->sum('ganancia')
+            : null,
 
         // === Archivos FE ===
         'pdf_url' => $venta->pdf_url ?? null,
@@ -1274,7 +1321,9 @@ public function show($id)
         'fecha_formato' => $venta->fecha
                                 ? Carbon::parse($venta->fecha)->format('h:i A | d F Y')
                                 : '—',
-        'ganancia'      => (float) $venta->detalleVentas->sum('ganancia'),
+        'ganancia'      => auth()->user()->esAdmin()
+                                ? (float) $venta->detalleVentas->sum('ganancia')
+                                : null,
 
         'productos' => $venta->detalleVentas->map(function ($item) {
 
@@ -1325,6 +1374,78 @@ public function stockFifo($productoId)
         ])
     );
 }
+private function discountAuthorizationPayload(array $productos): array
+{
+    return collect($productos)
+        ->filter(fn ($item) => (float) ($item['descuento_valor'] ?? 0) > 0)
+        ->map(fn ($item) => [
+            'producto_id' => (int) ($item['producto_id'] ?? 0),
+            'cantidad' => (int) ($item['cantidad'] ?? 0),
+            'presentacion' => (string) ($item['presentacion'] ?? ''),
+            'descuento_tipo' => (string) ($item['descuento_tipo'] ?? ''),
+            'descuento_valor' => number_format((float) ($item['descuento_valor'] ?? 0), 4, '.', ''),
+            'descuento_motivo' => trim((string) ($item['descuento_motivo'] ?? '')),
+        ])
+        ->values()
+        ->all();
+}
+
+private function discountAuthorizationFingerprint(array $productos): string
+{
+    return hash('sha256', json_encode(
+        $this->discountAuthorizationPayload($productos),
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    ));
+}
+
+public function autorizarDescuentos(Request $request)
+{
+    $data = $request->validate([
+        'usuario' => ['required', 'string', 'max:100'],
+        'clave' => ['required', 'string', 'max:255'],
+        'productos' => ['required', 'array', 'min:1'],
+        'productos.*.producto_id' => ['required', 'integer', 'exists:productos,id'],
+        'productos.*.cantidad' => ['required', 'integer', 'min:1'],
+        'productos.*.presentacion' => ['required', 'in:unidad,paquete,caja'],
+        'productos.*.descuento_tipo' => ['required', 'in:monto,porcentaje'],
+        'productos.*.descuento_valor' => ['required', 'numeric', 'gt:0'],
+        'productos.*.descuento_motivo' => ['required', 'string', 'max:255'],
+    ]);
+
+    $identidad = trim($data['usuario']);
+    $admin = User::where(function ($query) use ($identidad) {
+        $query->where('usuario', $identidad)
+            ->orWhere('email', mb_strtolower($identidad));
+    })->with('rol')->first();
+    if (! $admin || ! $admin->esAdmin() || ! Hash::check($data['clave'], $admin->clave)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Las credenciales del administrador no son correctas.',
+        ], 401);
+    }
+
+    $token = bin2hex(random_bytes(20));
+    $autorizaciones = $request->session()->get('discount_authorizations', []);
+    $autorizaciones = array_filter(
+        is_array($autorizaciones) ? $autorizaciones : [],
+        fn ($item) => (int) ($item['expires_at'] ?? 0) >= now()->timestamp
+    );
+    $autorizaciones[$token] = [
+        'seller_id' => auth()->id(),
+        'admin_id' => $admin->id,
+        'fingerprint' => $this->discountAuthorizationFingerprint($data['productos']),
+        'expires_at' => now()->addMinutes(10)->timestamp,
+    ];
+    $request->session()->put('discount_authorizations', $autorizaciones);
+
+    return response()->json([
+        'success' => true,
+        'token' => $token,
+        'admin' => $admin->nombre ?: $admin->usuario,
+        'expires_in' => 600,
+    ]);
+}
+
 public function autorizar(Request $request)
 {
     $usuario = $request->input('usuario');

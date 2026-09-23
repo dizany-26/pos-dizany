@@ -223,6 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cliente_modo: clienteModo,
         tipo_documento: tipoDocumento,
         informacion_adicional: informacionAdicional,
+        descuento_autorizacion_token: v.descuento_autorizacion_token || null,
         fecha: fecha,
         hora: hora,
         monto_pagado: montoPagado,
@@ -298,6 +299,24 @@ document.addEventListener("DOMContentLoaded", () => {
       ? Object.values(error.errors).flat().find(Boolean)
       : null;
   const msg = validationMessage || error?.message || "No se pudo registrar la venta. Inténtalo nuevamente.";
+
+  if (type === "discount_authorization_required") {
+    const venta = ventaActiva();
+    delete venta.descuento_autorizacion_token;
+    delete venta.descuento_autorizacion_firma;
+    delete venta.descuento_autorizado_por_nombre;
+    guardarPOSAhora();
+    Swal.fire({
+        icon: "warning",
+        title: "Autoriza nuevamente el descuento",
+        text: msg,
+        confirmButtonText: "Volver al carrito",
+        confirmButtonColor: "#2563eb"
+    }).then(() => {
+        if (typeof showStep === "function") showStep(1);
+    });
+    return;
+  }
 
  if (type === "stock") {
     Swal.fire({

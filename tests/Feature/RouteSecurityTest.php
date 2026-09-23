@@ -21,6 +21,7 @@ class RouteSecurityTest extends TestCase
             'inventario.compras.pagos' => ['auth', 'permission:inventario.lote', 'role:Administrador'],
             'inventario.compra-en-curso.limpiar' => ['auth', 'permission:inventario.lote'],
             'lotes.ajustar' => ['auth', 'role:Administrador'],
+            'gastos.store' => ['auth', 'permission:ventas,gastos'],
             'gastos.destroy' => ['auth', 'role:Administrador'],
             'movimientos.compras.pagos' => ['auth', 'permission:movimientos', 'role:Administrador'],
             'ventas.cambiar-metodo-pago' => ['auth', 'permission:movimientos', 'role:Administrador'],

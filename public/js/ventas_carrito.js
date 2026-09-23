@@ -40,9 +40,10 @@ function descuentoPublicoUnitario(it) {
     const valor = Math.max(0, parseFloat(it.descuento_valor || 0));
     if (!valor) return 0;
     const precioPublico = calcularPrecioFinal(parseFloat(it.precio_unitario || 0));
+    const cantidad = Math.max(1, parseInt(it.cantidad) || 1);
     return it.descuento_tipo === "porcentaje"
         ? precioPublico * Math.min(valor, 99.99) / 100
-        : Math.min(valor, Math.max(0, precioPublico - 0.01));
+        : Math.min(valor / cantidad, Math.max(0, precioPublico - 0.01));
 }
 
 function precioBaseConDescuento(it) {
@@ -365,8 +366,8 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
   const conservarDescuento = nuevoTipo === baseItem.tipo_venta;
   if (conservarDescuento && baseItem.descuento_tipo === 'monto' && Number(baseItem.descuento_valor || 0) > 0) {
     const nuevoPrecio = calcularPrecioFinal(Number(nuevosItems[0]?.precio_unitario || 0));
-    if (Number(baseItem.descuento_valor) >= nuevoPrecio) {
-      throw new Error('El descuento fijo supera el precio de la nueva presentación. Edita o quita el descuento primero.');
+    if (Number(baseItem.descuento_valor) >= nuevoPrecio * totalDeseado) {
+      throw new Error('El descuento supera el total de la nueva cantidad. Edita o quita el descuento primero.');
     }
   }
   nuevosItems.forEach(item => {
@@ -516,9 +517,9 @@ async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoT
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                            ${window.POS_PUEDE_DESCONTAR ? `<button type="button" class="btn btn-sm ${descuentoUnitario > 0 ? 'btn-success' : 'btn-outline-primary'} btn-descuento carrito-descuento-icono" data-index="${index}" title="${descuentoUnitario > 0 ? 'Editar descuento' : 'Aplicar descuento'}" aria-label="${descuentoUnitario > 0 ? 'Editar descuento' : 'Aplicar descuento'}">
+                            <button type="button" class="btn btn-sm ${descuentoUnitario > 0 ? 'btn-success' : 'btn-outline-primary'} btn-descuento carrito-descuento-icono" data-index="${index}" title="${descuentoUnitario > 0 ? 'Editar descuento' : 'Aplicar descuento'}" aria-label="${descuentoUnitario > 0 ? 'Editar descuento' : 'Aplicar descuento'}">
                                 <i class="fas fa-tag" aria-hidden="true"></i>
-                            </button>` : ''}
+                            </button>
                             <button class="btn btn-outline-danger btn-sm rounded-circle eliminar-item" data-index="${index}" title="Quitar producto" aria-label="Quitar producto">
                                 <i class="fas fa-trash" aria-hidden="true"></i>
                             </button>
@@ -731,21 +732,21 @@ carritoLista.addEventListener("blur", async (e) => {
                 const i = Number(btnDescuento.dataset.index);
                 const it = v.productos[i];
                 if (!it) return;
-                if (window.POS_PUEDE_DESCONTAR === false) {
-                    mostrarAlerta("Solo un administrador puede aplicar descuentos.");
-                    return;
-                }
-
                 const precioOriginal = calcularPrecioFinal(parseFloat(it.precio_unitario || 0));
+                const cantidad = Math.max(1, parseInt(it.cantidad) || 1);
+                const totalOriginal = precioOriginal * cantidad;
                 const resultado = await Swal.fire({
                     title: `Descuento · ${it.nombre}`,
                     width: 430,
                     html: `
                         <div class="text-start">
-                            <div class="border rounded py-2 px-3 mb-3">Precio original por ${it.tipo_venta}: <strong>S/ ${formatPrecioDinamico(precioOriginal)}</strong></div>
+                            <div class="border rounded py-2 px-3 mb-3">
+                                <div>Precio por ${it.tipo_venta}: <strong>S/ ${formatPrecioDinamico(precioOriginal)}</strong></div>
+                                <div>${cantidad} × S/ ${formatPrecioDinamico(precioOriginal)} = <strong>S/ ${formatPrecioDinamico(totalOriginal)}</strong></div>
+                            </div>
                             <label class="form-label small fw-bold">Tipo de descuento</label>
                             <select id="swal-descuento-tipo" class="form-select mb-3">
-                                <option value="monto" ${it.descuento_tipo !== 'porcentaje' ? 'selected' : ''}>Monto en soles por ${it.tipo_venta}</option>
+                                <option value="monto" ${it.descuento_tipo !== 'porcentaje' ? 'selected' : ''}>Monto total de esta línea</option>
                                 <option value="porcentaje" ${it.descuento_tipo === 'porcentaje' ? 'selected' : ''}>Porcentaje</option>
                             </select>
                             <label class="form-label small fw-bold">Valor</label>
@@ -763,8 +764,8 @@ carritoLista.addEventListener("blur", async (e) => {
                         const actualizar = () => {
                             const tipo = document.getElementById('swal-descuento-tipo').value;
                             const valor = Number(document.getElementById('swal-descuento-valor').value || 0);
-                            const rebaja = tipo === 'porcentaje' ? precioOriginal * valor / 100 : valor;
-                            document.getElementById('swal-descuento-preview').textContent = `Precio final: S/ ${formatPrecioDinamico(Math.max(0, precioOriginal - rebaja))}`;
+                            const rebajaTotal = tipo === 'porcentaje' ? totalOriginal * valor / 100 : valor;
+                            document.getElementById('swal-descuento-preview').textContent = `Total final: S/ ${formatPrecioDinamico(Math.max(0, totalOriginal - rebajaTotal))}`;
                         };
                         document.getElementById('swal-descuento-tipo').addEventListener('change', actualizar);
                         document.getElementById('swal-descuento-valor').addEventListener('input', actualizar);
@@ -774,8 +775,8 @@ carritoLista.addEventListener("blur", async (e) => {
                         const tipo = document.getElementById('swal-descuento-tipo').value;
                         const valor = Number(document.getElementById('swal-descuento-valor').value || 0);
                         const motivo = document.getElementById('swal-descuento-motivo').value.trim();
-                        const rebaja = tipo === 'porcentaje' ? precioOriginal * valor / 100 : valor;
-                        if (valor <= 0 || rebaja >= precioOriginal) return Swal.showValidationMessage('El descuento debe ser mayor a cero y menor al precio.');
+                        const rebajaTotal = tipo === 'porcentaje' ? totalOriginal * valor / 100 : valor;
+                        if (valor <= 0 || rebajaTotal >= totalOriginal) return Swal.showValidationMessage('El descuento debe ser mayor a cero y menor al total de la línea.');
                         if (!motivo) return Swal.showValidationMessage('Ingresa el motivo del descuento.');
                         return { tipo, valor, motivo };
                     }
@@ -843,8 +844,8 @@ carritoLista.addEventListener("blur", async (e) => {
                         totalDeseado,
                         grupo.tipo
                     );
-                    if (it.descuento_tipo === 'monto' && Number(it.descuento_valor || 0) >= calcularPrecioFinal(Number(nuevosItems[0]?.precio_unitario || 0))) {
-                        throw new Error('El descuento fijo supera el precio actualizado. Edita o quita el descuento primero.');
+                    if (it.descuento_tipo === 'monto' && Number(it.descuento_valor || 0) >= calcularPrecioFinal(Number(nuevosItems[0]?.precio_unitario || 0)) * totalDeseado) {
+                        throw new Error('El descuento supera el total actualizado. Edita o quita el descuento primero.');
                     }
                     nuevosItems.forEach(item => {
                         item.descuento_tipo = it.descuento_tipo || null;

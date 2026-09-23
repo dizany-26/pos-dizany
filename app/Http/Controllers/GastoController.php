@@ -8,6 +8,7 @@ use App\Models\User; // <- tu modelo que usa la tabla 'usuarios'
 use App\Models\Movimiento;
 use App\Models\Caja;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 
 class GastoController extends Controller
@@ -73,10 +74,11 @@ class GastoController extends Controller
         'descripcion' => 'required|string|max:255',
         'monto' => 'required|numeric|min:0.01',
         'fecha' => 'required|date',
-        'metodo_pago' => 'required|string|max:50',
+        'metodo_pago' => 'required|in:efectivo,yape,plin,transferencia,tarjeta',
     ]);
 
-    if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
+    $caja = Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->first();
+    if (! $caja) {
         $error = [
             'caja' => 'Debes abrir tu caja antes de registrar un gasto.',
         ];
@@ -86,29 +88,32 @@ class GastoController extends Controller
         return back()->withErrors($error)->withInput();
     }
 
-    // 1️⃣ Guardar gasto
-    $gasto = Gasto::create([
-        'usuario_id'  => auth()->id(),
-        'descripcion' => $request->descripcion,
-        'monto'       => $request->monto,
-        'fecha'       => $request->fecha,
-        'metodo_pago' => $request->metodo_pago,
-        'estado'      => 'activo', // 👈 CLAVE
-    ]);
+    $fechaGasto = Carbon::parse($request->fecha);
+    DB::transaction(function () use ($request, $caja, $fechaGasto) {
+        $gasto = Gasto::create([
+            'usuario_id'  => auth()->id(),
+            'descripcion' => trim($request->descripcion),
+            'monto'       => $request->monto,
+            'fecha'       => $fechaGasto,
+            'metodo_pago' => $request->metodo_pago,
+            'estado'      => 'activo',
+        ]);
 
-    // 2️⃣ Registrar movimiento (CLAVE)
-    Movimiento::create([
-        'fecha'           => now()->toDateString(),
-        'hora'            => now()->toTimeString(),
-        'tipo'            => 'egreso',
-        'subtipo'         => 'gasto', // ✅ CLAVE
-        'concepto'        => $request->descripcion,
-        'monto'           => $request->monto,
-        'metodo_pago'     => $request->metodo_pago ?? 'efectivo',
-        'estado'          => 'pagado',
-        'referencia_tipo' => 'gasto',
-        'referencia_id'   => $gasto->id,
-    ]);
+        Movimiento::create([
+            'caja_id'         => $caja->id,
+            'usuario_id'      => auth()->id(),
+            'fecha'           => $fechaGasto->toDateString(),
+            'hora'            => $fechaGasto->format('H:i:s'),
+            'tipo'            => 'egreso',
+            'subtipo'         => 'gasto',
+            'concepto'        => trim($request->descripcion),
+            'monto'           => $request->monto,
+            'metodo_pago'     => $request->metodo_pago,
+            'estado'          => 'pagado',
+            'referencia_tipo' => 'gasto',
+            'referencia_id'   => $gasto->id,
+        ]);
+    });
 
     if ($request->expectsJson()) {
         return response()->json(['success' => true, 'message' => 'Gasto registrado correctamente.']);

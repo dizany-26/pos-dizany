@@ -340,15 +340,23 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/autorizar', [VentaController::class, 'autorizar'])
             ->middleware('throttle:10,1')
             ->name('ventas.autorizar');
+        Route::post('/ventas/autorizar-descuentos', [VentaController::class, 'autorizarDescuentos'])
+            ->middleware('throttle:10,1')
+            ->name('ventas.descuentos.autorizar');
     });
 
     /*
     | Gastos
     */
+    // Un usuario que opera ventas puede registrar gastos de su propia caja.
+    // Consultar/administrar el módulo completo sigue requiriendo permiso de gastos.
+    Route::post('/gastos', [GastoController::class, 'store'])
+        ->middleware('permission:ventas,gastos')
+        ->name('gastos.store');
+
     Route::middleware('permission:gastos')->group(function () {
         Route::get('/gastos', [GastoController::class, 'index'])->name('gastos.index');
         Route::get('/gastos/crear', [GastoController::class, 'create'])->name('gastos.create');
-        Route::post('/gastos', [GastoController::class, 'store'])->name('gastos.store');
     });
 
     Route::middleware('role:Administrador')->group(function () {

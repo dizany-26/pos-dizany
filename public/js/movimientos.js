@@ -677,13 +677,15 @@ const documentoSol = sol.documento || null;
                         : ''
                     }
 
-                    <div class="detalle-item">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Ganancia</span>
-                        <strong class="text-success">
-                            ${money(v.ganancia || 0)}
-                        </strong>
-                    </div>
+                    ${v.ganancia !== null && v.ganancia !== undefined ? `
+                        <div class="detalle-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Ganancia</span>
+                            <strong class="text-success">
+                                ${money(v.ganancia)}
+                            </strong>
+                        </div>
+                    ` : ''}
                 </div>
 
                 <!-- ===== TRIBUTOS (FE) ===== -->

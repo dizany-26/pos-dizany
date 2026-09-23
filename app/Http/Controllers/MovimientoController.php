@@ -31,9 +31,6 @@ class MovimientoController extends Controller
         if (! in_array($tab, ['ingresos', 'egresos', 'por_cobrar'], true)) {
             $tab = 'ingresos';
         }
-        if (! $esAdmin && $tab === 'egresos' && ! $usuarioActual->tienePermiso('gastos')) {
-            $tab = 'ingresos';
-        }
         $tipo  = $request->get('tipo', 'transacciones');
         $rango = $request->get('rango', 'diario');
         $fecha = trim((string) $request->get('fecha', ''));
@@ -585,7 +582,7 @@ class MovimientoController extends Controller
         $gasto = Gasto::with('usuario')->findOrFail($id);
 
         $puedeVer = auth()->user()->esAdmin()
-            || (auth()->user()->tienePermiso('gastos') && (int) $gasto->usuario_id === (int) auth()->id());
+            || (int) $gasto->usuario_id === (int) auth()->id();
         abort_unless($puedeVer, 403);
 
         return response()->json([

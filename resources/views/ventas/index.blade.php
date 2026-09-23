@@ -669,7 +669,7 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 <script>
   window.PRODUCTOS_INICIALES = @json($productos); // productos activos con imagen, etc.
   window.POS_PUEDE_DESCONTAR = @json(auth()->user()->esAdmin());
-  window.USUARIO_ES_ADMIN = @json(Auth::user()->rol_id == 1);
+  window.USUARIO_ES_ADMIN = @json(auth()->user()->esAdmin());
 </script>
 
 <script src="{{ asset('js/ventas_core.js') }}?v={{ filemtime(public_path('js/ventas_core.js')) }}"></script>
