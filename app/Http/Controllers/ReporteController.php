@@ -208,13 +208,30 @@ class ReporteController extends Controller
             ->selectRaw("ca.id, COALESCE(u.nombre, '—') cajero, DATE_FORMAT(ca.abierta_en, '%d/%m/%Y %H:%i') apertura, DATE_FORMAT(ca.cerrada_en, '%d/%m/%Y %H:%i') cierre, ca.monto_inicial, ca.monto_esperado, ca.monto_contado, ca.diferencia, ca.estado")
             ->orderByDesc('ca.abierta_en')->limit(100)->get();
 
-        return [
+        $reporte = [
             'kpis' => compact('ventasTotal', 'costoVentas', 'utilidadBruta', 'gastos', 'utilidadNeta', 'ticketPromedio', 'porCobrar', 'comprasTotal', 'operaciones'),
             'ventasDetalle' => $ventasDetalle, 'productosVendidos' => $productosVendidos,
             'metodosPago' => $metodosPago, 'clientes' => $clientes, 'gastosDetalle' => $gastosDetalle,
             'inventario' => $inventario, 'stockBajo' => $stockBajo, 'vencimientos' => $vencimientos,
             'compras' => $compras, 'cajas' => $cajas, 'flujo' => $this->flujoDiario($f, $gastosBase),
         ];
+
+        if (! $f['es_admin']) {
+            $reporte['kpis'] = collect($reporte['kpis'])
+                ->only(['ventasTotal', 'ticketPromedio', 'operaciones'])
+                ->all();
+            $reporte['flujo'] = $reporte['flujo']->map(fn (array $dia) => [
+                'dia' => $dia['dia'],
+                'ventas' => $dia['ventas'],
+                'gastos' => 0.0,
+            ]);
+
+            return collect($reporte)->only([
+                'kpis', 'ventasDetalle', 'metodosPago', 'cajas', 'flujo',
+            ])->all();
+        }
+
+        return $reporte;
     }
 
     private function resumenMetodosPago(Builder $ventasBase, array $f): Collection

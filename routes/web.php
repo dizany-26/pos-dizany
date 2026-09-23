@@ -399,7 +399,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
             ->name('movimientos.compras.pagos');
     });
 
-    Route::middleware('role:Administrador')->group(function () {
+    Route::middleware('permission:reportes')->group(function () {
         Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
         Route::get('/reportes/ganancias', [ReporteController::class, 'ganancias'])
             ->name('reportes.ganancias');
