@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
+use Illuminate\Validation\Rule;
 use App\Models\Venta;
 use App\Models\User; 
 use Carbon\Carbon;
@@ -1105,7 +1106,7 @@ public function pagarCredito(Request $request, Venta $venta)
 {
     $request->validate([
         'monto_pagado' => 'required|numeric|min:0.01',
-        'metodo_pago'  => 'required|string',
+        'metodo_pago'  => ['required', 'string', Rule::in(array_keys(Caja::mediosConciliables()))],
     ]);
 
     if (! Caja::where('usuario_id', auth()->id())->where('estado', 'abierta')->exists()) {
@@ -1115,79 +1116,68 @@ public function pagarCredito(Request $request, Venta $venta)
         ], 422);
     }
 
-    if ($venta->estado !== 'credito') {
-        return response()->json([
-            'success' => false,
-            'message' => 'La venta no está en crédito'
-        ], 400);
-    }
-
-    $monto = round($request->monto_pagado, 2);
-
-    // 🔥 Si paga menos → NO permitido
-    if ($monto < $venta->saldo) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Debe pagar al menos el saldo pendiente'
-        ], 400);
-    }
-
-    // 🔥 Si paga más → se ajusta (vuelto solo visual)
-    if ($monto > $venta->saldo) {
-        $monto = $venta->saldo;
-    }
-
-    DB::beginTransaction();
-
     try {
-        // Registrar pago
-        PagoVenta::create([
-            'venta_id'    => $venta->id,
-            'usuario_id'  => auth()->id(),
-            'monto'       => $monto,
-            'metodo_pago' => $request->metodo_pago,
-        ]);
+        $resultado = DB::transaction(function () use ($request, $venta) {
+            $ventaBloqueada = Venta::query()->lockForUpdate()->findOrFail($venta->id);
 
-        // Actualizar saldo
-        $nuevoSaldo = round($venta->saldo - $monto, 2);
+            abort_if($ventaBloqueada->estado !== 'credito' || (float) $ventaBloqueada->saldo <= 0, 422, 'La venta ya no tiene un crédito pendiente.');
 
-        $venta->update([
-            'saldo'  => $nuevoSaldo,
-            'estado' => $nuevoSaldo <= 0 ? 'pagado' : 'credito',
-        ]);
+            $monto = min(round((float) $request->monto_pagado, 2), round((float) $ventaBloqueada->saldo, 2));
+            $nuevoSaldo = max(0, round((float) $ventaBloqueada->saldo - $monto, 2));
 
-        // Movimiento de ingreso
-        Movimiento::create([
-            'fecha' => now()->toDateString(),
-            'tipo'  => 'ingreso',
-            'subtipo' => 'cobro_credito',
-            'concepto' => "Cobro crédito venta {$venta->serie}-" . str_pad($venta->correlativo, 6, '0', STR_PAD_LEFT),
-            'monto' => $monto,
-            'metodo_pago' => $request->metodo_pago,
-            'estado' => 'pagado',
-            'referencia_id' => $venta->id,
-            'referencia_tipo' => 'venta',
-        ]);
-        Movimiento::where('referencia_id', $venta->id)
-        ->where('subtipo', 'venta')
-        ->where('estado', 'pendiente')
-        ->where('metodo_pago', 'credito')
-        ->delete();
+            PagoVenta::create([
+                'venta_id' => $ventaBloqueada->id,
+                'usuario_id' => auth()->id(),
+                'monto' => $monto,
+                'metodo_pago' => $request->metodo_pago,
+            ]);
 
-        DB::commit();
+            $metodosUsados = PagoVenta::where('venta_id', $ventaBloqueada->id)
+                ->distinct()->pluck('metodo_pago')->map(fn ($metodo) => strtolower((string) $metodo));
+
+            $ventaBloqueada->update([
+                'saldo' => $nuevoSaldo,
+                'estado' => $nuevoSaldo <= 0 ? 'pagado' : 'credito',
+                'metodo_pago' => $metodosUsados->count() > 1 ? 'mixto' : $metodosUsados->first(),
+            ]);
+
+            Movimiento::create([
+                'fecha' => now()->toDateString(),
+                'hora' => now()->toTimeString(),
+                'tipo' => 'ingreso',
+                'subtipo' => 'cobro_credito',
+                'concepto' => "Cobro crédito venta {$ventaBloqueada->serie}-" . str_pad($ventaBloqueada->correlativo, 6, '0', STR_PAD_LEFT),
+                'monto' => $monto,
+                'metodo_pago' => $request->metodo_pago,
+                'estado' => 'pagado',
+                'referencia_id' => $ventaBloqueada->id,
+                'referencia_tipo' => 'venta',
+            ]);
+
+            Movimiento::where('referencia_tipo', 'venta')
+                ->where('referencia_id', $ventaBloqueada->id)
+                ->where('subtipo', 'venta')
+                ->where('estado', 'pendiente')
+                ->update(['estado' => 'anulado']);
+
+            return ['saldo' => $nuevoSaldo, 'monto' => $monto];
+        });
 
         return response()->json([
             'success' => true,
-            'message' => 'Pago registrado correctamente',
-            'saldo'   => $nuevoSaldo,
+            'message' => $resultado['saldo'] > 0
+                ? 'Abono registrado correctamente. Saldo pendiente: S/ '.number_format($resultado['saldo'], 2)
+                : 'Crédito pagado por completo.',
+            'saldo' => $resultado['saldo'],
+            'monto_aplicado' => $resultado['monto'],
         ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
+    } catch (\Throwable $e) {
+        if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+            throw $e;
+        }
         return response()->json([
             'success' => false,
-            'message' => $e->getMessage()
+            'message' => 'No se pudo registrar el abono. Inténtalo nuevamente.'
         ], 500);
     }
 }

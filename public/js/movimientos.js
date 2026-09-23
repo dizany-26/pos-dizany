@@ -1055,16 +1055,14 @@ async function confirmarCobro() {
 
     const totalCobrar = Number(v.montoCobrar || 0);
 
-    if (montoIngresado < totalCobrar) {
-        if (v.estado === 'credito') {
-            toast('warning', 'En crédito, el monto no puede ser menor al saldo pendiente');
-        } else {
-            toast('warning', 'En una venta pendiente debe pagar como mínimo el total');
-        }
+    if (v.estado !== 'credito' && montoIngresado < totalCobrar) {
+        toast('warning', 'En una venta fiada debe pagar como mínimo el total');
         return;
     }
 
-    const montoAEnviar = totalCobrar;
+    const montoAEnviar = v.estado === 'credito'
+        ? Math.min(montoIngresado, totalCobrar)
+        : totalCobrar;
 
     const url = (v.estado === 'credito')
         ? `/ventas/${v.id}/pagar-credito`
@@ -1098,7 +1096,7 @@ async function confirmarCobro() {
             return;
         }
 
-        toast('success', 'Deuda pagada con éxito');
+        toast('success', data.message || 'Pago registrado con éxito');
         setTimeout(() => location.reload(), 900);
 
     } catch (err) {
