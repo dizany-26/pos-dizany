@@ -117,7 +117,22 @@ class ReporteController extends Controller
     {
         return $query->whereBetween('v.fecha', [$f['desde_obj'], $f['hasta_obj']])
             ->when($f['usuario_id'], fn ($q) => $q->where('v.usuario_id', $f['usuario_id']))
-            ->when($f['metodo'], fn ($q) => $q->whereRaw('LOWER(v.metodo_pago) = ?', [$f['metodo']]))
+            ->when($f['metodo'], function ($query) use ($f) {
+                $query->where(function ($metodos) use ($f) {
+                    $metodos->whereExists(function ($pagos) use ($f) {
+                        $pagos->selectRaw('1')
+                            ->from('pagos_venta as pv_filtro')
+                            ->whereColumn('pv_filtro.venta_id', 'v.id')
+                            ->whereRaw('LOWER(pv_filtro.metodo_pago) = ?', [$f['metodo']]);
+                    })->orWhere(function ($legacy) use ($f) {
+                        $legacy->whereNotExists(function ($pagos) {
+                            $pagos->selectRaw('1')
+                                ->from('pagos_venta as pv_existente')
+                                ->whereColumn('pv_existente.venta_id', 'v.id');
+                        })->whereRaw('LOWER(v.metodo_pago) = ?', [$f['metodo']]);
+                    });
+                });
+            })
             ->when($f['estado'], fn ($q) => $q->whereRaw('LOWER(v.estado) = ?', [$f['estado']]))
             ->when(! $f['estado'], fn ($q) => $q->whereRaw("LOWER(COALESCE(v.estado, '')) <> 'anulado'"));
     }
@@ -152,8 +167,7 @@ class ReporteController extends Controller
             ->selectRaw("p.nombre producto, COALESCE(cat.nombre, 'Sin categoría') categoria, SUM(COALESCE(dv.unidades_afectadas, dv.cantidad)) unidades, SUM(dv.subtotal) ventas, SUM(dv.ganancia) utilidad")
             ->groupBy('p.id', 'p.nombre', 'cat.nombre')->orderByDesc('unidades')->limit(100)->get();
 
-        $metodosPago = (clone $ventasBase)->selectRaw("LOWER(COALESCE(v.metodo_pago, 'otro')) metodo, SUM(v.total) total, COUNT(*) operaciones")
-            ->groupByRaw("LOWER(COALESCE(v.metodo_pago, 'otro'))")->orderByDesc('total')->get();
+        $metodosPago = $this->resumenMetodosPago($ventasBase, $f);
 
         $clientes = (clone $ventasBase)->leftJoin('clientes as c', 'c.id', '=', 'v.cliente_id')
             ->selectRaw("COALESCE(c.nombre, 'Público general') cliente, COUNT(*) compras, SUM(v.total) consumo, MAX(v.fecha) ultima_compra, SUM(COALESCE(v.saldo, 0)) deuda")
@@ -201,6 +215,30 @@ class ReporteController extends Controller
             'inventario' => $inventario, 'stockBajo' => $stockBajo, 'vencimientos' => $vencimientos,
             'compras' => $compras, 'cajas' => $cajas, 'flujo' => $this->flujoDiario($f, $gastosBase),
         ];
+    }
+
+    private function resumenMetodosPago(Builder $ventasBase, array $f): Collection
+    {
+        $ventasFiltradas = (clone $ventasBase)->select('v.id', 'v.metodo_pago', 'v.total');
+
+        $pagosRegistrados = DB::table('pagos_venta as pv')
+            ->joinSub($ventasFiltradas, 'vf', 'vf.id', '=', 'pv.venta_id')
+            ->when($f['metodo'], fn ($q) => $q->whereRaw('LOWER(pv.metodo_pago) = ?', [$f['metodo']]))
+            ->selectRaw("pv.venta_id, LOWER(COALESCE(pv.metodo_pago, 'otro')) metodo, pv.monto total");
+
+        $ventasLegacy = (clone $ventasBase)
+            ->whereNotExists(function ($pagos) {
+                $pagos->selectRaw('1')
+                    ->from('pagos_venta as pv_existente')
+                    ->whereColumn('pv_existente.venta_id', 'v.id');
+            })
+            ->selectRaw("v.id venta_id, LOWER(COALESCE(v.metodo_pago, 'otro')) metodo, v.total total");
+
+        return DB::query()->fromSub($pagosRegistrados->unionAll($ventasLegacy), 'distribucion')
+            ->selectRaw('metodo, SUM(total) total, COUNT(DISTINCT venta_id) operaciones')
+            ->groupBy('metodo')
+            ->orderByDesc('total')
+            ->get();
     }
 
     private function flujoDiario(array $f, Builder $gastosBase): Collection
