@@ -29,6 +29,7 @@ class RouteSecurityTest extends TestCase
             'backups.index' => ['auth', 'permission:backups'],
             'backups.store' => ['auth', 'permission:backups'],
             'backups.download' => ['auth', 'permission:backups'],
+            'backups.download-complete' => ['auth', 'permission:backups'],
             'backups.restore' => ['auth', 'permission:backups'],
             'backups.destroy' => ['auth', 'permission:backups'],
         ];

@@ -32,7 +32,7 @@
         <div>
             <span class="backup-eyebrow">PROTECCIÓN DE DATOS</span>
             <h1>Respalda la información de DIZANY</h1>
-            <p>Guarda una copia privada de productos, inventario, ventas, clientes y configuración.</p>
+            <p>Guarda la base de datos junto con fotografías, logos, comprobantes y archivos privados de SUNAT.</p>
         </div>
     </div>
 
@@ -103,7 +103,7 @@
                                         <span><i class="fas {{ $backup['emergency'] ? 'fa-shield-alt' : 'fa-file-code' }}"></i></span>
                                         <div>
                                             <strong>{{ $backup['name'] }}</strong>
-                                            <small>{{ $backup['emergency'] ? 'Estado anterior a una restauración' : 'Base de datos MySQL' }}</small>
+                                            <small>{{ $backup['emergency'] ? 'Estado anterior a una restauración' : ($backup['archive_size'] ? 'Respaldo completo disponible' : 'Solo base de datos') }}</small>
                                         </div>
                                     </div>
                                 </td>
@@ -120,6 +120,11 @@
                                         <a href="{{ route('backups.download', $backup['name']) }}" title="Descargar copia">
                                             <i class="fas fa-download"></i>
                                         </a>
+                                        @if($backup['archive_size'])
+                                            <a href="{{ route('backups.download-complete', $backup['name']) }}" title="Descargar copia completa (base, imágenes y archivos)">
+                                                <i class="fas fa-file-zipper"></i>
+                                            </a>
+                                        @endif
                                         @if($backup['restorable'])
                                             <button type="button" class="backup-restore-button"
                                                     data-backup-restore

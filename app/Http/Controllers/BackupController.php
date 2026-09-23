@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Process\Process;
+use ZipArchive;
 
 class BackupController extends Controller
 {
@@ -33,6 +34,10 @@ class BackupController extends Controller
                 'size' => $file->getSize(),
                 'created_at' => $file->getMTime(),
                 'restorable' => $this->isPortableBackup($file->getPathname()),
+                'archive_name' => $this->archiveName($file->getFilename()),
+                'archive_size' => File::exists($this->archivePath($file->getFilename()))
+                    ? File::size($this->archivePath($file->getFilename()))
+                    : null,
                 'emergency' => str_contains($file->getFilename(), '_emergencia_')
                     || $emergencyBackups->contains($file->getFilename()),
             ])
@@ -112,7 +117,19 @@ class BackupController extends Controller
 
         File::move($temporaryPath, $finalPath);
 
-        return $this->storeResponse($request, true, 'Copia de seguridad creada correctamente.');
+        try {
+            $this->createCompleteArchive($finalPath, $filename);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return $this->storeResponse(
+                $request,
+                false,
+                'La base de datos fue respaldada, pero no se pudo completar el paquete con imágenes y archivos.'
+            );
+        }
+
+        return $this->storeResponse($request, true, 'Copia completa creada: base de datos, imágenes y archivos del sistema.');
     }
 
     private function storeResponse(Request $request, bool $success, string $message): RedirectResponse|JsonResponse
@@ -139,9 +156,22 @@ class BackupController extends Controller
         ]);
     }
 
+    public function downloadArchive(string $filename): BinaryFileResponse
+    {
+        $this->resolveBackup($filename);
+        $archivePath = $this->archivePath($filename);
+        abort_unless(File::isFile($archivePath), 404);
+
+        return response()->download($archivePath, $this->archiveName($filename), [
+            'Content-Type' => 'application/zip',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function destroy(string $filename): RedirectResponse
     {
         File::delete($this->resolveBackup($filename));
+        File::delete($this->archivePath($filename));
 
         return back()->with('success', 'Copia de seguridad eliminada.');
     }
@@ -538,5 +568,76 @@ class BackupController extends Controller
         $prefix = Str::slug((string) $companyName, '_');
 
         return Str::limit($prefix !== '' ? $prefix : 'dizany', 60, '');
+    }
+
+    private function archiveName(string $databaseFilename): string
+    {
+        return pathinfo($databaseFilename, PATHINFO_FILENAME).'.zip';
+    }
+
+    private function archivePath(string $databaseFilename): string
+    {
+        return storage_path(self::DIRECTORY.DIRECTORY_SEPARATOR.$this->archiveName($databaseFilename));
+    }
+
+    private function createCompleteArchive(string $databasePath, string $databaseFilename): void
+    {
+        $archivePath = $this->archivePath($databaseFilename);
+        $temporaryPath = $archivePath.'.tmp';
+        File::delete($temporaryPath);
+
+        $zip = new ZipArchive();
+        if ($zip->open($temporaryPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('No se pudo crear el paquete ZIP del respaldo.');
+        }
+
+        try {
+            $zip->addFile($databasePath, 'database/database.sql');
+            $zip->addFromString('manifest.json', json_encode([
+                'format' => 'dizany-complete-backup-v1',
+                'created_at' => now()->toIso8601String(),
+                'database_file' => basename($databasePath),
+                'paths' => [
+                    'public/uploads',
+                    'public/comprobantes',
+                    'storage/app/sunat',
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+            $this->addDirectoryToArchive($zip, public_path('uploads'), 'files/public/uploads');
+            $this->addDirectoryToArchive($zip, public_path('comprobantes'), 'files/public/comprobantes');
+            $this->addDirectoryToArchive($zip, storage_path('app/sunat'), 'files/storage/app/sunat');
+        } finally {
+            $zip->close();
+        }
+
+        if (! File::isFile($temporaryPath) || File::size($temporaryPath) === 0) {
+            File::delete($temporaryPath);
+            throw new \RuntimeException('El paquete completo se generó vacío.');
+        }
+
+        File::move($temporaryPath, $archivePath);
+    }
+
+    private function addDirectoryToArchive(ZipArchive $zip, string $directory, string $archiveRoot): void
+    {
+        if (! File::isDirectory($directory)) {
+            return;
+        }
+
+        $directory = rtrim($directory, DIRECTORY_SEPARATOR);
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($iterator as $file) {
+            if (! $file->isFile() || $file->isLink()) {
+                continue;
+            }
+
+            $relative = ltrim(substr($file->getPathname(), strlen($directory)), '\\/');
+            $zip->addFile($file->getPathname(), $archiveRoot.'/'.str_replace('\\', '/', $relative));
+        }
     }
 }

@@ -458,6 +458,7 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::get('/', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/', [BackupController::class, 'store'])->middleware('throttle:3,1')->name('backups.store');
         Route::get('/{filename}/descargar', [BackupController::class, 'download'])->name('backups.download');
+        Route::get('/{filename}/descargar-completa', [BackupController::class, 'downloadArchive'])->name('backups.download-complete');
         Route::post('/{filename}/restaurar', [BackupController::class, 'restore'])
             ->middleware('throttle:2,5')
             ->name('backups.restore');
