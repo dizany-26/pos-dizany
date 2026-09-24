@@ -33,22 +33,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const buscarInput   = document.getElementById("buscar_producto");
     const limpiarBusquedaBtn = document.getElementById("limpiar_busqueda_producto");
     const resultadosDiv = document.getElementById("resultados-busqueda");
-    const esEscritorioPOS = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     let versionBusqueda = 0;
     let listaVisible = [];
+    let temporizadorBusqueda = null;
+    let controladorBusqueda = null;
 
     function actualizarBotonLimpiarBusqueda() {
         if (!limpiarBusquedaBtn || !buscarInput) return;
         limpiarBusquedaBtn.hidden = buscarInput.value.length === 0;
     }
 
-    function enfocarBuscadorPOS() {
-        if (!buscarInput || !esEscritorioPOS) return;
+    function enfocarBuscadorPOS(inmediato = false) {
+        if (!buscarInput) return;
 
-        window.setTimeout(() => {
-            buscarInput.focus();
+        const aplicarFoco = () => {
+            buscarInput.focus({ preventScroll: true });
             buscarInput.select?.();
-        }, 150);
+        };
+
+        if (inmediato) {
+            aplicarFoco();
+            return;
+        }
+
+        window.setTimeout(aplicarFoco, 150);
     }
 
     function normalizarTexto(valor) {
@@ -235,6 +243,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         );
                     }
 
+                    // En móvil debe ejecutarse dentro del gesto del usuario para
+                    // que el navegador vuelva a abrir el teclado inmediatamente.
+                    enfocarBuscadorPOS(true);
+
                     try {
                         await agregarProductoDesdeBusqueda(prod);
                     } catch (error) {
@@ -245,10 +257,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    async function buscarProductosApi(searchTerm) {
-        const response = await fetch(`/buscar-producto?search=${encodeURIComponent(searchTerm)}`);
+    async function buscarProductosApi(searchTerm, signal) {
+        const response = await fetch(`/buscar-producto?search=${encodeURIComponent(searchTerm)}`, {
+            headers: { "Accept": "application/json" },
+            signal
+        });
         if (!response.ok) {
-            throw new Error("Error al buscar productos");
+            const error = new Error("No se pudo buscar en este momento.");
+            error.status = response.status;
+            throw error;
         }
 
         const list = await response.json();
@@ -398,7 +415,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            buscarProductosApi(q)
+            window.clearTimeout(temporizadorBusqueda);
+            controladorBusqueda?.abort();
+
+            temporizadorBusqueda = window.setTimeout(() => {
+                controladorBusqueda = new AbortController();
+
+                buscarProductosApi(q, controladorBusqueda.signal)
                 .then(list => {
                     if (
                         versionActual === versionBusqueda &&
@@ -407,11 +430,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         renderGrillaProductos(list);
                     }
                 })
-                .catch(() => {
+                .catch(error => {
+                    if (error?.name === "AbortError") return;
+
                     if (versionActual === versionBusqueda) {
-                        mostrarAlerta("Error al buscar productos");
+                        mostrarAlerta("El servidor demoró en responder. Intenta buscar nuevamente.");
                     }
                 });
+            }, 300);
         });
 
         buscarInput.addEventListener("keydown", async (event) => {

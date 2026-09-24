@@ -55,6 +55,58 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    async function leerRespuestaJson(respuesta) {
+        const tipoContenido = respuesta.headers.get("content-type") || "";
+        if (!tipoContenido.includes("application/json")) {
+            const error = new Error(
+                "El servidor no respondió correctamente. La venta se verificará antes de permitir otro intento."
+            );
+            error.type = "connection_error";
+            error.status = respuesta.status;
+            throw error;
+        }
+
+        return respuesta.json();
+    }
+
+    async function enviarVentaConRecuperacion(payload, intento = 0) {
+        try {
+            const respuesta = await fetch("/ventas/registrar", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await leerRespuestaJson(respuesta);
+            if (!respuesta.ok) throw data;
+            return data;
+        } catch (error) {
+            const estadoTemporal = [502, 503, 504].includes(Number(error?.status));
+            const falloDeRed = error instanceof TypeError;
+
+            // El mismo request_key hace seguro este único reintento: si la primera
+            // petición sí se guardó, el backend devuelve esa misma venta.
+            if (intento === 0 && (estadoTemporal || falloDeRed || error?.type === "connection_error")) {
+                await new Promise(resolve => window.setTimeout(resolve, 900));
+                return enviarVentaConRecuperacion(payload, 1);
+            }
+
+            if (falloDeRed || estadoTemporal || error?.type === "connection_error") {
+                const conexion = new Error(
+                    "Helio no respondió. Conservamos el carrito; revisa Movimientos antes de volver a confirmar."
+                );
+                conexion.type = "connection_error";
+                throw conexion;
+            }
+
+            throw error;
+        }
+    }
+
     // ============================
     // BOTONES COMPROBANTE
     // ============================
@@ -209,14 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         mostrarProcesandoVenta(true);
 
-        fetch("/ventas/registrar", {    
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-TOKEN":
-            document.querySelector('meta[name="csrf-token"]').content
-    },
-    body: JSON.stringify({
+        enviarVentaConRecuperacion({
         tipo_comprobante: tipoComprobante,
         cliente_id: v.cliente?.id || null,
         documento: documento,
@@ -236,18 +281,6 @@ document.addEventListener("DOMContentLoaded", () => {
         request_key: v.id,
         formato: formato,
         credit_due_date: ["credito", "pendiente"].includes(estadoPago) ? document.getElementById("credito-vencimiento")?.value : null
-    })
-})
-.then(async res => {
-
-    const data = await res.json();
-
-    // 🔥 SI EL BACKEND DEVUELVE 422 U OTRO ERROR
-    if (!res.ok) {
-        throw data;
-    }
-
-    return data;
 })
 .then(data => {
 
@@ -396,6 +429,11 @@ document.addEventListener("DOMContentLoaded", () => {
         icon: "error",
         title: "No se pudo registrar la venta",
         confirmButtonText: "Entendido"
+    },
+    connection_error: {
+        icon: "warning",
+        title: "Servidor temporalmente no disponible",
+        confirmButtonText: "Revisar movimientos"
     }
   };
 
@@ -410,6 +448,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }).then(() => {
         if (type === "product_not_found" && typeof actualizarProductosStock === "function") {
             actualizarProductosStock();
+        }
+        if (type === "connection_error") {
+            window.location.href = "/movimientos";
         }
     });
 
