@@ -41,7 +41,7 @@
             <label><span>Responsable</span><select name="usuario_id"><option value="">Todos</option>@foreach($usuarios as $usuario)<option value="{{ $usuario->id }}" @selected($filtros['usuario_id'] === $usuario->id)>{{ $usuario->nombre }}</option>@endforeach</select></label>
         @endif
         <label><span>Método</span><select name="metodo"><option value="">Todos</option>@foreach($metodos as $key => $nombre)<option value="{{ $key }}" @selected($filtros['metodo'] === $key)>{{ $nombre }}</option>@endforeach</select></label>
-        <label><span>Estado</span><select name="estado"><option value="">Vigentes</option><option value="pagado" @selected($filtros['estado'] === 'pagado')>Pagadas</option><option value="pendiente" @selected($filtros['estado'] === 'pendiente')>Pendientes</option><option value="anulado" @selected($filtros['estado'] === 'anulado')>Anuladas</option></select></label>
+        <label><span>Estado</span><select name="estado"><option value="">Vigentes</option><option value="pagado" @selected($filtros['estado'] === 'pagado')>Pagadas</option><option value="pendiente" @selected($filtros['estado'] === 'pendiente')>Pendientes</option><option value="anulada" @selected($filtros['estado'] === 'anulada')>Anuladas</option></select></label>
         <button type="submit" class="reports-filter-btn"><i class="fas fa-filter"></i> Aplicar</button>
         <a href="{{ route('reportes.index') }}" class="reports-clear" title="Limpiar filtros"><i class="fas fa-rotate-left"></i></a>
     </form>

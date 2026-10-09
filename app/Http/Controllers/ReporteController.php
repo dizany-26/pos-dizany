@@ -101,6 +101,9 @@ class ReporteController extends Controller
         $esAdmin = (bool) $usuario?->esAdmin();
         $metodo = strtolower(trim((string) $request->input('metodo', '')));
         $estado = strtolower(trim((string) $request->input('estado', '')));
+        if ($estado === 'anulado') {
+            $estado = 'anulada';
+        }
         return [
             'desde' => $desde->format('Y-m-d'), 'hasta' => $hasta->format('Y-m-d'),
             'desde_obj' => $desde, 'hasta_obj' => $hasta,
@@ -108,7 +111,7 @@ class ReporteController extends Controller
                 ? ($request->filled('usuario_id') ? (int) $request->input('usuario_id') : null)
                 : (int) $usuario->getAuthIdentifier(),
             'metodo' => array_key_exists($metodo, Caja::mediosConciliables()) ? $metodo : '',
-            'estado' => in_array($estado, ['pagado', 'pendiente', 'anulado'], true) ? $estado : '',
+            'estado' => in_array($estado, ['pagado', 'pendiente', 'anulada'], true) ? $estado : '',
             'es_admin' => $esAdmin,
         ];
     }
@@ -133,8 +136,9 @@ class ReporteController extends Controller
                     });
                 });
             })
-            ->when($f['estado'], fn ($q) => $q->whereRaw('LOWER(v.estado) = ?', [$f['estado']]))
-            ->when(! $f['estado'], fn ($q) => $q->whereRaw("LOWER(COALESCE(v.estado, '')) <> 'anulado'"));
+            ->when($f['estado'] === 'anulada', fn ($q) => $q->whereIn(DB::raw('LOWER(v.estado)'), ['anulada', 'anulado']))
+            ->when($f['estado'] && $f['estado'] !== 'anulada', fn ($q) => $q->whereRaw('LOWER(v.estado) = ?', [$f['estado']]))
+            ->when(! $f['estado'], fn ($q) => $q->whereNotIn(DB::raw("LOWER(COALESCE(v.estado, ''))"), ['anulada', 'anulado']));
     }
 
     private function construirReporte(array $f): array
@@ -150,7 +154,7 @@ class ReporteController extends Controller
         $costoVentas = max(0, $ventasTotal - $utilidadBruta);
 
         $gastosBase = DB::table('gastos as g')->whereBetween('g.fecha', [$f['desde_obj'], $f['hasta_obj']])
-            ->whereRaw("LOWER(COALESCE(g.estado, '')) <> 'anulado'")
+            ->whereNotIn(DB::raw("LOWER(COALESCE(g.estado, ''))"), ['anulada', 'anulado'])
             ->when($f['usuario_id'], fn ($q) => $q->where('g.usuario_id', $f['usuario_id']))
             ->when($f['metodo'], fn ($q) => $q->whereRaw('LOWER(g.metodo_pago) = ?', [$f['metodo']]));
         $gastos = (float) (clone $gastosBase)->sum('g.monto');
