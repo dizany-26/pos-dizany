@@ -22,6 +22,7 @@
             'ventas' => 'Ventas',
             'movimientos' => 'Movimientos',
             'gastos' => 'Gastos',
+            'reportes' => 'Reportes',
         ],
         'CATÁLOGO WEB' => [
             'catalogo.ver' => 'Vista catálogo',

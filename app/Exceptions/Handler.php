@@ -2,7 +2,9 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use PDOException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -26,5 +28,34 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+
+        $this->renderable(function (Throwable $e, $request) {
+            if (! $request->expectsJson() || ! $this->isTransientDatabaseFailure($e)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'La base de datos está temporalmente ocupada. Espera unos segundos y vuelve a intentarlo.',
+            ], 503);
+        });
+    }
+
+    private function isTransientDatabaseFailure(Throwable $exception): bool
+    {
+        $databaseException = $exception instanceof QueryException
+            || $exception instanceof PDOException;
+
+        if (! $databaseException) {
+            return false;
+        }
+
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'max_user_connections')
+            || str_contains($message, 'too many connections')
+            || str_contains($message, 'no such file or directory')
+            || str_contains($message, 'server has gone away')
+            || str_contains($message, 'lost connection');
     }
 }

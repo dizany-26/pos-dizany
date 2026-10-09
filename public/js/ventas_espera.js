@@ -108,6 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })();
 
     let pedidosCatalogo = [];
+    let consultandoPedidosCatalogo = false;
 
     function escaparHtml(valor) {
         return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
@@ -127,6 +128,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function cargarPedidosCatalogo(renderizar = false) {
+        if (consultandoPedidosCatalogo) return;
+        consultandoPedidosCatalogo = true;
+
         try {
             const response = await fetch('/ventas/pedidos-catalogo', {
                 headers: { 'Accept': 'application/json' }
@@ -139,6 +143,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error('Pedidos del catálogo:', error);
+        } finally {
+            consultandoPedidosCatalogo = false;
         }
     }
 
@@ -449,6 +455,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.actualizarContadorVentasEspera = actualizarContadorVentasEspera;
 
     cargarPedidosCatalogo();
-    window.setInterval(() => cargarPedidosCatalogo(true), 15000);
+    window.setInterval(() => {
+        if (!document.hidden) cargarPedidosCatalogo(true);
+    }, 30000);
 
 });

@@ -241,7 +241,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    let consultandoAlertasCaja = false;
     const revisarAlertasCaja = () => {
+        if (document.hidden || consultandoAlertasCaja) return;
+        consultandoAlertasCaja = true;
+
         fetch("{{ route('notificaciones.caja') }}", {
             headers: { 'Accept': 'application/json' }
         })
@@ -276,11 +280,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (result.isConfirmed) window.location.href = nueva.url;
                 });
             })
-            .catch(err => console.error('Alertas de caja:', err));
+            .catch(err => console.error('Alertas de caja:', err))
+            .finally(() => { consultandoAlertasCaja = false; });
     };
 
     revisarAlertasCaja();
-    window.setInterval(revisarAlertasCaja, 15000);
+    window.setInterval(revisarAlertasCaja, 60000);
 
     const hash = window.location.hash;
     if (hash) {

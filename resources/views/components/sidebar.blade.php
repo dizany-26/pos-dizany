@@ -309,6 +309,14 @@
                     </a>
                 @endif
 
+                @if($permisosUsuario->contains('reportes'))
+                    <a href="{{ route('reportes.index') }}"
+                    class="{{ request()->routeIs('reportes.*') ? 'active' : '' }}">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="menu-text">Reportes</span>
+                    </a>
+                @endif
+
                 @if($permisosUsuario->contains('catalogo.ver'))
                     <a href="{{ route('catalogo.admin.index') }}"
                     class="{{ request()->routeIs('catalogo.admin.index') ? 'active' : '' }}">

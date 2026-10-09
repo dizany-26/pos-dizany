@@ -259,9 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Accept': 'application/json' },
                 body
             });
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            const data = contentType.includes('application/json')
+                ? await response.json().catch(() => ({}))
+                : {};
             if (!response.ok || !data.success) {
-                throw new Error(data.message || Object.values(data.errors || {})[0]?.[0] || 'No se pudo corregir el método de pago.');
+                const validationMessage = Object.values(data.errors || {})[0]?.[0];
+                const fallbackMessage = response.status === 503
+                    ? 'La base de datos está temporalmente ocupada. Espera unos segundos y vuelve a intentarlo.'
+                    : `No se pudo corregir el método de pago (error ${response.status || 'de conexión'}).`;
+                throw new Error(data.message || validationMessage || fallbackMessage);
             }
 
             await Swal.fire({
