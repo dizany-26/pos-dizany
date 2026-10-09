@@ -125,7 +125,7 @@ Movimientos
 
             @if($tipo === 'transacciones')
             <div class="col-lg-3 col-md-6">
-                <select name="caja_id" class="form-select ui-input" onchange="this.form.elements.filtro_modo.value = this.value ? 'caja' : 'fecha'; this.form.submit()">
+                <select name="caja_id" class="form-select ui-input" data-select-search="true" onchange="this.form.elements.filtro_modo.value = this.value ? 'caja' : 'fecha'; this.form.submit()">
                     <option value="">Filtrar por fecha</option>
                     @foreach($cajasFiltro as $cajaFiltro)
                         @php
