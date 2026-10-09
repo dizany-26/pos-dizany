@@ -233,7 +233,9 @@ class MovimientoController extends Controller
         ========================== */
         $movimientos = $query
             ->orderByDesc('fecha')
-            ->orderByDesc('hora')
+            // La interfaz muestra la hora de creación. Usar la misma fuente
+            // evita que registros con `hora` nula aparezcan fuera de orden.
+            ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate(15);
 
@@ -503,7 +505,7 @@ class MovimientoController extends Controller
             });
         }
 
-        $movimientos = $query->orderByDesc('fecha')->orderByDesc('hora')->orderByDesc('id')->get();
+        $movimientos = $query->orderByDesc('fecha')->orderByDesc('created_at')->orderByDesc('id')->get();
         $ingresos = (float) $movimientos->where('tipo', 'ingreso')->sum('monto');
         $egresos = (float) $movimientos->where('tipo', 'egreso')->sum('monto');
         $balance = $ingresos - $egresos;
