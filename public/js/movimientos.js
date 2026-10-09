@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="input-group input-group-sm swal-mixed-item">
                     <span class="input-group-text flex-grow-1">${label}</span>
                     <span class="input-group-text">S/</span>
-                    <input type="number" class="form-control swal-mixed-amount" data-method="${value}" min="0" step="0.01" value="0.00" inputmode="decimal" style="max-width:110px">
+                    <input type="number" class="form-control swal-mixed-amount" data-method="${value}" min="0" step="0.01" placeholder="0.00" inputmode="decimal" style="max-width:110px">
                 </div>`)
             .join('');
 
