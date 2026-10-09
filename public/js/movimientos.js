@@ -529,6 +529,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const estado = (v.estado || '').toLowerCase(); // pagado | pendiente | credito
             const total = Number(v.total || 0);
             const saldo = Number(v.saldo || 0);
+            const tipoComprobante = String(v.tipo_comprobante || v.tipo || '')
+                .trim()
+                .toLowerCase()
+                .replace(/[\s-]+/g, '_');
+            const esNotaVenta = tipoComprobante === 'nota_venta';
 
             // El saldo es la fuente de verdad para ventas fiadas y parciales.
             const montoCobrar = ['credito', 'pendiente'].includes(estado) ? saldo : total;
@@ -566,7 +571,7 @@ const documentoSol = sol.documento || null;
 
                         <div class="d-flex flex-column gap-1 align-items-end">
                             <div id="estadoVenta"></div>
-                            <div id="estadoSunat"></div>
+                            ${!esNotaVenta ? '<div id="estadoSunat"></div>' : ''}
                         </div>
                     </div>
 
@@ -695,27 +700,29 @@ const documentoSol = sol.documento || null;
                     ` : ''}
                 </div>
 
-                <!-- ===== TRIBUTOS (FE) ===== -->
-                <h6 class="mt-4 fw-semibold text-muted small text-uppercase">
-                    Información tributaria
-                </h6>
+                ${!esNotaVenta ? `
+                    <!-- ===== TRIBUTOS (FE) ===== -->
+                    <h6 class="mt-4 fw-semibold text-muted small text-uppercase">
+                        Información tributaria
+                    </h6>
 
-                <div class="card ui-card rounded-4 p-3">
-                    <div class="d-flex justify-content-between py-1">
-                        <span class="text-muted">Subtotal</span>
-                        <strong>${money(v.subtotal || 0)}</strong>
-                    </div>
+                    <div class="card ui-card rounded-4 p-3">
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Subtotal</span>
+                            <strong>${money(v.subtotal || 0)}</strong>
+                        </div>
 
-                    <div class="d-flex justify-content-between py-1">
-                        <span class="text-muted">IGV</span>
-                        <strong>${money(v.igv || 0)}</strong>
-                    </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">IGV</span>
+                            <strong>${money(v.igv || 0)}</strong>
+                        </div>
 
-                    <div class="d-flex justify-content-between py-1 border-top mt-2 pt-2">
-                        <span class="fw-bold">Total</span>
-                        <strong class="fw-bold">${money(total)}</strong>
+                        <div class="d-flex justify-content-between py-1 border-top mt-2 pt-2">
+                            <span class="fw-bold">Total</span>
+                            <strong class="fw-bold">${money(total)}</strong>
+                        </div>
                     </div>
-                </div>
+                ` : ''}
 
                 ${sol.aplica ? `
                     <details class="sol-disclosure mt-4">

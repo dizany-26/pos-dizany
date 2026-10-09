@@ -1233,6 +1233,9 @@
 }
 
 .swal-mixed-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px 80px;
+    width: 100%;
     margin: 0;
 }
 
@@ -1241,6 +1244,21 @@
     min-height: 34px;
     padding: .3rem .45rem;
     font-size: .78rem;
+}
+
+.swal-mixed-item .input-group-text {
+    justify-content: center;
+}
+
+.swal-mixed-item .input-group-text:first-child {
+    min-width: 0;
+    justify-content: flex-start;
+}
+
+.swal-mixed-item .form-control {
+    width: 100%;
+    min-width: 0;
+    max-width: none !important;
 }
 
 body.dark-mode .swal2-popup.movement-swal {
