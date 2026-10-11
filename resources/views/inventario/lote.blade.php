@@ -42,6 +42,7 @@ Ingreso de inventario
 
     <form action="{{ route('inventario.lote.store') }}" method="POST" id="formIngresoInventario">
         @csrf
+        <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
 
         <section class="inventory-entry-card">
             <div class="inventory-step">
@@ -356,6 +357,23 @@ Ingreso de inventario
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const inventoryForm = document.getElementById('formIngresoInventario');
+    const inventorySubmit = document.getElementById('btnGuardarIngreso');
+    let inventorySubmitting = false;
+
+    inventoryForm?.addEventListener('submit', event => {
+        if (event.submitter && event.submitter !== inventorySubmit) return;
+        if (inventorySubmitting) {
+            event.preventDefault();
+            return;
+        }
+
+        inventorySubmitting = true;
+        inventorySubmit.disabled = true;
+        inventorySubmit.setAttribute('aria-disabled', 'true');
+        inventorySubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
+    });
+
     flatpickr('.date-ingreso', { locale: 'es', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd F Y', disableMobile: true });
     flatpickr('.date-vencimiento, .date-pago', { locale: 'es', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd F Y', minDate: 'today', disableMobile: true });
 

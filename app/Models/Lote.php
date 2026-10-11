@@ -13,6 +13,7 @@ class Lote extends Model
     protected $table = 'lotes';
 
     protected $fillable = [
+        'request_key',
         'producto_id',
         'proveedor_id',
         'numero_lote',

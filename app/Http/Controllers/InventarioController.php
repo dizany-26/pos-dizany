@@ -381,6 +381,7 @@ private function lotesDeCompra(Lote $lote)
 public function storeLote(Request $request)
 {
     $request->validate([
+        'request_key'       => 'required|uuid|max:100',
         'producto_id'       => 'required|exists:productos,id',
         'proveedor_id'      => 'nullable|exists:proveedores,id',
         'tipo_comprobante'  => 'nullable|in:factura,boleta,nota_venta,guia,otro',
@@ -413,7 +414,13 @@ public function storeLote(Request $request)
             ->withInput();
     }
 
-        DB::transaction(function () use ($request) {
+    $requestKey = (string) $request->request_key;
+    if (Lote::where('request_key', $requestKey)->exists()) {
+        return $this->respuestaIngresoInventario($request, true);
+    }
+
+    try {
+        DB::transaction(function () use ($request, $requestKey) {
 
         $producto = Producto::whereKey($request->producto_id)
             ->lockForUpdate()
@@ -439,6 +446,7 @@ public function storeLote(Request $request)
         $numeroLote = ($ultimoNumero ?? 0) + 1;
 
         $lote = Lote::create([
+            'request_key'       => $requestKey,
             'producto_id'       => $request->producto_id,
             'proveedor_id'      => $request->proveedor_id,
             'numero_lote'       => $numeroLote, // 👈 AQUÍ
@@ -484,9 +492,21 @@ public function storeLote(Request $request)
                 'referencia_tipo' => 'lote',
             ]);
         }
-    });
+        });
+    } catch (\Illuminate\Database\QueryException $exception) {
+        // Dos envíos simultáneos comparten la misma clave. La restricción
+        // única deja pasar solo el primero y este segundo recupera su resultado.
+        if (! Lote::where('request_key', $requestKey)->exists()) {
+            throw $exception;
+        }
+    }
 
-        session(['inventario_compra_en_curso' => [
+    return $this->respuestaIngresoInventario($request);
+}
+
+private function respuestaIngresoInventario(Request $request, bool $recuperado = false)
+{
+    session(['inventario_compra_en_curso' => [
             'proveedor_id' => $request->proveedor_id,
             'tipo_comprobante' => $request->tipo_comprobante,
             'codigo_comprobante' => $request->codigo_comprobante,
@@ -495,15 +515,14 @@ public function storeLote(Request $request)
             'metodo_pago' => $request->condicion_pago === 'contado' ? $request->metodo_pago : null,
             'fecha_vencimiento_pago' => $request->condicion_pago === 'credito' ? $request->fecha_vencimiento_pago : null,
             'observaciones_compra' => $request->observaciones_compra,
-        ]]);
-        return redirect(route('inventario.lote').'#producto-y-lote')
-            ->with(
-                'success',
-                $request->condicion_pago === 'credito'
-                    ? 'Inventario registrado y compra agregada al Historial de compras.'
-                    : 'Ingreso de inventario registrado correctamente.'
-            );
-    
+    ]]);
+
+    $mensaje = $request->condicion_pago === 'credito'
+        ? 'Inventario registrado y compra agregada al Historial de compras.'
+        : 'Ingreso de inventario registrado correctamente.';
+
+    return redirect(route('inventario.lote').'#producto-y-lote')
+        ->with('success', $recuperado ? $mensaje.' Se evitó un registro duplicado.' : $mensaje);
 }
 
     public function edit(Lote $lote)
