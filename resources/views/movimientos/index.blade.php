@@ -91,25 +91,49 @@ Movimientos
             </a>
         </div>
 
-        @if($cajaAbierta && $tipo === 'transacciones')
-            <div class="cash-session-banner mb-4">
-                <div>
-                    <span class="cash-session-dot"></span>
+        @if($tipo === 'transacciones' && ($cajaAbierta || $cajaSeleccionada))
+            @php
+                $finJornada = $cajaSeleccionada?->cerrada_en ?? $cajaSeleccionada?->cierre_solicitado_en;
+                $estadoJornada = $cajaSeleccionada?->estado === 'cerrada'
+                    ? 'Cerrada'
+                    : ($cajaSeleccionada?->estado === 'pendiente_cierre' ? 'Cierre pendiente' : 'En curso');
+            @endphp
+            <div class="cash-session-overview {{ $cajaAbierta && $cajaSeleccionada ? '' : 'cash-session-overview-single' }}">
+                @if($cajaAbierta)
+                <div class="cash-session-banner">
                     <div>
-                        <strong>{{ $cajaAbierta->estado === 'abierta' ? 'Caja abierta' : 'Cierre pendiente de aprobación' }}</strong>
-                        <small>Desde {{ $cajaAbierta->abierta_en->format('d/m/Y H:i') }} · Fondo S/ {{ number_format($cajaAbierta->monto_inicial, 2) }}</small>
+                        <span class="cash-session-dot"></span>
+                        <div>
+                            <strong>{{ $cajaAbierta->estado === 'abierta' ? 'Caja abierta' : 'Cierre pendiente de aprobación' }}</strong>
+                            <small>Desde {{ $cajaAbierta->abierta_en->format('d/m/Y H:i') }} · Fondo S/ {{ number_format($cajaAbierta->monto_inicial, 2) }}</small>
+                        </div>
                     </div>
-                </div>
-                @if(auth()->user()->esAdmin())
+                    @if(auth()->user()->esAdmin())
                     <div>
                         <span>Efectivo esperado</span>
                         <strong>S/ {{ number_format($resumenCaja['esperado'], 2) }}</strong>
                     </div>
-                @else
+                    @else
+                        <div>
+                            <span>Control de caja</span>
+                            <strong>Conteo ciego habilitado</strong>
+                        </div>
+                    @endif
+                </div>
+                @endif
+
+                @if($cajaSeleccionada)
+                <div class="cash-session-filter-summary">
+                    <i class="fas fa-clock"></i>
                     <div>
-                        <span>Control de caja</span>
-                        <strong>Conteo ciego habilitado</strong>
+                        <strong>Jornada de caja #{{ $cajaSeleccionada->id }} · {{ $cajaSeleccionada->usuario?->nombre ?? 'Sin cajero' }}</strong>
+                        <small>
+                            {{ $cajaSeleccionada->abierta_en->format('d/m/Y h:i A') }}
+                            → {{ $finJornada?->format('d/m/Y h:i A') ?? 'Ahora' }}
+                            · {{ $estadoJornada }}
+                        </small>
                     </div>
+                </div>
                 @endif
             </div>
         @endif
@@ -235,26 +259,6 @@ Movimientos
             </div>
 
         </form>
-
-        @if($tipo === 'transacciones' && $cajaSeleccionada)
-            @php
-                $finJornada = $cajaSeleccionada->cerrada_en ?? $cajaSeleccionada->cierre_solicitado_en;
-                $estadoJornada = $cajaSeleccionada->estado === 'cerrada'
-                    ? 'Cerrada'
-                    : ($cajaSeleccionada->estado === 'pendiente_cierre' ? 'Cierre pendiente' : 'En curso');
-            @endphp
-            <div class="cash-session-filter-summary mb-4">
-                <i class="fas fa-clock"></i>
-                <div>
-                    <strong>Jornada de caja #{{ $cajaSeleccionada->id }} · {{ $cajaSeleccionada->usuario?->nombre ?? 'Sin cajero' }}</strong>
-                    <small>
-                        {{ $cajaSeleccionada->abierta_en->format('d/m/Y h:i A') }}
-                        → {{ $finJornada?->format('d/m/Y h:i A') ?? 'Ahora' }}
-                        · {{ $estadoJornada }}
-                    </small>
-                </div>
-            </div>
-        @endif
 
         @if($tipo === 'transacciones')
         {{-- ================= KPIs ================= --}}
