@@ -782,6 +782,28 @@
     background: #f7faff;
 }
 
+.ui-table .mov-row > td[data-label="Acciones"] {
+    min-width: 132px;
+}
+
+.movement-row-actions {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+}
+
+.movement-row-actions form {
+    display: flex;
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.movement-row-actions .btn-soft {
+    flex: 0 0 auto;
+}
+
 @media (max-width: 767.98px) {
     .ui-table .mov-row > td[data-label="Acciones"] {
         flex-direction: row;

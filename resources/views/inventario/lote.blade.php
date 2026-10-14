@@ -95,6 +95,7 @@ Ingreso de inventario
                     <input type="text" name="codigo_comprobante" id="codigo_comprobante"
                         class="form-control ui-input" placeholder="F001-000123"
                         value="{{ old('codigo_comprobante', data_get($compraEnCurso, 'codigo_comprobante')) }}">
+                    <small class="field-help">Se habilita al seleccionar un comprobante.</small>
                 </div>
 
                 <div class="col-md-5 col-lg-3">
@@ -414,6 +415,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const product = document.getElementById('producto-select');
     const quantity = document.getElementById('stock_inicial');
     const cost = document.getElementById('precio_compra');
+    const receiptType = document.getElementById('tipo_comprobante');
+    const receiptNumber = document.getElementById('codigo_comprobante');
+
+    function syncReceipt() {
+        const withoutReceipt = !receiptType.value;
+        receiptNumber.disabled = withoutReceipt;
+        receiptNumber.required = !withoutReceipt;
+        if (withoutReceipt) receiptNumber.value = '';
+    }
+
+    receiptType.addEventListener('change', syncReceipt);
 
     const tipoProveedor = document.getElementById('inv-proveedor-tipo');
     const documentoProveedor = document.getElementById('inv-proveedor-documento');
@@ -689,6 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     syncProduct();
+    syncReceipt();
     syncPayment();
     syncTotal();
 });

@@ -380,12 +380,21 @@ private function lotesDeCompra(Lote $lote)
 
 public function storeLote(Request $request)
 {
+    if (! $request->filled('tipo_comprobante')) {
+        // Un ingreso sin comprobante tampoco debe conservar una serie enviada
+        // por autocompletado, una pestaña antigua o una petición manipulada.
+        $request->merge([
+            'tipo_comprobante' => null,
+            'codigo_comprobante' => null,
+        ]);
+    }
+
     $request->validate([
         'request_key'       => 'required|uuid|max:100',
         'producto_id'       => 'required|exists:productos,id',
         'proveedor_id'      => 'nullable|exists:proveedores,id',
         'tipo_comprobante'  => 'nullable|in:factura,boleta,nota_venta,guia,otro',
-        'codigo_comprobante'=> 'nullable|string|max:100',
+        'codigo_comprobante'=> 'nullable|required_with:tipo_comprobante|string|max:100',
         'condicion_pago'    => 'required|in:contado,credito',
         'metodo_pago'       => 'nullable|required_if:condicion_pago,contado|in:efectivo,yape,plin,transferencia,tarjeta,otro',
         'fecha_vencimiento_pago' => 'nullable|required_if:condicion_pago,credito|date|after_or_equal:fecha_ingreso',
