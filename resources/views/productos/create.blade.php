@@ -206,10 +206,10 @@ Nuevo Producto
                             <i class="fas fa-plus"></i>
                         </button>
                     </label>
-                    <select name="categoria_id" id="categoria_id" class="form-select ui-input" required>
-                        <option value="">Seleccione</option>
+                    <select name="categoria_id" id="categoria_id" class="form-select ui-input">
+                        <option value="">Sin categoría (automático)</option>
                         @foreach($categorias as $categoria)
-                            <option value="{{ $categoria->id }}">
+                            <option value="{{ $categoria->id }}" @selected(old('categoria_id') == $categoria->id)>
                                 {{ $categoria->nombre }}
                             </option>
                         @endforeach
@@ -228,9 +228,9 @@ Nuevo Producto
                         </button>
                     </label>
                     <select name="marca_id" id="marca_id" class="form-select ui-input">
-                        <option value="">Seleccione</option>
+                        <option value="">Sin marca (automático)</option>
                         @foreach($marcas as $marca)
-                            <option value="{{ $marca->id }}">
+                            <option value="{{ $marca->id }}" @selected(old('marca_id') == $marca->id)>
                                 {{ $marca->nombre }}
                             </option>
                         @endforeach
@@ -624,7 +624,13 @@ Nuevo Producto
             $("#modalNuevaCategoria").modal("hide");
             $("#nueva_categoria_nombre").val("");
 
-            Swal.fire("Éxito", "Categoría registrada correctamente.", "success");
+            Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Categoría registrada correctamente.",
+                timer: 1400,
+                showConfirmButton: false
+            });
         });
     });
 
@@ -660,7 +666,13 @@ Nuevo Producto
             $("#modalNuevaMarca").modal("hide");
             $("#nueva_marca_nombre").val("");
 
-            Swal.fire("Éxito", "Marca registrada correctamente.", "success");
+            Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Marca registrada correctamente.",
+                timer: 1400,
+                showConfirmButton: false
+            });
         });
     });
 </script>

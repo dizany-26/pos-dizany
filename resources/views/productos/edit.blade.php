@@ -209,8 +209,8 @@ Editar Producto
 
                 <select name="categoria_id"
                         id="categoria_id"
-                        class="form-select ui-input"
-                        required>
+                        class="form-select ui-input">
+                    <option value="">Sin categoría (automático)</option>
                     @foreach($categorias as $categoria)
                         <option value="{{ $categoria->id }}"
                             {{ old('categoria_id', $producto->categoria_id) == $categoria->id ? 'selected' : '' }}>
@@ -234,7 +234,7 @@ Editar Producto
                 <select name="marca_id"
                         id="marca_id"
                         class="form-select ui-input">
-                    <option value="">Seleccione</option>
+                    <option value="">Sin marca (automático)</option>
                     @foreach($marcas as $marca)
                         <option value="{{ $marca->id }}"
                             {{ old('marca_id', $producto->marca_id) == $marca->id ? 'selected' : '' }}>
@@ -687,7 +687,13 @@ document.addEventListener('DOMContentLoaded', function () {
             $("#modalNuevaCategoria").modal("hide");
             $("#nueva_categoria_nombre").val("");
 
-            Swal.fire("Éxito", "Categoría registrada correctamente.", "success");
+            Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Categoría registrada correctamente.",
+                timer: 1400,
+                showConfirmButton: false
+            });
         });
     });
 
@@ -720,7 +726,13 @@ document.addEventListener('DOMContentLoaded', function () {
             $("#modalNuevaMarca").modal("hide");
             $("#nueva_marca_nombre").val("");
 
-            Swal.fire("Éxito", "Marca registrada correctamente.", "success");
+            Swal.fire({
+                icon: "success",
+                title: "Éxito",
+                text: "Marca registrada correctamente.",
+                timer: 1400,
+                showConfirmButton: false
+            });
         });
     });
 

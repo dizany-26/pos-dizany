@@ -108,7 +108,7 @@ class ProductoController extends Controller
         'imagenes_catalogo'    => 'nullable|array|max:2',
         'imagenes_catalogo.*'  => 'image|mimes:jpeg,png,jpg,webp,avif|max:2048',
 
-        'categoria_id'         => 'required|exists:categorias,id',
+        'categoria_id'         => 'nullable|exists:categorias,id',
         'marca_id'             => 'nullable|exists:marcas,id',
     ]);
 
@@ -145,6 +145,8 @@ class ProductoController extends Controller
             'unidades_por_caja' => 'No puede definir unidades por caja si la caja se compone de paquetes.'
         ])->withInput();
     }
+
+    $validated = $this->completarClasificacionProducto($validated);
 
     /* =====================
        EXTRAS
@@ -205,7 +207,7 @@ class ProductoController extends Controller
 
         'ubicacion'            => 'nullable|string|max:255',
 
-        'categoria_id'         => 'required|exists:categorias,id',
+        'categoria_id'         => 'nullable|exists:categorias,id',
         'marca_id'             => 'nullable|exists:marcas,id',
 
         'imagen'               => 'nullable|image|mimes:jpg,jpeg,png,webp,avif|max:2048',
@@ -270,6 +272,8 @@ class ProductoController extends Controller
             'unidades_por_caja' => 'No puede definir unidades por caja si la caja se arma por paquetes.'
         ])->withInput();
     }
+
+    $validated = $this->completarClasificacionProducto($validated);
 
     // ===== FLAGS =====
     $validated['activo'] = $request->has('activo') ? 1 : 0;
@@ -458,6 +462,24 @@ public function toggleEstado($id)
             'categorias' => Categoria::all(),
             'marcas' => Marca::all(),
         ];
+    }
+
+    private function completarClasificacionProducto(array $datos): array
+    {
+        if (empty($datos['categoria_id'])) {
+            $datos['categoria_id'] = Categoria::firstOrCreate([
+                'nombre' => 'SIN CATEGORÍA',
+            ])->id;
+        }
+
+        if (empty($datos['marca_id'])) {
+            $datos['marca_id'] = Marca::firstOrCreate(
+                ['nombre' => 'SIN MARCA'],
+                ['descripcion' => 'Clasificación automática para productos sin marca especificada.']
+            )->id;
+        }
+
+        return $datos;
     }
 
     public function mostrarDetalles($id)

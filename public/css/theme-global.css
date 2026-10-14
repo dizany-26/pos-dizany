@@ -802,6 +802,15 @@
 }
 
 /* File input + select2 fixes */
+:root[data-theme='light'] .select2-container--default .select2-results__option--selected {
+    background: #e5edf8 !important;
+    color: #11243f !important;
+}
+
+:root[data-theme='light'] .select2-container--default .select2-results__option--selected * {
+    color: inherit !important;
+}
+
 :root[data-theme='dark'] input[type='file'] {
     background: var(--dm-input-bg) !important;
     color: var(--dm-text) !important;
@@ -822,9 +831,22 @@
     color: var(--dm-text) !important;
 }
 
+:root[data-theme='dark'] .select2-container--default .select2-results__option--selected {
+    background: #1b3556 !important;
+    color: #edf4ff !important;
+}
+
+:root[data-theme='dark'] .select2-container--default .select2-results__option--selected * {
+    color: inherit !important;
+}
+
 :root[data-theme='dark'] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
     background: #5d92e6 !important;
     color: #fff !important;
+}
+
+:root .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable * {
+    color: inherit !important;
 }
 
 /* POS ventas premium */
