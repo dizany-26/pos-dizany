@@ -1219,6 +1219,44 @@ select.form-select-sm,
 }
 
 /* Paso final: los campos se desplazan y las acciones permanecen accesibles. */
+
+/* Navegación POS por teclado */
+.product-card.agregar-carrito.keyboard-active,
+.carrito-item.keyboard-active {
+    position: relative;
+    outline: 3px solid #2f80ed;
+    outline-offset: 2px;
+    border-radius: 12px;
+    box-shadow: 0 0 0 5px rgba(47, 128, 237, .16);
+}
+
+.product-card.agregar-carrito:focus-visible,
+.carrito-item:focus-visible,
+.metodo-pago-item:focus-visible {
+    outline: 3px solid #2f80ed;
+    outline-offset: 2px;
+}
+
+.keyboard-help-grid {
+    display: grid;
+    grid-template-columns: 105px minmax(0, 1fr);
+    gap: .65rem 1rem;
+}
+
+.keyboard-help-grid strong {
+    color: #2563eb;
+}
+
+@media (max-width: 575.98px) {
+    .keyboard-help-grid {
+        grid-template-columns: 1fr;
+        gap: .25rem;
+    }
+
+    .keyboard-help-grid span {
+        margin-bottom: .55rem;
+    }
+}
 #step-3.is-active > .card {
     display: flex;
     flex: 1;

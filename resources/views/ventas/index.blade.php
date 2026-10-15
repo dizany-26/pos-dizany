@@ -688,6 +688,7 @@ $productos = \App\Models\Producto::withSum('detalleVentas as total_vendido', 'ca
 <script src="{{ asset('js/ventas_registro.js') }}?v={{ filemtime(public_path('js/ventas_registro.js')) }}"></script>
 
 <script src="{{ asset('js/ventas_bootstrap.js') }}?v={{ filemtime(public_path('js/ventas_bootstrap.js')) }}"></script>
+<script src="{{ asset('js/ventas_keyboard.js') }}?v={{ filemtime(public_path('js/ventas_keyboard.js')) }}"></script>
 
 
 <script>
