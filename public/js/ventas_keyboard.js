@@ -112,6 +112,16 @@
             const campo = document.getElementById(id);
             if (campo) campo.tabIndex = -1;
         });
+        [
+            "btn-volver-step1",
+            "btn-ir-step3",
+            "btn-confirmar-venta-directo",
+            "btn-volver-step2",
+            "btn-confirmar-venta"
+        ].forEach(id => {
+            const boton = document.getElementById(id);
+            if (boton) boton.tabIndex = 0;
+        });
         prepararProductos();
         prepararCarrito();
         prepararMetodos();
@@ -291,8 +301,24 @@
             else if (pasoActivo() === "step-2") document.getElementById("btn-volver-step1")?.click();
             return;
         }
-        // Tab y Shift+Tab conservan siempre el recorrido nativo de los controles.
-        if (tecla === "Tab") return;
+        if (tecla === "Tab") {
+            if (!evento.shiftKey && foco?.id === "formato_pdf") {
+                const continuar = document.getElementById("btn-ir-step3");
+                const confirmarDirecto = document.getElementById("btn-confirmar-venta-directo");
+                const destino = visible(continuar) ? continuar : confirmarDirecto;
+                if (visible(destino)) {
+                    evento.preventDefault();
+                    enfocar(destino);
+                }
+            } else if (!evento.shiftKey && foco?.id === "vuelto-paga") {
+                const confirmar = document.getElementById("btn-confirmar-venta");
+                if (visible(confirmar)) {
+                    evento.preventDefault();
+                    enfocar(confirmar);
+                }
+            }
+            return;
+        }
 
         if (manejarCarrito(evento)) return;
 
