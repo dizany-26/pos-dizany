@@ -3,6 +3,12 @@
 (function () {
     "use strict";
 
+    // Esta capa es exclusiva para PC y laptop. En celulares y tablets no se
+    // modifica el foco, el orden de tabulacion ni la navegacion tactil.
+    const esDispositivoMovil = window.matchMedia("(max-width: 991.98px)").matches
+        || (navigator.maxTouchPoints > 0 && window.matchMedia("(hover: none)").matches);
+    if (esDispositivoMovil) return;
+
     let productoActivo = -1;
     let carritoActivo = -1;
 
