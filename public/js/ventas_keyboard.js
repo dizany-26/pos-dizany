@@ -112,10 +112,6 @@
             const campo = document.getElementById(id);
             if (campo) campo.tabIndex = -1;
         });
-        ["btn-volver-step1", "btn-volver-step2"].forEach(id => {
-            const boton = document.getElementById(id);
-            if (boton) boton.tabIndex = -1;
-        });
         prepararProductos();
         prepararCarrito();
         prepararMetodos();
@@ -289,6 +285,14 @@
         }
         if (tecla === "F8") return manejarF8(evento);
         if (tecla === "F9") return manejarF9(evento);
+        if (tecla === "Escape") {
+            evento.preventDefault();
+            if (pasoActivo() === "step-3") document.getElementById("btn-volver-step2")?.click();
+            else if (pasoActivo() === "step-2") document.getElementById("btn-volver-step1")?.click();
+            return;
+        }
+        // Tab y Shift+Tab conservan siempre el recorrido nativo de los controles.
+        if (tecla === "Tab") return;
 
         if (manejarCarrito(evento)) return;
 
@@ -336,12 +340,6 @@
         }
 
         if (escribiendo(foco)) return;
-
-        if (tecla === "Escape") {
-            if (pasoActivo() === "step-3") document.getElementById("btn-volver-step2")?.click();
-            else if (pasoActivo() === "step-2") document.getElementById("btn-volver-step1")?.click();
-            return;
-        }
 
         if (pasoActivo() !== "step-2") return;
         const key = tecla.toLowerCase();
