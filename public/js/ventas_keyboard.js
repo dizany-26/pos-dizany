@@ -201,9 +201,16 @@
     }
 
     function manejarCarrito(evento) {
-        const item = evento.target.closest?.(".carrito-item.keyboard-active");
-        if (!item || escribiendo(evento.target)) return false;
+        if (pasoActivo() !== "step-1" || escribiendo(evento.target)) return false;
+
         const items = itemsCarrito();
+        // Cambiar presentación reconstruye el carrito y el nodo enfocado deja de
+        // existir. Conservamos el índice activo para que la siguiente pulsación
+        // de P (o cualquier otro atajo del carrito) continúe sobre la misma fila.
+        const item = evento.target.closest?.(".carrito-item.keyboard-active")
+            || (carritoActivo >= 0 ? items[carritoActivo] : null);
+        if (!item) return false;
+
         const indice = items.indexOf(item);
 
         if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {

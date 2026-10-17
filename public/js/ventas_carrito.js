@@ -162,13 +162,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const buscarInput  = document.getElementById("buscar_producto");
     const btnIrStep2   = document.getElementById("btn-ir-step2");
 
-    async function descomponerFIFO(producto, cantidadPresentaciones, tipoVenta) {
-        const res = await fetch(`/ventas/stock-fifo/${producto.id}`);
-        const lotes = await res.json();
+    // Evita pedir al servidor los mismos lotes en cada pulsacion de + o -.
+    // El plazo corto mantiene vigente la informacion y permite varios ajustes
+    // consecutivos sin la latencia de una solicitud por cada clic.
+    const cacheLotesFIFO = new Map();
+    const DURACION_CACHE_FIFO = 10000;
 
-        if (!res.ok || !Array.isArray(lotes) || !lotes.length) {
-            throw new Error("No hay stock disponible");
-        }
+    function guardarLotesFIFO(productoId, lotes) {
+        if (!Array.isArray(lotes)) return;
+        cacheLotesFIFO.set(Number(productoId), {
+            lotes,
+            vence: Date.now() + DURACION_CACHE_FIFO
+        });
+    }
+
+    async function obtenerLotesFIFO(productoId) {
+        const id = Number(productoId);
+        const guardado = cacheLotesFIFO.get(id);
+        if (guardado?.lotes && guardado.vence > Date.now()) return guardado.lotes;
+        if (guardado?.promesa) return guardado.promesa;
+
+        const promesa = fetch(`/ventas/stock-fifo/${id}`)
+            .then(async response => {
+                const lotes = await response.json();
+                if (!response.ok || !Array.isArray(lotes) || !lotes.length) {
+                    throw new Error("No hay stock disponible");
+                }
+                guardarLotesFIFO(id, lotes);
+                return lotes;
+            })
+            .catch(error => {
+                cacheLotesFIFO.delete(id);
+                throw error;
+            });
+
+        cacheLotesFIFO.set(id, { promesa, vence: Date.now() + DURACION_CACHE_FIFO });
+        return promesa;
+    }
+
+    async function descomponerFIFO(producto, cantidadPresentaciones, tipoVenta) {
+        const lotes = await obtenerLotesFIFO(producto.id);
 
         let factor = 1;
         if (tipoVenta === "paquete") {
@@ -265,6 +298,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // ✅ pedir lotes FIFO (con precios por presentación)
     const res = await fetch(`/ventas/stock-fifo/${producto.id}`);
     const lotes = await res.json();
+
+    if (res.ok && Array.isArray(lotes) && lotes.length) {
+        guardarLotesFIFO(producto.id, lotes);
+    }
 
     const loteFIFO = Array.isArray(lotes) ? lotes[0] : null;
     if (!loteFIFO) {
