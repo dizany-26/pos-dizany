@@ -55,6 +55,7 @@ class BackupController extends Controller
         $executable = $this->findMysqlDump();
         $directory = storage_path(self::DIRECTORY);
         File::ensureDirectoryExists($directory);
+        $this->cleanupIncompleteArchives($directory);
 
         $filename = $this->backupPrefix() . '_' . now()->format('Y-m-d_H-i-s') . '_' . Str::lower(Str::random(4)) . '.sql';
         $temporaryPath = $directory . DIRECTORY_SEPARATOR . $filename . '.tmp';
@@ -122,10 +123,14 @@ class BackupController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
 
+            $message = str_contains(Str::lower($exception->getMessage()), 'disk quota exceeded')
+                ? 'La base de datos fue respaldada, pero Helio no tiene espacio suficiente para incluir las imágenes y archivos. Elimina copias antiguas o libera espacio e inténtalo nuevamente.'
+                : 'La base de datos fue respaldada, pero no se pudo completar el paquete con imágenes y archivos.';
+
             return $this->storeResponse(
                 $request,
                 false,
-                'La base de datos fue respaldada, pero no se pudo completar el paquete con imágenes y archivos.'
+                $message
             );
         }
 
@@ -607,8 +612,19 @@ class BackupController extends Controller
             $this->addDirectoryToArchive($zip, public_path('uploads'), 'files/public/uploads');
             $this->addDirectoryToArchive($zip, public_path('comprobantes'), 'files/public/comprobantes');
             $this->addDirectoryToArchive($zip, storage_path('app/sunat'), 'files/storage/app/sunat');
-        } finally {
-            $zip->close();
+
+            if (! $zip->close()) {
+                throw new \RuntimeException('No se pudo finalizar el paquete ZIP del respaldo.');
+            }
+        } catch (\Throwable $exception) {
+            try {
+                $zip->close();
+            } catch (\Throwable) {
+                // El ZIP puede haber quedado cerrado después de fallar por falta de espacio.
+            }
+
+            File::delete($temporaryPath);
+            throw $exception;
         }
 
         if (! File::isFile($temporaryPath) || File::size($temporaryPath) === 0) {
@@ -617,6 +633,13 @@ class BackupController extends Controller
         }
 
         File::move($temporaryPath, $archivePath);
+    }
+
+    private function cleanupIncompleteArchives(string $directory): void
+    {
+        foreach (File::glob($directory.DIRECTORY_SEPARATOR.'*.zip.tmp') ?: [] as $temporaryArchive) {
+            File::delete($temporaryArchive);
+        }
     }
 
     private function addDirectoryToArchive(ZipArchive $zip, string $directory, string $archiveRoot): void

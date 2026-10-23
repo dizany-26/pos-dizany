@@ -140,7 +140,6 @@
                                         @endif
                                         <form method="POST" action="{{ route('backups.destroy', $backup['name']) }}" data-backup-delete>
                                             @csrf
-                                            @method('DELETE')
                                             <button type="submit" title="Eliminar copia"><i class="fas fa-trash-alt"></i></button>
                                         </form>
                                     </div>

@@ -70,6 +70,17 @@ class RouteSecurityTest extends TestCase
         );
     }
 
+    public function test_backup_deletion_uses_hosting_compatible_post_request(): void
+    {
+        $route = $this->routeByName('backups.destroy');
+
+        $this->assertSame(['POST'], $route->methods());
+        $this->assertSame(
+            'configuracion/copias-seguridad/{filename}/eliminar',
+            $route->uri()
+        );
+    }
+
     public function test_ngrok_forwarded_origin_is_recognized_from_local_proxy(): void
     {
         $request = Request::create('/', 'GET', [], [], [], [

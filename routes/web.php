@@ -462,7 +462,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/{filename}/restaurar', [BackupController::class, 'restore'])
             ->middleware('throttle:2,5')
             ->name('backups.restore');
-        Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
+        // Algunos hostings compartidos bloquean HTTP DELETE antes de llegar a Laravel.
+        Route::post('/{filename}/eliminar', [BackupController::class, 'destroy'])->name('backups.destroy');
     });
 
     /*

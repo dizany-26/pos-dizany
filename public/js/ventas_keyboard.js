@@ -5,8 +5,10 @@
 
     // Esta capa es exclusiva para PC y laptop. En celulares y tablets no se
     // modifica el foco, el orden de tabulacion ni la navegacion tactil.
-    const esDispositivoMovil = window.matchMedia("(max-width: 991.98px)").matches
-        || (navigator.maxTouchPoints > 0 && window.matchMedia("(hover: none)").matches);
+    const esNavegadorMovil = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile/i
+        .test(navigator.userAgent || "");
+    const esDispositivoMovil = esNavegadorMovil
+        || window.matchMedia("(max-width: 767.98px)").matches;
     if (esDispositivoMovil) return;
 
     let productoActivo = -1;
@@ -357,12 +359,13 @@
                 const siguiente = (indice + avance + metodos.length) % metodos.length;
                 metodos.forEach((item, i) => item.tabIndex = i === siguiente ? 0 : -1);
                 enfocar(metodos[siguiente]);
+                return;
             } else if (tecla === "Enter" || tecla === " ") {
                 evento.preventDefault();
                 metodo.click();
                 prepararMetodos();
+                return;
             }
-            return;
         }
 
         if (escribiendo(foco)) return;
