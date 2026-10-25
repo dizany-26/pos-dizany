@@ -14,6 +14,7 @@ class Lote extends Model
 
     protected $fillable = [
         'request_key',
+        'purchase_group_key',
         'producto_id',
         'proveedor_id',
         'numero_lote',

@@ -220,6 +220,81 @@ Panel de Editar
                     </button>
                 </div>
             </form>
+
+            @if(auth()->user()->esAdmin())
+                <div class="card border-danger mt-4">
+                    <div class="card-header bg-danger bg-opacity-10 fw-semibold">
+                        <i class="fas fa-coins me-2"></i> Corrección del costo de compra
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning small">
+                            <strong>Esta acción no modifica el stock ni el precio de venta.</strong>
+                            El sistema recalculará la utilidad de las ventas que utilizaron este lote.
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block">Costo actual por unidad</span>
+                                <strong class="fs-5">S/ {{ number_format($lote->precio_compra, 6) }}</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block">Unidades vendidas de este lote</span>
+                                <strong class="fs-5">{{ number_format($unidadesVendidas) }}</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block">Stock actual / inicial</span>
+                                <strong class="fs-5">{{ $lote->stock_actual }} / {{ $lote->stock_inicial }}</strong>
+                            </div>
+                        </div>
+
+                        <form method="POST" action="{{ route('lotes.corregir-costo', $lote) }}" data-cost-correction-form>
+                            @csrf
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" for="nuevo_costo">Nuevo costo por unidad (S/)</label>
+                                    <input type="number" class="form-control @error('nuevo_costo') is-invalid @enderror"
+                                           id="nuevo_costo" name="nuevo_costo" min="0" step="0.000001"
+                                           value="{{ old('nuevo_costo') }}" required>
+                                    @error('nuevo_costo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold" for="motivo_correccion_costo">Motivo de la corrección</label>
+                                    <input type="text" class="form-control @error('motivo') is-invalid @enderror"
+                                           id="motivo_correccion_costo" name="motivo" maxlength="500"
+                                           value="{{ old('motivo') }}" placeholder="Ejemplo: costo digitado incorrectamente" required>
+                                    @error('motivo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-3 d-grid">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-calculator me-1"></i> Corregir y recalcular
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        @if($correccionesCosto->isNotEmpty())
+                            <div class="table-responsive mt-4">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr><th>Fecha</th><th>Costo anterior</th><th>Costo nuevo</th><th>Motivo</th><th>Responsable</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($correccionesCosto as $correccion)
+                                            <tr>
+                                                <td>{{ \Carbon\Carbon::parse($correccion->created_at)->format('d/m/Y H:i') }}</td>
+                                                <td>S/ {{ number_format($correccion->costo_anterior, 6) }}</td>
+                                                <td>S/ {{ number_format($correccion->costo_nuevo, 6) }}</td>
+                                                <td>{{ $correccion->motivo }}</td>
+                                                <td>{{ $correccion->usuario_nombre ?? 'Usuario eliminado' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
             
         </div>
     </div>
@@ -237,6 +312,22 @@ Panel de Editar
 @endpush
 
 @push('scripts')
+<script>
+document.querySelector('[data-cost-correction-form]')?.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const nuevoCosto = document.getElementById('nuevo_costo')?.value || '0';
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: '¿Corregir el costo de compra?',
+        html: `El nuevo costo será <strong>S/ ${Number(nuevoCosto).toFixed(6)}</strong> por unidad.<br>Se recalcularán las ganancias relacionadas.`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, corregir y recalcular',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545'
+    });
+    if (result.isConfirmed) this.submit();
+});
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         flatpickr('.fecha-vencimiento-edit', {

@@ -14,8 +14,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Process\Process;
 use ZipArchive;
+use ZipStream\ZipStream;
 
 class BackupController extends Controller
 {
@@ -118,23 +120,7 @@ class BackupController extends Controller
 
         File::move($temporaryPath, $finalPath);
 
-        try {
-            $this->createCompleteArchive($finalPath, $filename);
-        } catch (\Throwable $exception) {
-            report($exception);
-
-            $message = str_contains(Str::lower($exception->getMessage()), 'disk quota exceeded')
-                ? 'La base de datos fue respaldada, pero Helio no tiene espacio suficiente para incluir las imágenes y archivos. Elimina copias antiguas o libera espacio e inténtalo nuevamente.'
-                : 'La base de datos fue respaldada, pero no se pudo completar el paquete con imágenes y archivos.';
-
-            return $this->storeResponse(
-                $request,
-                false,
-                $message
-            );
-        }
-
-        return $this->storeResponse($request, true, 'Copia completa creada: base de datos, imágenes y archivos del sistema.');
+        return $this->storeResponse($request, true, 'Copia rápida creada: la base de datos quedó guardada en Helio.');
     }
 
     private function storeResponse(Request $request, bool $success, string $message): RedirectResponse|JsonResponse
@@ -170,6 +156,60 @@ class BackupController extends Controller
         return response()->download($archivePath, $this->archiveName($filename), [
             'Content-Type' => 'application/zip',
             'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    public function downloadComplete(): StreamedResponse
+    {
+        $connection = config('database.connections.mysql');
+        abort_unless(($connection['driver'] ?? null) === 'mysql', 422, 'La copia automática requiere una conexión MySQL.');
+
+        $directory = storage_path(self::DIRECTORY);
+        File::ensureDirectoryExists($directory);
+        $this->cleanupIncompleteArchives($directory);
+
+        $baseName = $this->backupPrefix().'_completa_'.now()->format('Y-m-d_H-i-s');
+        $databaseFilename = $baseName.'.sql';
+        $databasePath = $directory.DIRECTORY_SEPARATOR.$databaseFilename;
+        $temporaryPath = $databasePath.'.download.tmp';
+        File::delete([$temporaryPath, $databasePath]);
+
+        try {
+            $this->createPortableDump($temporaryPath, (string) ($connection['database'] ?? ''));
+            File::move($temporaryPath, $databasePath);
+        } catch (\Throwable $exception) {
+            File::delete([$temporaryPath, $databasePath]);
+            report($exception);
+            abort(500, 'No se pudo preparar la base de datos para la descarga completa.');
+        }
+
+        return response()->streamDownload(function () use ($databasePath, $databaseFilename): void {
+            @set_time_limit(0);
+            $zip = new ZipStream(
+                defaultDeflateLevel: 1,
+                sendHttpHeaders: false,
+                flushOutput: true
+            );
+            $zip->addFileFromPath('database/'.$databaseFilename, $databasePath);
+            $zip->addFile('manifest.json', json_encode([
+                'format' => 'dizany-complete-backup-v1',
+                'created_at' => now()->toIso8601String(),
+                'database_file' => $databaseFilename,
+                'paths' => [
+                    'public/uploads',
+                    'public/comprobantes',
+                    'storage/app/sunat',
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+            $this->addDirectoryToStream($zip, public_path('uploads'), 'files/public/uploads');
+            $this->addDirectoryToStream($zip, public_path('comprobantes'), 'files/public/comprobantes');
+            $this->addDirectoryToStream($zip, storage_path('app/sunat'), 'files/storage/app/sunat');
+            $zip->finish();
+        }, $baseName.'.zip', [
+            'Content-Type' => 'application/zip',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 
@@ -639,6 +679,35 @@ class BackupController extends Controller
     {
         foreach (File::glob($directory.DIRECTORY_SEPARATOR.'*.zip.tmp') ?: [] as $temporaryArchive) {
             File::delete($temporaryArchive);
+        }
+
+        foreach (File::glob($directory.DIRECTORY_SEPARATOR.'*.download.tmp') ?: [] as $temporaryDownload) {
+            File::delete($temporaryDownload);
+        }
+    }
+
+    private function addDirectoryToStream(ZipStream $zip, string $directory, string $archiveRoot): void
+    {
+        if (! File::isDirectory($directory)) {
+            return;
+        }
+
+        $directory = rtrim($directory, DIRECTORY_SEPARATOR);
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($iterator as $file) {
+            if (! $file->isFile() || $file->isLink()) {
+                continue;
+            }
+
+            $relative = ltrim(substr($file->getPathname(), strlen($directory)), '\\/');
+            $zip->addFileFromPath(
+                $archiveRoot.'/'.str_replace('\\', '/', $relative),
+                $file->getPathname()
+            );
         }
     }
 

@@ -14,6 +14,7 @@ use App\Models\Lote;
 use App\Models\LoteMovimiento;
 use App\Models\CompraPago;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class InventarioController extends Controller
 {
@@ -364,6 +365,7 @@ public function registrarPagoCompra(Request $request, Lote $lote)
 
 private function claveCompra(Lote $lote): string
 {
+    if (filled($lote->purchase_group_key)) return 'grupo-'.$lote->purchase_group_key;
     if (blank($lote->codigo_comprobante)) return 'lote-'.$lote->id;
     return implode('|', [$lote->proveedor_id, strtolower($lote->tipo_comprobante ?? ''), strtoupper(trim($lote->codigo_comprobante)), optional($lote->fecha_ingreso)->format('Y-m-d')]);
 }
@@ -371,6 +373,9 @@ private function claveCompra(Lote $lote): string
 private function lotesDeCompra(Lote $lote)
 {
     $query = Lote::with(['producto', 'proveedor', 'compraMovimiento.pagosCompra.usuario']);
+    if (filled($lote->purchase_group_key)) {
+        return $query->where('purchase_group_key', $lote->purchase_group_key)->get();
+    }
     if (blank($lote->codigo_comprobante)) return $query->whereKey($lote->id)->get();
     return $query->where('proveedor_id', $lote->proveedor_id)
         ->where('tipo_comprobante', $lote->tipo_comprobante)
@@ -424,12 +429,20 @@ public function storeLote(Request $request)
     }
 
     $requestKey = (string) $request->request_key;
-    if (Lote::where('request_key', $requestKey)->exists()) {
-        return $this->respuestaIngresoInventario($request, true);
+    $loteExistente = Lote::where('request_key', $requestKey)->first();
+    if ($loteExistente) {
+        return $this->respuestaIngresoInventario($request, true, $loteExistente->purchase_group_key);
     }
 
+    $groupSignature = $this->firmaCompra($request->all());
+    $compraEnCurso = session('inventario_compra_en_curso', []);
+    $purchaseGroupKey = ($compraEnCurso['group_signature'] ?? null) === $groupSignature
+        && filled($compraEnCurso['purchase_group_key'] ?? null)
+            ? $compraEnCurso['purchase_group_key']
+            : (string) Str::uuid();
+
     try {
-        DB::transaction(function () use ($request, $requestKey) {
+        DB::transaction(function () use ($request, $requestKey, $purchaseGroupKey) {
 
         $producto = Producto::whereKey($request->producto_id)
             ->lockForUpdate()
@@ -456,6 +469,7 @@ public function storeLote(Request $request)
 
         $lote = Lote::create([
             'request_key'       => $requestKey,
+            'purchase_group_key'=> $purchaseGroupKey,
             'producto_id'       => $request->producto_id,
             'proveedor_id'      => $request->proveedor_id,
             'numero_lote'       => $numeroLote, // 👈 AQUÍ
@@ -505,17 +519,21 @@ public function storeLote(Request $request)
     } catch (\Illuminate\Database\QueryException $exception) {
         // Dos envíos simultáneos comparten la misma clave. La restricción
         // única deja pasar solo el primero y este segundo recupera su resultado.
-        if (! Lote::where('request_key', $requestKey)->exists()) {
+        $loteExistente = Lote::where('request_key', $requestKey)->first();
+        if (! $loteExistente) {
             throw $exception;
         }
+        $purchaseGroupKey = $loteExistente->purchase_group_key ?: $purchaseGroupKey;
     }
 
-    return $this->respuestaIngresoInventario($request);
+    return $this->respuestaIngresoInventario($request, false, $purchaseGroupKey);
 }
 
-private function respuestaIngresoInventario(Request $request, bool $recuperado = false)
+private function respuestaIngresoInventario(Request $request, bool $recuperado = false, ?string $purchaseGroupKey = null)
 {
     session(['inventario_compra_en_curso' => [
+            'purchase_group_key' => $purchaseGroupKey ?: (string) Str::uuid(),
+            'group_signature' => $this->firmaCompra($request->all()),
             'proveedor_id' => $request->proveedor_id,
             'tipo_comprobante' => $request->tipo_comprobante,
             'codigo_comprobante' => $request->codigo_comprobante,
@@ -534,9 +552,36 @@ private function respuestaIngresoInventario(Request $request, bool $recuperado =
         ->with('success', $recuperado ? $mensaje.' Se evitó un registro duplicado.' : $mensaje);
 }
 
+private function firmaCompra(array $datos): string
+{
+    return hash('sha256', json_encode([
+        'proveedor_id' => (string) ($datos['proveedor_id'] ?? ''),
+        'tipo_comprobante' => strtolower(trim((string) ($datos['tipo_comprobante'] ?? ''))),
+        'codigo_comprobante' => strtoupper(trim((string) ($datos['codigo_comprobante'] ?? ''))),
+        'fecha_ingreso' => (string) ($datos['fecha_ingreso'] ?? ''),
+        'condicion_pago' => (string) ($datos['condicion_pago'] ?? ''),
+        'metodo_pago' => ($datos['condicion_pago'] ?? null) === 'contado'
+            ? (string) ($datos['metodo_pago'] ?? '')
+            : '',
+        'fecha_vencimiento_pago' => ($datos['condicion_pago'] ?? null) === 'credito'
+            ? (string) ($datos['fecha_vencimiento_pago'] ?? '')
+            : '',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+}
+
     public function edit(Lote $lote)
     {
-        return view('inventario.lote_edit', compact('lote'));
+        $unidadesVendidas = (int) DB::table('detalle_lote_ventas')
+            ->where('lote_id', $lote->id)
+            ->sum('cantidad');
+        $correccionesCosto = DB::table('lote_costo_correcciones as correccion')
+            ->leftJoin('usuarios as usuario', 'usuario.id', '=', 'correccion.usuario_id')
+            ->where('correccion.lote_id', $lote->id)
+            ->orderByDesc('correccion.id')
+            ->select('correccion.*', 'usuario.nombre as usuario_nombre')
+            ->get();
+
+        return view('inventario.lote_edit', compact('lote', 'unidadesVendidas', 'correccionesCosto'));
     }
 
 public function update(Request $request, Lote $lote)
@@ -581,6 +626,99 @@ public function update(Request $request, Lote $lote)
                 ? 'Lote y precio público del producto actualizados correctamente'
                 : 'Lote actualizado; se conservó el precio público del producto'
         );
+}
+
+public function corregirCosto(Request $request, Lote $lote)
+{
+    abort_unless(auth()->user()->esAdmin(), 403);
+
+    $datos = $request->validate([
+        'nuevo_costo' => ['required', 'numeric', 'min:0', 'max:999999.999999'],
+        'motivo' => ['required', 'string', 'min:5', 'max:500'],
+    ], [
+        'nuevo_costo.required' => 'Ingresa el costo correcto por unidad.',
+        'motivo.required' => 'Explica el motivo de la corrección.',
+        'motivo.min' => 'El motivo debe tener al menos 5 caracteres.',
+    ]);
+
+    $resultado = DB::transaction(function () use ($lote, $datos) {
+        $lote = Lote::whereKey($lote->id)->lockForUpdate()->firstOrFail();
+        $costoAnterior = round((float) $lote->precio_compra, 6);
+        $nuevoCosto = round((float) $datos['nuevo_costo'], 6);
+
+        if (abs($costoAnterior - $nuevoCosto) < 0.000001) {
+            throw ValidationException::withMessages([
+                'nuevo_costo' => 'El nuevo costo debe ser diferente del costo actual.',
+            ]);
+        }
+
+        $detalleIds = DB::table('detalle_lote_ventas')
+            ->where('lote_id', $lote->id)
+            ->pluck('detalle_venta_id')
+            ->unique()
+            ->values();
+        $unidadesVendidas = (int) DB::table('detalle_lote_ventas')
+            ->where('lote_id', $lote->id)
+            ->sum('cantidad');
+
+        $movimiento = Movimiento::where('referencia_tipo', 'lote')
+            ->where('referencia_id', $lote->id)
+            ->where('subtipo', 'compra_mercaderia')
+            ->lockForUpdate()
+            ->first();
+
+        if ($movimiento) {
+            $nuevoTotalCompra = round((float) $lote->stock_inicial * $nuevoCosto, 2);
+            $pagado = round((float) CompraPago::where('movimiento_id', $movimiento->id)->sum('monto'), 2);
+
+            if ($pagado > $nuevoTotalCompra) {
+                throw ValidationException::withMessages([
+                    'nuevo_costo' => 'No se puede reducir el costo porque este lote ya tiene pagos mayores al nuevo total de compra.',
+                ]);
+            }
+
+            $movimiento->update([
+                'monto' => $nuevoTotalCompra,
+                'estado' => $pagado >= $nuevoTotalCompra ? 'pagado' : 'pendiente',
+            ]);
+        }
+
+        $lote->update(['precio_compra' => $nuevoCosto]);
+
+        foreach ($detalleIds as $detalleId) {
+            $detalle = DB::table('detalle_ventas')->where('id', $detalleId)->lockForUpdate()->first();
+            if (! $detalle) continue;
+
+            $costoVendido = (float) DB::table('detalle_lote_ventas as asignacion')
+                ->join('lotes as lote_costo', 'lote_costo.id', '=', 'asignacion.lote_id')
+                ->where('asignacion.detalle_venta_id', $detalleId)
+                ->sum(DB::raw('asignacion.cantidad * lote_costo.precio_compra'));
+
+            DB::table('detalle_ventas')->where('id', $detalleId)->update([
+                'ganancia' => round((float) $detalle->subtotal - $costoVendido, 2),
+            ]);
+        }
+
+        DB::table('lote_costo_correcciones')->insert([
+            'lote_id' => $lote->id,
+            'usuario_id' => auth()->id(),
+            'costo_anterior' => $costoAnterior,
+            'costo_nuevo' => $nuevoCosto,
+            'unidades_vendidas' => $unidadesVendidas,
+            'detalles_venta_afectados' => $detalleIds->count(),
+            'motivo' => trim($datos['motivo']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return compact('unidadesVendidas') + ['ventasAfectadas' => $detalleIds->count()];
+    });
+
+    return redirect()->route('lotes.edit', $lote)->with(
+        'success',
+        'Costo de compra corregido. Se recalcularon '.$resultado['ventasAfectadas'].' venta(s) y '
+            .$resultado['unidadesVendidas'].' unidad(es) vendida(s).'
+    );
 }
     
 

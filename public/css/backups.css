@@ -10,3 +10,6 @@
 .backup-progress-icon.is-restore{background:#fff3dc;color:#d97706}.backup-progress-icon.is-restore.is-complete{background:#dcfce7;color:#15803d}:root[data-theme='dark'] .backup-progress-icon.is-restore{background:#493516;color:#ffc565}:root[data-theme='dark'] .backup-progress-icon.is-restore.is-complete{background:#153b2a;color:#70e69b}
 
 .backup-table tr.is-emergency{background:#fffaf0}.backup-file-cell.is-emergency>span{background:#fff1d6;color:#d97706}.backup-status.is-emergency{background:#fff1d6;color:#b86206;white-space:nowrap}:root[data-theme='dark'] .backup-table tr.is-emergency{background:#302817}:root[data-theme='dark'] .backup-file-cell.is-emergency>span,:root[data-theme='dark'] .backup-status.is-emergency{background:#493516;color:#ffc565}
+
+.backup-mobile-actions{display:none}.backup-primary-button.is-download{border-color:#168342;color:#168342}
+@media(max-width:768px){.backup-mobile-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}}

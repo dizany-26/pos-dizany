@@ -21,6 +21,7 @@ class RouteSecurityTest extends TestCase
             'inventario.compras.pagos' => ['auth', 'permission:inventario.lote', 'role:Administrador'],
             'inventario.compra-en-curso.limpiar' => ['auth', 'permission:inventario.lote'],
             'lotes.ajustar' => ['auth', 'role:Administrador'],
+            'lotes.corregir-costo' => ['auth', 'role:Administrador'],
             'gastos.store' => ['auth', 'permission:ventas,gastos'],
             'gastos.destroy' => ['auth', 'role:Administrador'],
             'movimientos.compras.pagos' => ['auth', 'permission:movimientos', 'role:Administrador'],
@@ -31,6 +32,7 @@ class RouteSecurityTest extends TestCase
             'catalogo.admin.config.update' => ['auth', 'permission:catalogo.config'],
             'backups.index' => ['auth', 'permission:backups'],
             'backups.store' => ['auth', 'permission:backups'],
+            'backups.download-complete-now' => ['auth', 'permission:backups'],
             'backups.download' => ['auth', 'permission:backups'],
             'backups.download-complete' => ['auth', 'permission:backups'],
             'backups.restore' => ['auth', 'permission:backups'],
@@ -79,6 +81,15 @@ class RouteSecurityTest extends TestCase
             'configuracion/copias-seguridad/{filename}/eliminar',
             $route->uri()
         );
+    }
+
+    public function test_complete_backup_download_uses_protected_post_request(): void
+    {
+        $route = $this->routeByName('backups.download-complete-now');
+
+        $this->assertSame(['POST'], $route->methods());
+        $this->assertContains('auth', $route->gatherMiddleware());
+        $this->assertContains('permission:backups', $route->gatherMiddleware());
     }
 
     public function test_ngrok_forwarded_origin_is_recognized_from_local_proxy(): void

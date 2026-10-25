@@ -15,7 +15,14 @@
     @csrf
     <button class="btn-movimientos-outline" type="submit" data-backup-create>
         <i class="fas fa-database"></i>
-        <span>Crear copia</span>
+        <span>Copia rápida</span>
+    </button>
+</form>
+<form method="POST" action="{{ route('backups.download-complete-now') }}" target="_blank">
+    @csrf
+    <button class="btn-movimientos-outline" type="submit" title="Descargar todo al equipo y conservar el SQL en Helio">
+        <i class="fas fa-download"></i>
+        <span>Descargar completa</span>
     </button>
 </form>
 @endsection
@@ -32,7 +39,7 @@
         <div>
             <span class="backup-eyebrow">PROTECCIÓN DE DATOS</span>
             <h1>Respalda la información de DIZANY</h1>
-            <p>Guarda la base de datos junto con fotografías, logos, comprobantes y archivos privados de SUNAT.</p>
+            <p>Guarda una copia rápida en Helio o descarga a tu equipo la base de datos junto con fotografías, comprobantes y archivos de SUNAT.</p>
         </div>
     </div>
 
@@ -62,12 +69,20 @@
                 <h2><i class="fas fa-clock-rotate-left"></i> Historial de copias</h2>
                 <p>{{ $backups->count() }} {{ $backups->count() === 1 ? 'archivo guardado' : 'archivos guardados' }}</p>
             </div>
-            <form method="POST" action="{{ route('backups.store') }}" class="backup-mobile-create">
-                @csrf
-                <button class="backup-primary-button" type="submit" data-backup-create>
-                    <i class="fas fa-plus"></i> Crear copia
-                </button>
-            </form>
+            <div class="backup-mobile-actions">
+                <form method="POST" action="{{ route('backups.store') }}">
+                    @csrf
+                    <button class="backup-primary-button" type="submit" data-backup-create>
+                        <i class="fas fa-database"></i> Copia rápida
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('backups.download-complete-now') }}" target="_blank">
+                    @csrf
+                    <button class="backup-primary-button is-download" type="submit">
+                        <i class="fas fa-download"></i> Descargar completa
+                    </button>
+                </form>
+            </div>
         </div>
 
         @if($backups->isEmpty())
@@ -207,7 +222,7 @@ document.querySelectorAll('[data-backup-create]').forEach((button) => {
             if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo crear la copia.');
 
             window.clearInterval(timer);
-            updateBackupProgress(100, '¡Copia completada correctamente!');
+            updateBackupProgress(100, '¡Base de datos respaldada correctamente!');
             document.querySelector('.backup-progress-icon')?.classList.add('is-complete');
             await new Promise(resolve => window.setTimeout(resolve, 900));
             Swal.close();
