@@ -209,6 +209,157 @@
     -webkit-overflow-scrolling: touch;
     padding-bottom: 16px;
 }
+
+/* Cobro de ventas pendientes */
+.cobro-venta-card {
+    margin-top: 14px;
+    padding: 18px;
+    border: 1px solid #dbe5f1;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 35, 65, 0.08);
+}
+
+.cobro-venta-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.cobro-venta-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 13px;
+    background: rgba(34, 197, 94, 0.14);
+    color: #16a34a;
+}
+
+.cobro-venta-heading small,
+.cobro-venta-heading strong {
+    display: block;
+}
+
+.cobro-venta-heading small {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cobro-venta-heading strong {
+    margin-top: 2px;
+    color: #17233a;
+}
+
+.cobro-total-box,
+.cobro-vuelto-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 13px;
+}
+
+.cobro-total-box {
+    margin-bottom: 16px;
+    background: #eef5ff;
+    color: #24446f;
+}
+
+.cobro-total-box strong {
+    color: #135ec5;
+    font-size: 1.2rem;
+}
+
+.cobro-form-group {
+    margin-bottom: 13px;
+}
+
+.cobro-form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #475569;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.cobro-input-money {
+    position: relative;
+}
+
+.cobro-input-money > span {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-weight: 700;
+    pointer-events: none;
+}
+
+.cobro-input-money .form-control {
+    padding-left: 42px;
+}
+
+.cobro-vuelto-box {
+    margin-top: 4px;
+    background: rgba(34, 197, 94, 0.11);
+    color: #16753a;
+}
+
+.cobro-vuelto-box strong {
+    font-size: 1.05rem;
+}
+
+.cobro-acciones {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.cobro-acciones .btn-soft {
+    min-width: 0;
+    min-height: 42px;
+    justify-content: center;
+}
+
+:root[data-theme='dark'] .cobro-venta-card {
+    border-color: #284363;
+    background: #102039;
+    box-shadow: 0 14px 32px rgba(2, 8, 20, 0.3);
+}
+
+:root[data-theme='dark'] .cobro-venta-heading strong {
+    color: #f1f6ff;
+}
+
+:root[data-theme='dark'] .cobro-venta-heading small,
+:root[data-theme='dark'] .cobro-form-group label {
+    color: #9fb2cb;
+}
+
+:root[data-theme='dark'] .cobro-total-box {
+    background: #142c4c;
+    color: #a9bed7;
+}
+
+:root[data-theme='dark'] .cobro-total-box strong {
+    color: #79b6ff;
+}
+
+:root[data-theme='dark'] .cobro-vuelto-box {
+    background: rgba(34, 197, 94, 0.13);
+    color: #71dda0;
+}
 .sticky-actions {
     position: static;
     display: flex;

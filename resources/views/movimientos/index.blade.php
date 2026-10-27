@@ -271,7 +271,7 @@ Movimientos
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <div>
-                            <small class="text-muted">Balance</small>
+                            <small class="text-muted">Ingresos netos</small>
                             <h5 class="fw-bold mb-0">
                                 S/ {{ number_format($balance ?? 0, 2) }}
                             </h5>

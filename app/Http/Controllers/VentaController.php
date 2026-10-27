@@ -1154,11 +1154,20 @@ public function pagarCredito(Request $request, Venta $venta)
                 'referencia_tipo' => 'venta',
             ]);
 
-            Movimiento::where('referencia_tipo', 'venta')
+            $movimientoPendiente = Movimiento::where('referencia_tipo', 'venta')
                 ->where('referencia_id', $ventaBloqueada->id)
                 ->where('subtipo', 'venta')
-                ->where('estado', 'pendiente')
-                ->update(['estado' => 'anulado']);
+                ->whereRaw('LOWER(metodo_pago) = ?', ['credito'])
+                ->whereIn('estado', ['pendiente', 'anulado'])
+                ->latest('id')
+                ->first();
+
+            if ($movimientoPendiente) {
+                $movimientoPendiente->update($nuevoSaldo > 0
+                    ? ['monto' => $nuevoSaldo, 'estado' => 'pendiente']
+                    : ['estado' => 'anulado']
+                );
+            }
 
             return ['saldo' => $nuevoSaldo, 'monto' => $monto];
         });

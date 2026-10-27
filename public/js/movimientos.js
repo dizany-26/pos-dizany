@@ -692,7 +692,7 @@ const documentoSol = sol.documento || null;
                     ${v.ganancia !== null && v.ganancia !== undefined ? `
                         <div class="detalle-item">
                             <i class="fas fa-chart-line"></i>
-                            <span>Ganancia</span>
+                            <span>${saldo > 0.009 ? 'Ganancia estimada' : 'Ganancia'}</span>
                             <strong class="text-success">
                                 ${money(v.ganancia)}
                             </strong>
@@ -849,43 +849,58 @@ const documentoSol = sol.documento || null;
             </div>
 
             <div id="panel-cobro" style="display:none">
-                <h6 class="fw-semibold text-muted text-uppercase small mt-3">
-                    Cobrar venta
-                </h6>
+                <div class="cobro-venta-card">
+                    <div class="cobro-venta-heading">
+                        <span class="cobro-venta-icon"><i class="fas fa-hand-holding-dollar"></i></span>
+                        <div>
+                            <small>Cobrar venta</small>
+                            <strong>Registra el pago recibido</strong>
+                        </div>
+                    </div>
 
-                <div class="fw-bold mb-2">
-                    Total a pagar: S/ <span id="cc_total">${montoCobrar.toFixed(2)}</span>
-                </div>
+                    <div class="cobro-total-box">
+                        <span>Saldo a cobrar</span>
+                        <strong>S/ <span id="cc_total">${montoCobrar.toFixed(2)}</span></strong>
+                    </div>
 
-                <label class="form-label">Monto recibido</label>
+                    <div class="cobro-form-group">
+                        <label for="cc_monto">Monto recibido</label>
+                        <div class="cobro-input-money">
+                            <span>S/</span>
+                            <input type="number"
+                                id="cc_monto"
+                                class="form-control ui-input"
+                                placeholder="0.00"
+                                min="0"
+                                step="0.01">
+                        </div>
+                    </div>
 
-                <input type="number"
-                    id="cc_monto"
-                    class="form-control ui-input mb-2"
-                    value="0"
-                    min="0"
-                    step="0.01">
+                    <div class="cobro-form-group">
+                        <label for="cc_metodo">Método de pago</label>
+                        <select id="cc_metodo" class="form-select ui-input">
+                            <option value="">Seleccione método</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="yape">Yape</option>
+                            <option value="plin">Plin</option>
+                            <option value="transferencia">Transferencia</option>
+                        </select>
+                    </div>
 
-                <select id="cc_metodo" class="form-select ui-input mb-2">
-                    <option value="">Seleccione método</option>
-                    <option value="efectivo">Efectivo</option>
-                    <option value="yape">Yape</option>
-                    <option value="plin">Plin</option>
-                    <option value="transferencia">Transferencia</option>
-                </select>
+                    <div class="cobro-vuelto-box">
+                        <span>Vuelto</span>
+                        <strong>S/ <span id="cc_vuelto">0.00</span></strong>
+                    </div>
 
-                <div class="fw-bold text-success mt-2">
-                    Vuelto: S/ <span id="cc_vuelto">0.00</span>
-                </div>
+                    <div class="cobro-acciones">
+                        <button type="button" class="btn-soft btn-soft-info" onclick="volverDetalle()">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </button>
 
-                <div class="d-flex gap-2 mt-3">
-                    <button type="button" class="btn-soft btn-soft-info flex-fill" onclick="volverDetalle()">
-                        Volver
-                    </button>
-
-                    <button type="button" class="btn-soft btn-soft-success flex-fill" onclick="confirmarCobro()">
-                        Registrar pago
-                    </button>
+                        <button type="button" class="btn-soft btn-soft-success" onclick="confirmarCobro()">
+                            <i class="fas fa-check"></i> Registrar pago
+                        </button>
+                    </div>
                 </div>
             </div>
             `;
@@ -973,10 +988,10 @@ function mostrarCobro() {
     det.style.display = 'none';
     cob.style.display = 'block';
 
-    // poner 0 por defecto para que el usuario ingrese
+    // Mantener el campo vacío; 0.00 es solo una guía visual.
     const inputMonto = document.getElementById('cc_monto');
     const vueltoEl = document.getElementById('cc_vuelto');
-    if (inputMonto) inputMonto.value = '0';
+    if (inputMonto) inputMonto.value = '';
     if (vueltoEl) vueltoEl.innerText = '0.00';
 }
 
