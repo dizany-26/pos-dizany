@@ -444,6 +444,7 @@ Nuevo Producto
         $('#categoria_id').select2({
             width: '100%',
             placeholder: 'Seleccione...',
+            allowClear: true,
             minimumResultsForSearch: 0,
             dropdownCssClass: 'producto-select2-dropdown'
         });

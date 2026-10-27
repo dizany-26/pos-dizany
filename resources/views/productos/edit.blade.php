@@ -8,9 +8,9 @@
 
 {{-- BOTÓN ATRÁS --}}
 @section('header-back')
-<button class="btn-header-back" onclick="history.back()">
+<a class="btn-header-back" href="{{ route('productos.index') }}" aria-label="Volver a productos">
     <i class="fas fa-arrow-left"></i>
-</button>
+</a>
 @endsection
 
 {{-- TÍTULO --}}
@@ -490,6 +490,7 @@ Editar Producto
         $('#categoria_id').select2({
             width: '100%',
             placeholder: 'Seleccione...',
+            allowClear: true,
             minimumResultsForSearch: 0,
             dropdownCssClass: 'producto-select2-dropdown'
         });
@@ -522,14 +523,33 @@ Editar Producto
         const nombre = document.getElementById('nombre');
         const descripcion = document.getElementById('descripcion');
 
+        const actualizarSinMoverCursor = function (campo, transformar) {
+            const inicio = campo.selectionStart;
+            const fin = campo.selectionEnd;
+            const valorNormalizado = transformar(campo.value);
+
+            if (campo.value !== valorNormalizado) {
+                campo.value = valorNormalizado;
+            }
+
+            if (document.activeElement === campo && inicio !== null && fin !== null) {
+                campo.setSelectionRange(inicio, fin);
+            }
+        };
+
         const normalizarNombre = function () {
-            nombre.value = nombre.value.toLocaleUpperCase('es-PE');
+            actualizarSinMoverCursor(
+                nombre,
+                valor => valor.toLocaleUpperCase('es-PE')
+            );
         };
 
         const normalizarDescripcion = function () {
-            const texto = descripcion.value.toLocaleLowerCase('es-PE');
-            descripcion.value = texto.replace(/\p{L}/u, function (letra) {
-                return letra.toLocaleUpperCase('es-PE');
+            actualizarSinMoverCursor(descripcion, function (valor) {
+                const texto = valor.toLocaleLowerCase('es-PE');
+                return texto.replace(/\p{L}/u, function (letra) {
+                    return letra.toLocaleUpperCase('es-PE');
+                });
             });
         };
 

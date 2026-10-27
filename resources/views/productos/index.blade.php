@@ -55,7 +55,7 @@ Productos
 
             <div class="col-md-3">
                 <select name="categoria_id" class="form-select ui-input">
-                    <option value="todos">- Todas las Categorías -</option>
+                    <option value="">- Todas las Categorías -</option>
                     @foreach($categorias as $categoria)
                         <option value="{{ $categoria->id }}"
                             {{ request('categoria_id') == $categoria->id ? 'selected' : '' }}>
@@ -67,7 +67,7 @@ Productos
 
             <div class="col-md-3">
                 <select name="marca_id" class="form-select ui-input">
-                    <option value="todos">- Todas las Marcas -</option>
+                    <option value="">- Todas las Marcas -</option>
                     @foreach($marcas as $marca)
                         <option value="{{ $marca->id }}"
                             {{ request('marca_id') == $marca->id ? 'selected' : '' }}>
@@ -113,7 +113,9 @@ Productos
                 </thead>
                 <tbody>
                     @forelse($productos as $producto)
-                    <tr data-nombre="{{ strtolower($producto->nombre) }}"
+                    <tr id="producto-{{ $producto->id }}"
+                        class="{{ (int) session('producto_actualizado_id') === $producto->id ? 'producto-recien-actualizado' : '' }}"
+                        data-nombre="{{ strtolower($producto->nombre) }}"
                         data-codigo="{{ strtolower($producto->codigo_barras) }}"
                         data-categoria="{{ $producto->categoria_id }}"
                         data-marca="{{ $producto->marca_id }}">
@@ -189,7 +191,9 @@ Productos
                                 </form>
 
                                 <a href="javascript:void(0);"
-                                    class="btn-soft btn-soft-info btn-soft-icon ver-detalles"
+                                    class="btn-soft btn-soft-primary btn-soft-icon ver-detalles"
+                                    title="Ver detalles"
+                                    aria-label="Ver detalles del producto"
                                     data-id="{{ $producto->id }}">
                                     <i class="fa-solid fa-eye"></i>
                                 </a>
@@ -576,6 +580,14 @@ Productos
         });
 
         selects.forEach(select => select.addEventListener('change', submitFilters));
+
+        const productoActualizado = document.querySelector('.producto-recien-actualizado');
+        if (productoActualizado) {
+            window.setTimeout(() => {
+                productoActualizado.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                productoActualizado.classList.add('producto-resaltado-activo');
+            }, 2100);
+        }
 
     });
 </script>

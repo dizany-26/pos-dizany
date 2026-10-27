@@ -131,6 +131,30 @@
         return pagos;
     };
 
+    window.limpiarPagoMixto = function () {
+        const ui = elementos();
+
+        ui.inputs.forEach(input => {
+            input.value = "";
+        });
+
+        if (ui.efectivoRecibido) {
+            ui.efectivoRecibido.value = "";
+            ui.efectivoRecibido.dataset.confirmado = "0";
+        }
+
+        ui.wrap?.classList.add("d-none");
+        ui.efectivoRecibidoWrap?.classList.add("d-none");
+        ui.vueltoRow?.classList.add("d-none");
+        if (ui.asignado) ui.asignado.textContent = dinero(0);
+        if (ui.diferencia) {
+            ui.diferencia.textContent = dinero(0);
+            ui.diferencia.classList.remove("text-success", "text-danger");
+        }
+        if (ui.diferenciaLabel) ui.diferenciaLabel.textContent = "Falta distribuir";
+        if (ui.vuelto) ui.vuelto.textContent = dinero(0);
+    };
+
     document.addEventListener("DOMContentLoaded", () => {
         const ui = elementos();
         ui.inputs.forEach(input => input.addEventListener("input", recalcular));

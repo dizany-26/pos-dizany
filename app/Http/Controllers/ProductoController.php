@@ -335,9 +335,15 @@ class ProductoController extends Controller
 
     $this->guardarImagenesCatalogo($request, $producto);
 
-    return redirect()
-        ->route('productos.edit', $producto->id)
-        ->with('success', 'Producto actualizado correctamente.');
+    $paginaProducto = intdiv(
+        Producto::where('id', '>', $producto->id)->count(),
+        10
+    ) + 1;
+
+    return redirect()->route('productos.index', ['page' => $paginaProducto])->with([
+        'success' => 'Producto actualizado correctamente.',
+        'producto_actualizado_id' => $producto->id,
+    ]);
 }
 
 private function guardarImagenesCatalogo(Request $request, Producto $producto): void

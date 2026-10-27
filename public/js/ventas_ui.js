@@ -306,6 +306,42 @@ function restaurarVentaActivaEnUI() {
     showStep(v.fase || 1);
 }
 
+// Restablece únicamente los controles transitorios de la venta terminada.
+// Las demás ventas guardadas en espera viven en POS y no se modifican aquí.
+function limpiarFlujoVentaConfirmada() {
+    const estadoPago = document.getElementById("estado_pago");
+    const inputTotal = document.getElementById("vuelto-total-venta");
+    const inputPaga = document.getElementById("vuelto-paga");
+    const inputVuelto = document.getElementById("vuelto-mostrar");
+    const vencimiento = document.getElementById("credito-vencimiento");
+    const tituloFase3 = document.getElementById("step3-titulo");
+    const pagoLabel = document.getElementById("step3-pago-label");
+    const resultadoLabel = document.getElementById("step3-resultado-label");
+
+    if (estadoPago) estadoPago.value = "pagado";
+    if (inputTotal) inputTotal.value = "0.00";
+    if (inputPaga) inputPaga.value = "";
+    if (inputVuelto) inputVuelto.value = "0.00";
+    if (vencimiento) {
+        vencimiento.value = "";
+        vencimiento.required = false;
+    }
+    if (inputPaga) inputPaga.placeholder = "Opcional: importe exacto";
+    if (tituloFase3) tituloFase3.textContent = "Calcula el cambio de tu venta";
+    if (pagoLabel) pagoLabel.textContent = "Efectivo recibido";
+    if (resultadoLabel) resultadoLabel.textContent = "Vuelto";
+
+    document.getElementById("credito-vencimiento-wrap")?.classList.add("d-none");
+    document.getElementById("step3-pago-wrap")?.classList.remove("d-none");
+    document.getElementById("step3-resultado-wrap")?.classList.remove("d-none");
+    window.limpiarPagoMixto?.();
+
+    restaurarVentaActivaEnUI();
+    manejarEstadoVenta();
+    actualizarResumen();
+    actualizarBotonCarrito();
+}
+
 // ============================
 // Totales / resumen (usa calcularTotal del carrito)
 // ============================
@@ -783,6 +819,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.showStep = showStep;
 window.volcarUIaVentaActiva = volcarUIaVentaActiva;
 window.restaurarVentaActivaEnUI = restaurarVentaActivaEnUI;
+window.limpiarFlujoVentaConfirmada = limpiarFlujoVentaConfirmada;
 window.actualizarResumen = actualizarResumen;
 window.actualizarBotonCarrito = actualizarBotonCarrito;
 window.manejarEstadoVenta = manejarEstadoVenta;

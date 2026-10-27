@@ -308,6 +308,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     actualizarProductosStock();
 
+    // El nuevo carrito debe mostrarse desde la primera fase inmediatamente,
+    // sin conservar pago, vuelto ni distribución mixta de la venta terminada.
+    window.limpiarFlujoVentaConfirmada?.();
+
     ventaPendienteDeReinicio = true;
     if (modalVentaExitosa) {
         modalVentaExitosa.show();
@@ -494,7 +498,8 @@ function reiniciarDespuesDeVenta() {
         posSaveDebounced(snapshotPOS, 0);
     }
 
-    // Restaurar UI
+    // Restaurar la venta activa. Si el cajero eligió una venta en espera con el
+    // comprobante abierto, sus datos se conservan y vuelven a mostrarse aquí.
     if (typeof restaurarVentaActivaEnUI === "function") {
         restaurarVentaActivaEnUI();
     }

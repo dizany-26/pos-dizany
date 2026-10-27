@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('header-back')
-<button class="btn-header-back" onclick="history.back()">
+<a class="btn-header-back" href="{{ route('inventario.lotes') }}" aria-label="Volver a lotes">
     <i class="fas fa-arrow-left"></i>
-</button>
+</a>
 @endsection
 
 @section('header-title')
@@ -74,13 +74,15 @@ Panel de Editar
                             El stock no puede modificarse porque este lote puede tener movimientos de venta.
                         </small>
 
-                        <div class="mb-3">
-                            <label class="form-label">Fecha de vencimiento</label>
-                            <input type="date"
-                                name="fecha_vencimiento"
-                                class="form-control fecha-vencimiento-edit"
-                                value="{{ $lote->fecha_vencimiento }}">
-                        </div>
+                        @if ($lote->fecha_vencimiento)
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de vencimiento</label>
+                                <input type="date"
+                                    name="fecha_vencimiento"
+                                    class="form-control fecha-vencimiento-edit"
+                                    value="{{ $lote->fecha_vencimiento }}">
+                            </div>
+                        @endif
 
                         <div class="form-check mb-3">
                             <input type="hidden" name="actualizar_precio_producto" value="0">
