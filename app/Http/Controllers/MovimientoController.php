@@ -461,6 +461,15 @@ class MovimientoController extends Controller
         ]);
 
         $inicio = Carbon::createFromFormat('Y-m', $datos['periodo'])->startOfMonth()->startOfDay();
+
+        if (ConciliacionMensual::whereDate('periodo', $inicio->toDateString())->exists()) {
+            return redirect()->route('movimientos.index', [
+                'tipo' => 'cuadre',
+                'rango' => 'mensual',
+                'fecha' => $datos['periodo'],
+            ])->with('error', 'El cuadre de este mes ya fue guardado.');
+        }
+
         $fin = $inicio->copy()->endOfMonth()->endOfDay();
         $resumen = $this->construirCuadreMensual($inicio, $fin);
         $declarado = collect(Caja::mediosConciliables())

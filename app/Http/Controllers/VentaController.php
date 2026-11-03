@@ -977,7 +977,7 @@ $pdf = Pdf::setOptions([
 
 
 // VentaController.php
-public function detalle($id)
+public function detalle(Request $request, $id)
 {
     $venta = Venta::with([
         'usuario',
@@ -1001,6 +1001,28 @@ public function detalle($id)
     $montoPagado = max(0, round((float) $venta->total - $saldo, 2));
     $esVentaCredito = in_array($venta->estado, ['pendiente', 'credito'], true);
     $vencimiento = $venta->credit_due_date;
+    $gananciaTotal = (float) $venta->detalleVentas->sum('ganancia');
+    $movimientoDetalle = null;
+    if ($request->integer('movimiento_id') > 0) {
+        $movimientoDetalle = Movimiento::query()
+            ->whereKey($request->integer('movimiento_id'))
+            ->where('referencia_tipo', 'venta')
+            ->where('referencia_id', $venta->id)
+            ->first();
+    }
+
+    $gananciaMovimiento = $movimientoDetalle && (float) $venta->total > 0
+        ? round($gananciaTotal * (float) $movimientoDetalle->monto / (float) $venta->total, 2)
+        : null;
+    $etiquetaGananciaMovimiento = null;
+    if ($movimientoDetalle) {
+        $etiquetaGananciaMovimiento = match (true) {
+            $movimientoDetalle->estado === 'pendiente' => 'Ganancia pendiente de este saldo',
+            in_array($movimientoDetalle->subtipo, ['cobro_fiado', 'cobro_credito'], true) => 'Ganancia reconocida en este pago',
+            (float) $movimientoDetalle->monto + 0.009 < (float) $venta->total => 'Ganancia reconocida en este adelanto',
+            default => 'Ganancia de esta venta',
+        };
+    }
 
     return response()->json([
         'id' => $venta->id,
@@ -1062,8 +1084,10 @@ public function detalle($id)
 
         // === Ganancia ===
         'ganancia' => auth()->user()->esAdmin()
-            ? (float) $venta->detalleVentas->sum('ganancia')
+            ? $gananciaTotal
             : null,
+        'ganancia_movimiento' => auth()->user()->esAdmin() ? $gananciaMovimiento : null,
+        'ganancia_movimiento_etiqueta' => auth()->user()->esAdmin() ? $etiquetaGananciaMovimiento : null,
 
         // === Archivos FE ===
         'pdf_url' => $venta->pdf_url ?? null,

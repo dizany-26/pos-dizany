@@ -512,7 +512,9 @@ document.addEventListener('DOMContentLoaded', () => {
         contenido.innerHTML = `<div class="text-muted">Cargando...</div>`;
 
         try {
-            const res = await fetch(`/ventas/${ventaId}/detalle`, {
+            const detalleUrl = new URL(`/ventas/${ventaId}/detalle`, window.location.origin);
+            if (movimientoId) detalleUrl.searchParams.set('movimiento_id', movimientoId);
+            const res = await fetch(detalleUrl, {
                 headers: { 'Accept': 'application/json' }
             });
 
@@ -689,12 +691,12 @@ const documentoSol = sol.documento || null;
                         : ''
                     }
 
-                    ${v.ganancia !== null && v.ganancia !== undefined ? `
+                    ${v.ganancia_movimiento !== null && v.ganancia_movimiento !== undefined ? `
                         <div class="detalle-item">
                             <i class="fas fa-chart-line"></i>
-                            <span>${saldo > 0.009 ? 'Ganancia estimada' : 'Ganancia'}</span>
+                            <span>${v.ganancia_movimiento_etiqueta || 'Ganancia de este movimiento'}</span>
                             <strong class="text-success">
-                                ${money(v.ganancia)}
+                                ${money(v.ganancia_movimiento)}
                             </strong>
                         </div>
                     ` : ''}
@@ -1260,7 +1262,13 @@ document.addEventListener('DOMContentLoaded', () => {
         differenceTotal.classList.toggle('text-danger', Math.abs(difference) >= 0.005);
     };
 
-    rows.forEach(row => row.querySelector('[data-monthly-declared]').addEventListener('input', refresh));
+    rows.forEach(row => {
+        const input = row.querySelector('[data-monthly-declared]');
+        input.addEventListener('input', refresh);
+        // Evita que la rueda del mouse cambie centavos accidentalmente
+        // mientras el usuario se desplaza por el formulario.
+        input.addEventListener('wheel', event => event.preventDefault(), { passive: false });
+    });
     document.getElementById('copyMonthlyExpected')?.addEventListener('click', () => {
         rows.forEach(row => {
             row.querySelector('[data-monthly-declared]').value = Number(row.dataset.expected || 0).toFixed(2);

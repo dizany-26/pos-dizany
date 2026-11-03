@@ -32,7 +32,13 @@
         </article>
     </div>
 
-    <div class="monthly-breakdown-grid">
+    <details class="monthly-breakdown-collapsible monthly-collapsible">
+        <summary class="monthly-panel monthly-panel-heading monthly-breakdown-heading">
+            <div><i class="fas fa-chart-column"></i><span>Detalle de ingresos y salidas</span></div>
+            <i class="fas fa-chevron-down monthly-panel-chevron"></i>
+        </summary>
+
+        <div class="monthly-breakdown-grid">
         <section class="monthly-panel">
             <div class="monthly-panel-heading">
                 <div><i class="fas fa-layer-group"></i><span>Ingresos recibidos por método</span></div>
@@ -59,7 +65,8 @@
             </div>
             <p class="monthly-note"><i class="fas fa-circle-info"></i> Los retiros solo cambian la ubicación del efectivo; no reducen los ingresos del mes.</p>
         </section>
-    </div>
+        </div>
+    </details>
 
     <form method="POST" action="{{ route('movimientos.cuadre-mensual.guardar') }}" class="monthly-form" id="monthlyReconciliationForm">
         @csrf
@@ -116,8 +123,9 @@
                 <div><span>Total verificado</span><strong id="monthlyDeclaredTotal">S/ 0.00</strong></div>
                 <div class="monthly-final-difference"><span>Diferencia</span><strong id="monthlyDifferenceTotal">S/ 0.00</strong></div>
                 <small class="monthly-difference-help">Positivo: sobra · Negativo: falta</small>
-                <button type="submit" class="btn-soft btn-soft-success monthly-save-button">
-                    <i class="fas fa-floppy-disk"></i> Guardar cuadre mensual
+                <button type="submit" class="btn-soft btn-soft-success monthly-save-button" @disabled($conciliacionMensual)>
+                    <i class="fas {{ $conciliacionMensual ? 'fa-circle-check' : 'fa-floppy-disk' }}"></i>
+                    {{ $conciliacionMensual ? 'Cuadre ya guardado' : 'Guardar cuadre mensual' }}
                 </button>
             </div>
         </div>
