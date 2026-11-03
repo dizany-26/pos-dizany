@@ -12,6 +12,9 @@ use App\Models\User;
 use App\Models\Lote;
 use App\Models\CompraPago;
 use App\Models\Configuracion;
+use App\Models\ConciliacionMensual;
+use App\Models\CajaOperacion;
+use App\Models\PagoVenta;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -32,6 +35,12 @@ class MovimientoController extends Controller
             $tab = 'ingresos';
         }
         $tipo  = $request->get('tipo', 'transacciones');
+        if (! in_array($tipo, ['transacciones', 'cierres', 'cuadre'], true)) {
+            $tipo = 'transacciones';
+        }
+        if ($tipo === 'cuadre' && ! $esAdmin) {
+            $tipo = 'transacciones';
+        }
         $rango = $request->get('rango', 'diario');
         $fecha = trim((string) $request->get('fecha', ''));
         $metodo = strtolower(trim((string) $request->get('metodo', '')));
@@ -400,6 +409,15 @@ class MovimientoController extends Controller
         /* ==========================
         VISTA
         ========================== */
+        $cuadreMensual = null;
+        $conciliacionMensual = null;
+        if ($tipo === 'cuadre' && $inicio && $fin) {
+            $cuadreMensual = $this->construirCuadreMensual($inicio, $fin);
+            $conciliacionMensual = ConciliacionMensual::with('usuario')
+                ->whereDate('periodo', $inicio->copy()->startOfMonth()->toDateString())
+                ->first();
+        }
+
         return view('movimientos.index', compact(
             'movimientos',
             'ventas',
@@ -421,7 +439,126 @@ class MovimientoController extends Controller
             , 'usuariosCaja'
             , 'metodo'
             , 'buscarEn'
+            , 'cuadreMensual'
+            , 'conciliacionMensual'
         ));
+    }
+
+    public function guardarCuadreMensual(Request $request)
+    {
+        abort_unless($request->user()->esAdmin(), 403);
+
+        $datos = $request->validate([
+            'periodo' => ['required', 'date_format:Y-m'],
+            'declarado' => ['required', 'array'],
+            'declarado.efectivo' => ['nullable', 'numeric', 'min:0'],
+            'declarado.yape' => ['nullable', 'numeric', 'min:0'],
+            'declarado.plin' => ['nullable', 'numeric', 'min:0'],
+            'declarado.tarjeta' => ['nullable', 'numeric', 'min:0'],
+            'declarado.transferencia' => ['nullable', 'numeric', 'min:0'],
+            'declarado.otro' => ['nullable', 'numeric', 'min:0'],
+            'observaciones' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $inicio = Carbon::createFromFormat('Y-m', $datos['periodo'])->startOfMonth()->startOfDay();
+        $fin = $inicio->copy()->endOfMonth()->endOfDay();
+        $resumen = $this->construirCuadreMensual($inicio, $fin);
+        $declarado = collect(Caja::mediosConciliables())
+            ->keys()
+            ->mapWithKeys(fn (string $medio) => [
+                $medio => round((float) ($datos['declarado'][$medio] ?? 0), 2),
+            ])->all();
+        $totalDeclarado = round(array_sum($declarado), 2);
+        $totalEsperado = round((float) $resumen['total_recibido'], 2);
+        $diferencia = round($totalDeclarado - $totalEsperado, 2);
+
+        if (abs($diferencia) > 0.009 && blank($datos['observaciones'] ?? null)) {
+            return back()->withInput()->withErrors([
+                'observaciones' => 'Explica la diferencia antes de guardar el cuadre mensual.',
+            ]);
+        }
+
+        ConciliacionMensual::updateOrCreate(
+            ['periodo' => $inicio->toDateString()],
+            [
+                'usuario_id' => $request->user()->id,
+                'esperado' => $resumen['por_metodo'],
+                'declarado' => $declarado,
+                'total_esperado' => $totalEsperado,
+                'total_declarado' => $totalDeclarado,
+                'diferencia' => $diferencia,
+                'observaciones' => trim((string) ($datos['observaciones'] ?? '')) ?: null,
+            ]
+        );
+
+        return redirect()->route('movimientos.index', [
+            'tipo' => 'cuadre',
+            'rango' => 'mensual',
+            'fecha' => $datos['periodo'],
+        ])->with('success', 'Cuadre mensual guardado correctamente.');
+    }
+
+    private function construirCuadreMensual(Carbon $inicio, Carbon $fin): array
+    {
+        $medios = array_keys(Caja::mediosConciliables());
+        $porMetodo = array_fill_keys($medios, 0.0);
+
+        PagoVenta::query()
+            ->join('ventas as v_pago', 'v_pago.id', '=', 'pagos_venta.venta_id')
+            ->where('v_pago.activo', 1)
+            ->where('v_pago.estado', '!=', 'anulada')
+            ->whereBetween('pagos_venta.fecha_pago', [$inicio, $fin])
+            ->selectRaw('LOWER(pagos_venta.metodo_pago) as medio, SUM(pagos_venta.monto) as total')
+            ->groupByRaw('LOWER(pagos_venta.metodo_pago)')
+            ->get()
+            ->each(function ($fila) use (&$porMetodo) {
+                $medio = Caja::normalizarMetodo($fila->medio);
+                if ($medio !== 'pendiente') {
+                    $porMetodo[$medio] = round(($porMetodo[$medio] ?? 0) + (float) $fila->total, 2);
+                }
+            });
+
+        $gastosPorMetodo = array_fill_keys($medios, 0.0);
+        Movimiento::egresos()->pagados()->activos()
+            ->where('subtipo', 'gasto')
+            ->whereBetween('fecha', [$inicio, $fin])
+            ->selectRaw('LOWER(metodo_pago) as medio, SUM(monto) as total')
+            ->groupByRaw('LOWER(metodo_pago)')
+            ->get()
+            ->each(function ($fila) use (&$gastosPorMetodo) {
+                $medio = Caja::normalizarMetodo($fila->medio);
+                if ($medio !== 'pendiente') {
+                    $gastosPorMetodo[$medio] = round(($gastosPorMetodo[$medio] ?? 0) + (float) $fila->total, 2);
+                }
+            });
+
+        $cobrosFiados = (float) Movimiento::ingresos()->pagados()->activos()
+            ->whereIn('subtipo', ['cobro_fiado', 'cobro_credito'])
+            ->whereBetween('fecha', [$inicio, $fin])
+            ->sum('monto');
+
+        $ventasCobradasDirecto = max(0, round(array_sum($porMetodo) - $cobrosFiados, 2));
+        $comprasPagadas = (float) CompraPago::whereBetween('fecha', [$inicio, $fin])->sum('monto');
+        $operaciones = CajaOperacion::whereBetween('created_at', [$inicio, $fin])
+            ->selectRaw('tipo, SUM(monto) as total')->groupBy('tipo')->pluck('total', 'tipo');
+        $porCobrar = (float) Venta::where('activo', 1)
+            ->whereIn('estado', ['credito', 'pendiente'])
+            ->sum('saldo');
+
+        return [
+            'periodo' => $inicio->format('Y-m'),
+            'por_metodo' => array_map(fn ($monto) => round((float) $monto, 2), $porMetodo),
+            'gastos_por_metodo' => array_map(fn ($monto) => round((float) $monto, 2), $gastosPorMetodo),
+            'ventas_cobradas_directo' => $ventasCobradasDirecto,
+            'cobros_fiados' => round($cobrosFiados, 2),
+            'total_recibido' => round(array_sum($porMetodo), 2),
+            'gastos' => round(array_sum($gastosPorMetodo), 2),
+            'compras_pagadas' => round($comprasPagadas, 2),
+            'retiros' => round((float) ($operaciones['retiro'] ?? 0), 2),
+            'refuerzos' => round((float) ($operaciones['refuerzo'] ?? 0), 2),
+            'por_cobrar' => round($porCobrar, 2),
+            'disponible_despues_salidas' => round(array_sum($porMetodo) - array_sum($gastosPorMetodo) - $comprasPagadas, 2),
+        ];
     }
 
     /* ==========================

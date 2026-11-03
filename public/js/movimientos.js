@@ -1226,3 +1226,46 @@ function fixUrlHost(url) {
         return url;
     }
 }
+
+// ================= CUADRE MENSUAL =================
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('monthlyReconciliationForm');
+    if (!form) return;
+
+    const rows = [...form.querySelectorAll('[data-monthly-row]')];
+    const declaredTotal = document.getElementById('monthlyDeclaredTotal');
+    const differenceTotal = document.getElementById('monthlyDifferenceTotal');
+    const expectedTotal = rows.reduce((sum, row) => sum + Number(row.dataset.expected || 0), 0);
+
+    const money = value => `S/ ${Number(value || 0).toFixed(2)}`;
+    const refresh = () => {
+        let total = 0;
+        rows.forEach(row => {
+            const input = row.querySelector('[data-monthly-declared]');
+            const output = row.querySelector('[data-monthly-difference]');
+            const expected = Number(row.dataset.expected || 0);
+            const hasValue = input.value !== '';
+            const declared = hasValue ? Number(input.value || 0) : 0;
+            const difference = declared - expected;
+            total += declared;
+            output.textContent = hasValue ? money(difference) : '—';
+            output.classList.toggle('text-success', hasValue && Math.abs(difference) < 0.005);
+            output.classList.toggle('text-danger', hasValue && Math.abs(difference) >= 0.005);
+        });
+
+        const difference = total - expectedTotal;
+        declaredTotal.textContent = money(total);
+        differenceTotal.textContent = money(difference);
+        differenceTotal.classList.toggle('text-success', Math.abs(difference) < 0.005);
+        differenceTotal.classList.toggle('text-danger', Math.abs(difference) >= 0.005);
+    };
+
+    rows.forEach(row => row.querySelector('[data-monthly-declared]').addEventListener('input', refresh));
+    document.getElementById('copyMonthlyExpected')?.addEventListener('click', () => {
+        rows.forEach(row => {
+            row.querySelector('[data-monthly-declared]').value = Number(row.dataset.expected || 0).toFixed(2);
+        });
+        refresh();
+    });
+    refresh();
+});

@@ -67,6 +67,14 @@ Movimientos
                     <i class="fas fa-file-excel text-success me-2"></i>Descargar Excel
                 </a>
             </li>
+            @if(auth()->user()->esAdmin())
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item" href="{{ route('movimientos.index', ['tipo' => 'cuadre', 'rango' => 'mensual', 'fecha' => now()->format('Y-m')]) }}">
+                    <i class="fas fa-scale-balanced text-primary me-2"></i>Ir a Cuadre mensual
+                </a>
+            </li>
+            @endif
         </ul>
     </div>
 @endif
@@ -89,6 +97,13 @@ Movimientos
                class="btn-soft {{ request('tipo') === 'cierres' ? 'btn-soft-primary' : 'btn-soft-info' }} flex-fill text-center">
                 Cierres de caja
             </a>
+
+            @if(auth()->user()->esAdmin())
+            <a href="{{ route('movimientos.index', ['tipo' => 'cuadre', 'rango' => 'mensual', 'fecha' => $tipo === 'cuadre' ? $fecha : now()->format('Y-m')]) }}"
+               class="btn-soft {{ $tipo === 'cuadre' ? 'btn-soft-primary' : 'btn-soft-info' }} flex-fill text-center">
+                Cuadre mensual
+            </a>
+            @endif
         </div>
 
         @if($tipo === 'transacciones' && ($cajaAbierta || $cajaSeleccionada))
@@ -139,6 +154,17 @@ Movimientos
         @endif
 
         {{-- ================= FILTROS ================= --}}
+        @if($tipo === 'cuadre')
+        <form method="GET" action="{{ route('movimientos.index') }}" class="monthly-period-filter mb-4">
+            <input type="hidden" name="tipo" value="cuadre">
+            <input type="hidden" name="rango" value="mensual">
+            <label for="monthly-period-filter">Mes a cuadrar</label>
+            <div>
+                <input id="monthly-period-filter" type="month" name="fecha" value="{{ $cuadreMensual['periodo'] ?? now()->format('Y-m') }}" class="form-control ui-input" max="{{ now()->format('Y-m') }}">
+                <button class="btn-soft btn-soft-primary" type="submit"><i class="fas fa-calculator"></i> Calcular</button>
+            </div>
+        </form>
+        @else
         <form method="GET"
               action="{{ route('movimientos.index') }}"
               class="row g-3 mb-4">
@@ -259,6 +285,7 @@ Movimientos
             </div>
 
         </form>
+        @endif
 
         @if($tipo === 'transacciones')
         {{-- ================= KPIs ================= --}}
@@ -367,7 +394,9 @@ Movimientos
 
         {{-- ================= TABLA ================= --}}
         <div class="card ui-card rounded-4">
-            @if($tipo === 'transacciones')
+            @if($tipo === 'cuadre')
+                @include('movimientos._cuadre_mensual')
+            @elseif($tipo === 'transacciones')
             <div class="table-responsive ui-scroll">
                 <table class="table ui-table align-middle mb-0">
                     <thead>

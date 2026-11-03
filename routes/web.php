@@ -374,6 +374,9 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::middleware('permission:movimientos')->group(function () {
         Route::get('/movimientos', [MovimientoController::class, 'index'])
             ->name('movimientos.index');
+        Route::post('/movimientos/cuadre-mensual', [MovimientoController::class, 'guardarCuadreMensual'])
+            ->middleware('role:Administrador')
+            ->name('movimientos.cuadre-mensual.guardar');
         Route::post('/cajas/{caja}/solicitar-cierre', [CajaController::class, 'solicitarCierre'])
             ->name('cajas.solicitar-cierre');
         Route::middleware('role:Administrador')->group(function () {
