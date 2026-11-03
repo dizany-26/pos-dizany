@@ -71,13 +71,14 @@
     <form method="POST" action="{{ route('movimientos.cuadre-mensual.guardar') }}" class="monthly-form" id="monthlyReconciliationForm">
         @csrf
         <input type="hidden" name="periodo" value="{{ $cuadreMensual['periodo'] }}">
+        <input type="hidden" name="editar" value="0" id="monthlyEditMode">
         <div class="monthly-form-heading">
             <div>
                 <span class="monthly-reconciliation-eyebrow">VERIFICACIÓN</span>
                 <h4>¿Cuánto puedes comprobar realmente?</h4>
                 <p>Usa los cierres de efectivo y los movimientos de Yape, Plin, tarjeta y transferencias del mes.</p>
             </div>
-            <button type="button" class="btn-soft btn-soft-info" id="copyMonthlyExpected">
+            <button type="button" class="btn-soft btn-soft-info" id="copyMonthlyExpected" @disabled($conciliacionMensual)>
                 <i class="fas fa-copy"></i> Copiar montos del sistema
             </button>
         </div>
@@ -104,7 +105,7 @@
                         <input id="monthly-{{ $medio }}" type="number" name="declarado[{{ $medio }}]"
                                min="0" step="0.01" inputmode="decimal" @if($esperadoMedio > 0) required @endif
                                value="{{ $valorDeclarado === null ? '' : number_format((float)$valorDeclarado, 2, '.', '') }}"
-                               placeholder="0.00" data-monthly-declared>
+                               placeholder="0.00" data-monthly-declared @readonly($conciliacionMensual)>
                     </div>
                     <strong class="monthly-row-difference" data-monthly-difference>—</strong>
                 </div>
@@ -115,7 +116,7 @@
         <div class="monthly-form-footer">
             <div class="monthly-observation">
                 <label for="monthly-observations">Observaciones</label>
-                <textarea id="monthly-observations" name="observaciones" rows="3" maxlength="1000" placeholder="Explica cualquier diferencia encontrada...">{{ old('observaciones', $conciliacionMensual?->observaciones) }}</textarea>
+                <textarea id="monthly-observations" name="observaciones" rows="3" maxlength="1000" placeholder="Explica cualquier diferencia encontrada..." @readonly($conciliacionMensual)>{{ old('observaciones', $conciliacionMensual?->observaciones) }}</textarea>
                 @error('observaciones')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
             </div>
             <div class="monthly-totals">
@@ -123,6 +124,11 @@
                 <div><span>Total verificado</span><strong id="monthlyDeclaredTotal">S/ 0.00</strong></div>
                 <div class="monthly-final-difference"><span>Diferencia</span><strong id="monthlyDifferenceTotal">S/ 0.00</strong></div>
                 <small class="monthly-difference-help">Positivo: sobra · Negativo: falta</small>
+                @if($conciliacionMensual)
+                    <button type="button" class="btn-soft btn-soft-info monthly-edit-button" id="editMonthlyReconciliation">
+                        <i class="fas fa-pen"></i> Editar cuadre
+                    </button>
+                @endif
                 <button type="submit" class="btn-soft btn-soft-success monthly-save-button" @disabled($conciliacionMensual)>
                     <i class="fas {{ $conciliacionMensual ? 'fa-circle-check' : 'fa-floppy-disk' }}"></i>
                     {{ $conciliacionMensual ? 'Cuadre ya guardado' : 'Guardar cuadre mensual' }}

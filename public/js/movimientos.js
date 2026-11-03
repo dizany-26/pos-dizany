@@ -1237,6 +1237,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const rows = [...form.querySelectorAll('[data-monthly-row]')];
     const declaredTotal = document.getElementById('monthlyDeclaredTotal');
     const differenceTotal = document.getElementById('monthlyDifferenceTotal');
+    const editButton = document.getElementById('editMonthlyReconciliation');
+    const copyButton = document.getElementById('copyMonthlyExpected');
+    const saveButton = form.querySelector('.monthly-save-button');
+    const editMode = document.getElementById('monthlyEditMode');
     const expectedTotal = rows.reduce((sum, row) => sum + Number(row.dataset.expected || 0), 0);
 
     const money = value => `S/ ${Number(value || 0).toFixed(2)}`;
@@ -1269,11 +1273,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // mientras el usuario se desplaza por el formulario.
         input.addEventListener('wheel', event => event.preventDefault(), { passive: false });
     });
-    document.getElementById('copyMonthlyExpected')?.addEventListener('click', () => {
+    copyButton?.addEventListener('click', () => {
         rows.forEach(row => {
             row.querySelector('[data-monthly-declared]').value = Number(row.dataset.expected || 0).toFixed(2);
         });
         refresh();
+    });
+    editButton?.addEventListener('click', () => {
+        rows.forEach(row => {
+            row.querySelector('[data-monthly-declared]').readOnly = false;
+        });
+        const observations = document.getElementById('monthly-observations');
+        if (observations) observations.readOnly = false;
+        if (copyButton) copyButton.disabled = false;
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.innerHTML = '<i class="fas fa-floppy-disk"></i> Guardar cambios';
+        }
+        if (editMode) editMode.value = '1';
+        editButton.disabled = true;
+        rows[0]?.querySelector('[data-monthly-declared]')?.focus();
     });
     refresh();
 });

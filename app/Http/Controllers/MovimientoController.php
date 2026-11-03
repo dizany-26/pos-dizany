@@ -450,6 +450,7 @@ class MovimientoController extends Controller
 
         $datos = $request->validate([
             'periodo' => ['required', 'date_format:Y-m'],
+            'editar' => ['nullable', 'boolean'],
             'declarado' => ['required', 'array'],
             'declarado.efectivo' => ['nullable', 'numeric', 'min:0'],
             'declarado.yape' => ['nullable', 'numeric', 'min:0'],
@@ -462,7 +463,8 @@ class MovimientoController extends Controller
 
         $inicio = Carbon::createFromFormat('Y-m', $datos['periodo'])->startOfMonth()->startOfDay();
 
-        if (ConciliacionMensual::whereDate('periodo', $inicio->toDateString())->exists()) {
+        $conciliacionExistente = ConciliacionMensual::whereDate('periodo', $inicio->toDateString())->first();
+        if ($conciliacionExistente && ! $request->boolean('editar')) {
             return redirect()->route('movimientos.index', [
                 'tipo' => 'cuadre',
                 'rango' => 'mensual',
@@ -504,7 +506,9 @@ class MovimientoController extends Controller
             'tipo' => 'cuadre',
             'rango' => 'mensual',
             'fecha' => $datos['periodo'],
-        ])->with('success', 'Cuadre mensual guardado correctamente.');
+        ])->with('success', $conciliacionExistente
+            ? 'Cuadre mensual actualizado correctamente.'
+            : 'Cuadre mensual guardado correctamente.');
     }
 
     private function construirCuadreMensual(Carbon $inicio, Carbon $fin): array

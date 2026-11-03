@@ -1663,6 +1663,8 @@ body.dark-mode .movement-swal .form-control:focus {
 .monthly-money-input { display: flex; align-items: center; border: 1px solid var(--ui-border, #cbd5e1); border-radius: 10px; overflow: hidden; background: var(--ui-surface, #fff); }
 .monthly-money-input span { padding: .5rem .6rem; color: var(--ui-muted, #64748b); background: rgba(100, 116, 139, .08); }
 .monthly-money-input input { width: 100%; min-width: 0; padding: .5rem; border: 0; outline: 0; color: inherit; background: transparent; }
+.monthly-money-input input:read-only,
+.monthly-observation textarea:read-only { cursor: default; opacity: .78; }
 .monthly-money-input input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 .monthly-money-input input[type='number']::-webkit-inner-spin-button,
 .monthly-money-input input[type='number']::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
@@ -1673,8 +1675,9 @@ body.dark-mode .movement-swal .form-control:focus {
 .monthly-totals > div { display: flex; justify-content: space-between; gap: .75rem; padding: .35rem 0; }
 .monthly-final-difference { margin-top: .35rem; padding-top: .7rem !important; border-top: 1px solid var(--ui-border, #d9e2ef); font-size: 1.05rem; }
 .monthly-difference-help { display: block; color: var(--ui-muted, #64748b); text-align: right; }
+.monthly-edit-button,
 .monthly-save-button { width: 100%; justify-content: center; margin-top: .7rem; }
-.monthly-save-button:disabled { cursor: not-allowed; opacity: .58; filter: saturate(.6); }
+.monthly-form button:disabled { cursor: not-allowed; opacity: .58; filter: saturate(.6); }
 .monthly-saved-by { display: block; margin-top: .75rem; color: var(--ui-muted, #64748b); }
 
 body.dark-mode .monthly-reconciliation-hero,
