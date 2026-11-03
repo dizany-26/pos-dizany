@@ -15,6 +15,7 @@ use App\Models\LoteMovimiento;
 use App\Models\CompraPago;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class InventarioController extends Controller
 {
