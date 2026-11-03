@@ -155,15 +155,41 @@ Movimientos
 
         {{-- ================= FILTROS ================= --}}
         @if($tipo === 'cuadre')
-        <form method="GET" action="{{ route('movimientos.index') }}" class="monthly-period-filter mb-4">
-            <input type="hidden" name="tipo" value="cuadre">
-            <input type="hidden" name="rango" value="mensual">
-            <label for="monthly-period-filter">Mes a cuadrar</label>
-            <div>
-                <input id="monthly-period-filter" type="month" name="fecha" value="{{ $cuadreMensual['periodo'] ?? now()->format('Y-m') }}" class="form-control ui-input" max="{{ now()->format('Y-m') }}">
-                <button class="btn-soft btn-soft-primary" type="submit"><i class="fas fa-calculator"></i> Calcular</button>
+        <div class="monthly-period-header mb-4">
+            <div class="monthly-period-title">
+                <span>CONTROL DEL NEGOCIO</span>
+                <h3>Cuadre mensual · {{ \Carbon\Carbon::createFromFormat('Y-m', $cuadreMensual['periodo'])->locale('es')->translatedFormat('F Y') }}</h3>
+                <p>Compara los cobros que registró el sistema con tus cierres, efectivo y reportes de pagos digitales.</p>
             </div>
-        </form>
+            <div class="monthly-period-side">
+            <form method="GET" action="{{ route('movimientos.index') }}" class="monthly-period-filter">
+                <input type="hidden" name="tipo" value="cuadre">
+                <input type="hidden" name="rango" value="mensual">
+                <label for="monthly-period-filter">Mes a cuadrar</label>
+                <div class="input-group" id="picker-wrapper">
+                    <input
+                        id="monthly-period-filter"
+                        name="fecha"
+                        class="form-control ui-input"
+                        value="{{ $cuadreMensual['periodo'] ?? now()->format('Y-m') }}"
+                        autocomplete="off"
+                        readonly
+                        data-input
+                    >
+                    <span class="input-group-text" data-toggle aria-label="Seleccionar mes">
+                        <i class="fa fa-calendar"></i>
+                    </span>
+                </div>
+            </form>
+            <div class="monthly-reconciliation-state {{ $conciliacionMensual ? ((float) $conciliacionMensual->diferencia == 0.0 ? 'is-balanced' : 'has-difference') : 'is-pending' }}">
+                <i class="fas {{ $conciliacionMensual ? ((float) $conciliacionMensual->diferencia == 0.0 ? 'fa-circle-check' : 'fa-triangle-exclamation') : 'fa-clock' }}"></i>
+                <div>
+                    <span>{{ $conciliacionMensual ? 'Último cuadre guardado' : 'Cuadre pendiente' }}</span>
+                    <strong>{{ $conciliacionMensual ? 'Diferencia S/ '.number_format((float) $conciliacionMensual->diferencia, 2) : 'Completa la verificación' }}</strong>
+                </div>
+            </div>
+            </div>
+        </div>
         @else
         <form method="GET"
               action="{{ route('movimientos.index') }}"

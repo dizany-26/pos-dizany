@@ -5,23 +5,6 @@
 @endphp
 
 <div class="monthly-reconciliation">
-    <div class="monthly-reconciliation-hero">
-        <div>
-            <span class="monthly-reconciliation-eyebrow">CONTROL DEL NEGOCIO</span>
-            <h3>Cuadre mensual · {{ \Carbon\Carbon::createFromFormat('Y-m', $cuadreMensual['periodo'])->locale('es')->translatedFormat('F Y') }}</h3>
-            <p>Compara los cobros que registró el sistema con tus cierres, efectivo y reportes de pagos digitales.</p>
-        </div>
-        <div class="monthly-reconciliation-state {{ $conciliacionMensual ? ($diferenciaGuardada == 0.0 ? 'is-balanced' : 'has-difference') : 'is-pending' }}">
-            <i class="fas {{ $conciliacionMensual ? ($diferenciaGuardada == 0.0 ? 'fa-circle-check' : 'fa-triangle-exclamation') : 'fa-clock' }}"></i>
-            <div>
-                <span>{{ $conciliacionMensual ? 'Último cuadre guardado' : 'Cuadre pendiente' }}</span>
-                <strong>
-                    {{ $conciliacionMensual ? 'Diferencia S/ '.number_format($diferenciaGuardada, 2) : 'Completa la verificación' }}
-                </strong>
-            </div>
-        </div>
-    </div>
-
     <div class="monthly-summary-grid">
         <article class="monthly-summary-card summary-primary">
             <i class="fas fa-wallet"></i>
