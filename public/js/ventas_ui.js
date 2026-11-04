@@ -342,7 +342,7 @@ function limpiarFlujoVentaConfirmada() {
     if (estadoPago) estadoPago.value = "pagado";
     if (inputTotal) inputTotal.value = "0.00";
     if (inputPaga) inputPaga.value = "";
-    if (inputVuelto) inputVuelto.value = "0.00";
+    if (inputVuelto) inputVuelto.value = "S/ 0.00";
     if (vencimiento) {
         vencimiento.value = "";
         vencimiento.required = false;
@@ -459,7 +459,7 @@ function prepararFase3() {
         inputPaga.value = "";
         inputPaga.placeholder = "Opcional: importe exacto";
     }
-    if (inputVuelto) inputVuelto.value = "";
+    if (inputVuelto) inputVuelto.value = "S/ 0.00";
 
     document.getElementById("step3-titulo").textContent = "Calcula el cambio de tu venta";
     document.getElementById("step3-pago-wrap")?.classList.remove("d-none");

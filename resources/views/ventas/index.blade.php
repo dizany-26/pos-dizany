@@ -388,7 +388,7 @@ Nueva venta
                                 <span class="step3-field-icon"><i class="fas fa-coins"></i></span>
                                 <label class="form-label" id="step3-resultado-label" for="vuelto-mostrar">Vuelto</label>
                             </div>
-                            <input type="text" id="vuelto-mostrar" class="form-control step3-result-value" readonly>
+                            <input type="text" id="vuelto-mostrar" class="form-control step3-result-value" value="S/ 0.00" readonly>
                         </div>
 
                         <div id="pago-mixto-wrap" class="d-none">
