@@ -71,6 +71,7 @@ function crearVentaVacia(id) {
         cliente_modo: "sin_documento",
         tipo_documento: "dni",
         informacion_adicional: "",
+        estado_pago: "pagado",
         cliente: {
             documento: "",
             razon: "Público General",

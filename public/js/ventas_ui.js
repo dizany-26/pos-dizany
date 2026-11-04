@@ -214,6 +214,7 @@ function volcarUIaVentaActiva() {
     const razonInput     = document.getElementById("razon_social");
     const direccionInput = document.getElementById("direccion");
     const hiddenMetodoPago = document.getElementById("metodo_pago");
+    const estadoPago = document.getElementById("estado_pago");
     const tipoComprobante = document.getElementById("tipo_comprobante");
     const tipoDocumento = document.getElementById("tipo_documento_cliente");
     const informacionAdicional = document.getElementById("informacion_adicional");
@@ -235,6 +236,7 @@ function volcarUIaVentaActiva() {
     v.informacion_adicional = informacionAdicional?.value || "";
 
     v.metodo_pago = hiddenMetodoPago?.value || "";
+    v.estado_pago = (estadoPago?.value || "pagado").toLowerCase();
 
     if (window.actualizarAliasVentaDesdeCliente) {
         actualizarAliasVentaDesdeCliente();
@@ -260,6 +262,7 @@ function restaurarVentaActivaEnUI() {
     const razonInput     = document.getElementById("razon_social");
     const direccionInput = document.getElementById("direccion");
     const hiddenMetodoPago = document.getElementById("metodo_pago");
+    const estadoPago = document.getElementById("estado_pago");
     const tipoComprobante = document.getElementById("tipo_comprobante");
     const tipoDocumento = document.getElementById("tipo_documento_cliente");
     const informacionAdicional = document.getElementById("informacion_adicional");
@@ -283,6 +286,11 @@ function restaurarVentaActivaEnUI() {
         window.actualizarFlujoClienteComprobante(true);
     }
 
+    if (estadoPago) {
+        estadoPago.value = v.estado_pago || "pagado";
+        manejarEstadoVenta();
+    }
+
     if (hiddenMetodoPago) hiddenMetodoPago.value = v.metodo_pago || "";
 
     document.querySelectorAll(".metodo-pago-item").forEach(item => {
@@ -303,7 +311,20 @@ function restaurarVentaActivaEnUI() {
     // mientras la interfaz indica Efectivo.
     actualizarBotonesSegunMetodoPagado();
 
-    showStep(v.fase || 1);
+    const fase = v.fase || 1;
+    showStep(fase);
+
+    // Los importes de la fase final son valores derivados del carrito. Al
+    // recargar la página, reconstruirlos evita mostrar un cierre vacío aunque
+    // los productos sí se hayan recuperado desde localStorage.
+    if (fase === 3) {
+        const estado = (estadoPago?.value || v.estado_pago || "pagado").toLowerCase();
+        if (estado === "credito" || estado === "pendiente") {
+            prepararFase3Credito();
+        } else {
+            prepararFase3();
+        }
+    }
 }
 
 // Restablece únicamente los controles transitorios de la venta terminada.
@@ -419,6 +440,7 @@ function actualizarBotonCarrito() {
 // Preparar fase 3: PAGADO (vuelto)
 // ============================
 function prepararFase3() {
+    document.getElementById("step-3")?.setAttribute("data-payment-state", "pagado");
     const inputTotalVenta = document.getElementById("vuelto-total-venta");
     const inputPaga       = document.getElementById("vuelto-paga");
     const inputVuelto     = document.getElementById("vuelto-mostrar");
@@ -433,7 +455,10 @@ function prepararFase3() {
     document.getElementById("pago-mixto-wrap")?.classList.add("d-none");
 
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
-    if (inputPaga) inputPaga.value = "";
+    if (inputPaga) {
+        inputPaga.value = "";
+        inputPaga.placeholder = "Opcional: importe exacto";
+    }
     if (inputVuelto) inputVuelto.value = "";
 
     document.getElementById("step3-titulo").textContent = "Calcula el cambio de tu venta";
@@ -461,6 +486,7 @@ function prepararFase3Credito() {
 
     const { total } = calcularTotal();
     const estado = (document.getElementById("estado_pago")?.value || "pendiente").toLowerCase();
+    document.getElementById("step-3")?.setAttribute("data-payment-state", estado);
 
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
 
@@ -481,7 +507,10 @@ function prepararFase3Credito() {
         inputPaga.placeholder = "Ingresa el adelanto";
     }
     if (pagoLabel) pagoLabel.textContent = "Adelanto recibido";
-    if (resultadoLabel) resultadoLabel.textContent = "Saldo pendiente";
+    if (resultadoLabel) {
+        resultadoLabel.textContent = "Saldo pendiente";
+        resultadoLabel.classList.remove("d-none");
+    }
 
     if (inputVuelto) inputVuelto.value = "";
 
@@ -639,7 +668,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Estado pago dinámica
     const estadoPagoSelect = document.getElementById("estado_pago");
-    estadoPagoSelect?.addEventListener("change", manejarEstadoVenta);
+    estadoPagoSelect?.addEventListener("change", () => {
+        manejarEstadoVenta();
+        volcarUIaVentaActiva();
+    });
     manejarEstadoVenta();
 
     // ============================

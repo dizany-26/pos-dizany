@@ -350,24 +350,45 @@ Nueva venta
             <!-- ==================== FASE 3 ==================== -->
             <div id="step-3" class="step-panel">
 
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white" id="step3-titulo">
-                        Calcula el cambio de tu venta
+                <div class="card shadow-sm step3-checkout-card">
+                    <div class="card-header bg-primary text-white step3-checkout-header">
+                        <span class="step3-header-icon"><i class="fas fa-cash-register"></i></span>
+                        <div>
+                            <strong id="step3-titulo">Calcula el cambio de tu venta</strong>
+                            <small>Revisa los importes antes de confirmar</small>
+                        </div>
                     </div>
 
                     <div class="card-body">
 
-                        <label class="form-label">Valor de la venta</label>
-                        <input type="text" id="vuelto-total-venta" class="form-control mb-3" readonly>
-
-                        <div id="step3-pago-wrap">
-                            <label class="form-label" id="step3-pago-label">Valor a pagar</label>
-                            <input type="number" id="vuelto-paga" class="form-control mb-3" min="0" step="0.01" placeholder="Opcional: importe exacto">
+                        <div class="step3-total-card">
+                            <div class="step3-total-label">
+                                <span><i class="fas fa-receipt"></i></span>
+                                <div><small>Total de la venta</small><strong>Monto final a procesar</strong></div>
+                            </div>
+                            <div class="step3-total-amount">
+                                <span>S/</span>
+                                <input type="text" id="vuelto-total-venta" readonly aria-label="Total de la venta">
+                            </div>
                         </div>
 
-                        <div id="step3-resultado-wrap">
-                            <label class="form-label" id="step3-resultado-label">Vuelto</label>
-                            <input type="text" id="vuelto-mostrar" class="form-control mb-3" readonly>
+                        <div id="step3-pago-wrap" class="step3-field-card">
+                            <div class="step3-field-heading">
+                                <span class="step3-field-icon"><i class="fas fa-money-bill-wave"></i></span>
+                                <label class="form-label" id="step3-pago-label" for="vuelto-paga">Valor a pagar</label>
+                            </div>
+                            <div class="step3-money-input">
+                                <span>S/</span>
+                                <input type="number" id="vuelto-paga" class="form-control" min="0" step="0.01" placeholder="Opcional: importe exacto">
+                            </div>
+                        </div>
+
+                        <div id="step3-resultado-wrap" class="step3-field-card step3-result-card">
+                            <div class="step3-field-heading">
+                                <span class="step3-field-icon"><i class="fas fa-coins"></i></span>
+                                <label class="form-label" id="step3-resultado-label" for="vuelto-mostrar">Vuelto</label>
+                            </div>
+                            <input type="text" id="vuelto-mostrar" class="form-control step3-result-value" readonly>
                         </div>
 
                         <div id="pago-mixto-wrap" class="d-none">
@@ -405,10 +426,13 @@ Nueva venta
                             </div>
                         </div>
 
-                        <div id="credito-vencimiento-wrap" class="d-none">
-                            <label class="form-label" for="credito-vencimiento">Vencimiento del pago pendiente</label>
-                            <input type="date" id="credito-vencimiento" class="form-control mb-3" min="{{ date('Y-m-d') }}">
-                            <small class="text-muted d-block mb-3">Solo se solicita cuando la venta queda fiada o con saldo pendiente.</small>
+                        <div id="credito-vencimiento-wrap" class="step3-field-card d-none">
+                            <div class="step3-field-heading">
+                                <span class="step3-field-icon"><i class="far fa-calendar-check"></i></span>
+                                <label class="form-label" for="credito-vencimiento">Vencimiento del pago pendiente</label>
+                            </div>
+                            <input type="date" id="credito-vencimiento" class="form-control" min="{{ date('Y-m-d') }}">
+                            <small class="text-muted d-block mt-2">Solo se solicita cuando la venta queda fiada o con saldo pendiente.</small>
                         </div>
 
                     </div>

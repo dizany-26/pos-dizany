@@ -1278,6 +1278,183 @@ select.form-select-sm,
     background: var(--card-bg, #fff);
 }
 
+/* Fase 3: cierre visual de la venta */
+#step-3 .step3-checkout-card {
+    border: 1px solid #d8e4f2 !important;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 38%);
+    box-shadow: 0 18px 45px rgba(15, 54, 95, .12) !important;
+}
+
+#step-3 .step3-checkout-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+}
+
+.step3-checkout-header > div {
+    display: grid;
+    gap: 2px;
+}
+
+.step3-checkout-header strong { font-size: 1rem; line-height: 1.2; }
+.step3-checkout-header small { color: rgba(255, 255, 255, .76); font-size: .72rem; }
+.step3-header-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    border-radius: 11px;
+    color: #fff;
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .22);
+}
+
+#step-3 .card-body { padding: 16px; }
+
+.step3-total-card {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+    padding: 15px 16px;
+    border: 1px solid #bce5ca;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #edfff3 0%, #dff8e8 100%);
+    box-shadow: 0 10px 24px rgba(22, 163, 74, .10);
+}
+
+.step3-total-card::after {
+    content: '';
+    position: absolute;
+    width: 95px;
+    height: 95px;
+    right: -38px;
+    top: -48px;
+    border-radius: 50%;
+    background: rgba(22, 163, 74, .09);
+}
+
+.step3-total-label { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.step3-total-label > span {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 10px;
+    color: #15803d;
+    background: rgba(255, 255, 255, .72);
+}
+.step3-total-label > div { display: grid; }
+.step3-total-label small { color: #39704e; font-size: .72rem; }
+.step3-total-label strong { color: #174c2b; font-size: .8rem; }
+.step3-total-amount { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: flex-end; gap: 5px; }
+.step3-total-amount > span { color: #15803d; font-size: 1rem; font-weight: 800; }
+.step3-total-amount input {
+    width: 120px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    color: #087436 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: clamp(1.8rem, 3vw, 2.35rem);
+    font-weight: 900;
+    line-height: 1;
+    text-align: right;
+}
+
+.step3-field-card {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid #dce6f2;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .82);
+}
+.step3-field-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.step3-field-heading .form-label { margin: 0; color: #334155; font-size: .8rem; font-weight: 800; }
+.step3-field-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    border-radius: 8px;
+    color: #2563eb;
+    background: #eaf2ff;
+}
+.step3-money-input { display: flex; align-items: center; overflow: hidden; border: 1px solid #b9cce3; border-radius: 11px; background: #f8fbff; }
+.step3-money-input:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .13); }
+.step3-money-input > span { padding: 9px 10px; color: #64748b; background: #edf3fa; font-weight: 700; }
+#step-3 .step3-money-input .form-control { border: 0 !important; box-shadow: none !important; background: transparent !important; }
+#step-3 .step3-result-value {
+    min-height: 45px;
+    border-color: #bce5ca;
+    color: #087436;
+    background: #effcf4;
+    font-size: 1.12rem;
+    font-weight: 850;
+}
+
+#step-3[data-payment-state='credito'] .step3-total-card,
+#step-3[data-payment-state='pendiente'] .step3-total-card {
+    border-color: #f1d69c;
+    background: linear-gradient(135deg, #fffaf0 0%, #fff2d4 100%);
+    box-shadow: 0 10px 24px rgba(217, 138, 16, .10);
+}
+#step-3[data-payment-state='credito'] .step3-total-label > span,
+#step-3[data-payment-state='pendiente'] .step3-total-label > span,
+#step-3[data-payment-state='credito'] .step3-total-amount > span,
+#step-3[data-payment-state='pendiente'] .step3-total-amount > span,
+#step-3[data-payment-state='credito'] .step3-total-amount input,
+#step-3[data-payment-state='pendiente'] .step3-total-amount input { color: #b66508; }
+#step-3[data-payment-state='credito'] .step3-total-label small,
+#step-3[data-payment-state='pendiente'] .step3-total-label small { color: #8a5a20; }
+#step-3[data-payment-state='credito'] .step3-total-label strong,
+#step-3[data-payment-state='pendiente'] .step3-total-label strong { color: #70420b; }
+
+:root[data-theme='dark'] #step-3 .step3-checkout-card { border-color: #294970 !important; background: linear-gradient(180deg, #102844 0%, #0b1e35 40%) !important; }
+:root[data-theme='dark'] #step-3 .step3-checkout-header { background: linear-gradient(135deg, #244873 0%, #1a385f 100%) !important; }
+:root[data-theme='dark'] .step3-total-card { border-color: #246444; background: linear-gradient(135deg, #103425 0%, #123b2a 100%); }
+:root[data-theme='dark'] .step3-total-label > span { color: #77e49b; background: rgba(255, 255, 255, .07); }
+:root[data-theme='dark'] .step3-total-label small { color: #91c9a5; }
+:root[data-theme='dark'] .step3-total-label strong { color: #d3f6df; }
+:root[data-theme='dark'] .step3-total-amount > span,
+:root[data-theme='dark'] .step3-total-amount input { color: #6ee795 !important; background: transparent !important; }
+:root[data-theme='dark'] .step3-field-card { border-color: #294970; background: rgba(12, 32, 57, .82); }
+:root[data-theme='dark'] .step3-field-heading .form-label { color: #d6e3f3; }
+:root[data-theme='dark'] .step3-field-icon { color: #77aef7; background: #142f51; }
+:root[data-theme='dark'] .step3-money-input { border-color: #31557f; background: #0b1d34; }
+:root[data-theme='dark'] .step3-money-input > span { color: #91a9c5; background: #132b49; }
+:root[data-theme='dark'] #step-3 .step3-result-value { border-color: #246444 !important; color: #78e69c !important; background: #102f23 !important; box-shadow: none !important; }
+:root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-total-card,
+:root[data-theme='dark'] #step-3[data-payment-state='pendiente'] .step3-total-card { border-color: #6e5427; background: linear-gradient(135deg, #332711 0%, #3d2d12 100%); }
+:root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-total-label > span,
+:root[data-theme='dark'] #step-3[data-payment-state='pendiente'] .step3-total-label > span { color: #f2bd61; background: rgba(255, 193, 92, .09); }
+:root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-total-label small,
+:root[data-theme='dark'] #step-3[data-payment-state='pendiente'] .step3-total-label small { color: #d9b477; }
+:root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-total-label strong,
+:root[data-theme='dark'] #step-3[data-payment-state='pendiente'] .step3-total-label strong { color: #ffe7bd; }
+:root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-total-amount > span,
+:root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-total-amount input,
+:root[data-theme='dark'] #step-3[data-payment-state='pendiente'] .step3-total-amount > span,
+:root[data-theme='dark'] #step-3[data-payment-state='pendiente'] .step3-total-amount input { color: #ffc45f !important; }
+:root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-result-value,
+:root[data-theme='dark'] #step-3[data-payment-state='pendiente'] .step3-result-value { border-color: #6e5427 !important; color: #ffc45f !important; background: #302410 !important; }
+
+@media (max-width: 575.98px) {
+    #step-3 .card-body { padding: 12px; }
+    .step3-total-card { align-items: flex-start; padding: 13px; }
+    .step3-total-label strong { display: none; }
+    .step3-total-amount input { width: 94px; font-size: 1.75rem; }
+    .step3-checkout-header small { display: none; }
+}
+
 /* LISTA DEL CARRITO: ocupa el espacio disponible entre header y footer */
 #carrito-lista {
     flex: 1;                /* esto empuja el footer hacia abajo */
