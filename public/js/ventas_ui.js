@@ -193,6 +193,59 @@ function showStep(n) {
     if (typeof snapshotPOS === "function") {
         posSaveDebounced(snapshotPOS, 10);
     }
+
+    if (n === 2) {
+        actualizarResumenClienteFase2();
+    }
+}
+
+function actualizarResumenClienteFase2() {
+    const resumen = document.getElementById("step2-cliente-resumen");
+    if (!resumen) return;
+
+    const comprobanteSelect = document.getElementById("tipo_comprobante");
+    const conDocumento = document.getElementById("cliente-con-documento")?.checked;
+    const razon = document.getElementById("razon_social")?.value?.trim();
+    const documento = document.getElementById("documento")?.value?.trim();
+    const iconoGuardar = document.getElementById("icono-save");
+    const pendienteGuardar = iconoGuardar ? !iconoGuardar.classList.contains("d-none") : false;
+    const cliente = conDocumento
+        ? (razon || documento || "Cliente por identificar")
+        : "Público general";
+
+    resumen.textContent = cliente;
+
+    document.querySelectorAll(".step2-voucher-option").forEach(button => {
+        const active = button.dataset.comprobante === comprobanteSelect?.value;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+
+    const disclosure = document.getElementById("step2-cliente-disclosure");
+    disclosure?.classList.toggle("has-document", !!conDocumento);
+    disclosure?.classList.toggle("needs-save", pendienteGuardar);
+    const estadoCliente = document.getElementById("step2-cliente-estado");
+    if (estadoCliente) estadoCliente.textContent = pendienteGuardar ? "Cliente · Falta guardar" : "Cliente";
+    const documentoButton = document.getElementById("step2-agregar-documento");
+    const documentoAction = documentoButton?.querySelector("span");
+    const esFactura = comprobanteSelect?.value === "factura";
+    if (documentoAction) {
+        documentoAction.textContent = esFactura
+            ? "RUC obligatorio"
+            : (conDocumento ? "Usar público general" : "Agregar documento");
+    }
+    if (documentoButton) {
+        documentoButton.disabled = esFactura;
+        documentoButton.classList.toggle("is-required", esFactura);
+    }
+    if (disclosure && (comprobanteSelect?.value === "factura" || conDocumento) && !razon) {
+        disclosure.open = true;
+    } else if (disclosure && conDocumento && !pendienteGuardar && razon && (documento?.length === 8 || documento?.length === 11)) {
+        // Una vez identificado el cliente, dejar solo el resumen visible para
+        // devolver espacio a los datos de pago. El resumen sigue permitiendo
+        // abrir el editor cuando sea necesario.
+        disclosure.open = false;
+    }
 }
 
 // ============================
@@ -325,6 +378,35 @@ function restaurarVentaActivaEnUI() {
             prepararFase3();
         }
     }
+
+    actualizarResumenClienteFase2();
+
+    document.querySelectorAll(".step2-voucher-option").forEach(button => {
+        button.addEventListener("click", () => {
+            const comprobante = document.getElementById("tipo_comprobante");
+            if (!comprobante || comprobante.value === button.dataset.comprobante) return;
+
+            comprobante.value = button.dataset.comprobante;
+            comprobante.dispatchEvent(new Event("change", { bubbles: true }));
+
+            if (comprobante.value !== "factura") {
+                const documento = document.getElementById("documento")?.value?.trim();
+                const razon = document.getElementById("razon_social")?.value?.trim();
+                if (!documento && !razon) {
+                    const modoSin = document.getElementById("cliente-sin-documento");
+                    if (modoSin && !modoSin.checked) {
+                        modoSin.checked = true;
+                        modoSin.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                }
+            }
+
+            actualizarResumenClienteFase2();
+        });
+    });
+
+    const extraDisclosure = document.getElementById("step2-extra-disclosure");
+    if (extraDisclosure && v.informacion_adicional) extraDisclosure.open = true;
 }
 
 // Restablece únicamente los controles transitorios de la venta terminada.
@@ -674,6 +756,47 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     manejarEstadoVenta();
 
+    ["tipo_comprobante", "cliente-sin-documento", "cliente-con-documento", "documento", "razon_social"]
+        .forEach(id => {
+            const control = document.getElementById(id);
+            control?.addEventListener("change", actualizarResumenClienteFase2);
+            control?.addEventListener("input", actualizarResumenClienteFase2);
+        });
+    actualizarResumenClienteFase2();
+
+    document.getElementById("step2-agregar-documento")?.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const disclosure = document.getElementById("step2-cliente-disclosure");
+        const modoCon = document.getElementById("cliente-con-documento");
+        const modoSin = document.getElementById("cliente-sin-documento");
+        const esFactura = document.getElementById("tipo_comprobante")?.value === "factura";
+        if (esFactura) return;
+
+        if (modoCon?.checked) {
+            if (modoSin) {
+                modoSin.checked = true;
+                modoSin.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            return;
+        }
+
+        if (disclosure) disclosure.open = true;
+        if (modoCon) {
+            modoCon.checked = true;
+            modoCon.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        requestAnimationFrame(() => document.getElementById("documento")?.focus());
+    });
+
+    document.querySelector("#step2-cliente-disclosure > summary")?.addEventListener("click", event => {
+        const iconoGuardar = document.getElementById("icono-save");
+        const pendienteGuardar = iconoGuardar ? !iconoGuardar.classList.contains("d-none") : false;
+        if (!document.getElementById("cliente-con-documento")?.checked || pendienteGuardar) {
+            event.preventDefault();
+        }
+    });
+
     // ============================
     // MÉTODOS DE PAGO - SELECCIÓN ÚNICA
     // ============================
@@ -771,16 +894,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const tipoDoc = v.tipo_documento || "dni";
 
         if (comprobante === "factura" && (tipoDoc !== "ruc" || documento.length !== 11 || !razon)) {
+            document.getElementById("step2-cliente-disclosure")?.setAttribute("open", "");
             Swal.fire("RUC requerido", "La factura requiere seleccionar un cliente registrado con RUC de 11 dígitos.", "warning");
             return;
         }
 
         if (modoCliente === "con_documento" && (!documento || !razon)) {
+            document.getElementById("step2-cliente-disclosure")?.setAttribute("open", "");
             Swal.fire("Cliente requerido", "Consulta y selecciona un cliente antes de continuar.", "warning");
             return;
         }
 
         if (noGuardado) {
+            document.getElementById("step2-cliente-disclosure")?.setAttribute("open", "");
             Swal.fire("Cliente no guardado", "Debes guardar el cliente.", "warning");
             return;
         }
@@ -851,6 +977,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.showStep = showStep;
 window.volcarUIaVentaActiva = volcarUIaVentaActiva;
 window.restaurarVentaActivaEnUI = restaurarVentaActivaEnUI;
+window.actualizarResumenClienteFase2 = actualizarResumenClienteFase2;
 window.limpiarFlujoVentaConfirmada = limpiarFlujoVentaConfirmada;
 window.actualizarResumen = actualizarResumen;
 window.actualizarBotonCarrito = actualizarBotonCarrito;

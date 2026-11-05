@@ -1279,6 +1279,219 @@ select.form-select-sm,
 }
 
 /* Fase 3: cierre visual de la venta */
+
+/* Fase 2: preparación rápida con detalles bajo demanda */
+.step2-dialog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid #d8e4f2;
+    border-radius: 18px;
+    background: #f7faff;
+    box-shadow: 0 24px 70px rgba(15, 38, 68, .2);
+}
+
+.step2-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    color: #fff;
+    background: linear-gradient(135deg, #315f92 0%, #244b78 100%);
+    flex: 0 0 auto;
+}
+
+.step2-dialog-header > div,
+.step2-summary-copy { display: grid; gap: 1px; min-width: 0; }
+.step2-dialog-header strong { font-size: 1.05rem; }
+.step2-dialog-header small { color: rgba(255, 255, 255, .76); font-size: .74rem; }
+.step2-dialog-icon,
+.step2-summary-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 10px;
+}
+.step2-dialog-icon { color: #fff; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .2); }
+
+.step2-voucher-picker { flex: 0 0 auto; padding: 9px 14px 0; }
+.step2-section-label { display: block; margin-bottom: 6px; color: #51657c; font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.step2-voucher-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.step2-voucher-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 35px;
+    padding: 5px 9px;
+    border: 1px solid #d3e0ef;
+    border-radius: 10px;
+    color: #526a84;
+    background: #fff;
+    font-size: .76rem;
+    font-weight: 750;
+}
+.step2-voucher-option:hover { border-color: #83afe1; background: #f2f7ff; }
+.step2-voucher-option.active { color: #fff; border-color: #2f80ed; background: linear-gradient(135deg, #2f80ed, #2168c7); box-shadow: 0 6px 14px rgba(47, 128, 237, .2); }
+.step2-tax-caption { display: block; margin-top: 4px; color: #73859a; font-size: .64rem; }
+
+.step2-disclosure {
+    flex: 0 0 auto;
+    margin: 9px 14px 0;
+    border: 1px solid #d8e4f2;
+    border-radius: 13px;
+    background: #fff;
+    overflow: hidden;
+}
+.step2-disclosure > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 50px;
+    padding: 7px 11px;
+    cursor: default;
+    list-style: none;
+    user-select: none;
+}
+.step2-disclosure > summary::-webkit-details-marker { display: none; }
+.step2-summary-icon { color: #2f80ed; background: #eaf3ff; }
+.step2-summary-copy { flex: 1; }
+.step2-summary-copy small { color: #6b7d93; font-size: .7rem; }
+.step2-summary-copy strong { overflow: hidden; color: #1d3553; font-size: .84rem; text-overflow: ellipsis; white-space: nowrap; }
+.step2-summary-action { display: inline-flex; align-items: center; gap: 7px; color: #2f6fab; font-size: .74rem; font-weight: 700; }
+.step2-summary-action i { transition: transform .2s ease; }
+.step2-disclosure[open] .step2-summary-action i { transform: rotate(180deg); }
+.step2-disclosure-body { padding: 10px 12px; border-top: 1px solid #e4ebf4; }
+.step2-client-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 8px;
+    margin-left: auto;
+}
+.step2-client-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 32px;
+    padding: 5px 10px;
+    border: 1px solid #bfd5ef;
+    border-radius: 9px;
+    color: #2465a4;
+    background: #edf5ff;
+    font-size: .73rem;
+    font-weight: 750;
+}
+.step2-client-action:hover { border-color: #70a5df; background: #e1efff; }
+.step2-client-action:disabled,
+.step2-client-action.is-required { cursor: default; opacity: .72; }
+.step2-client-action-muted { color: #526a84; background: #fff; border-color: #d8e4f2; }
+.step2-disclosure.has-document > summary { cursor: pointer; }
+.step2-disclosure.needs-save { border-color: #b98522; }
+.step2-disclosure.needs-save > summary { cursor: default; }
+.step2-disclosure.needs-save .step2-summary-copy small { color: #d69a2d; font-weight: 800; }
+
+#step-2 .step2-main-card {
+    min-height: 0;
+    margin: 9px 14px 12px;
+    overflow: hidden;
+    border: 1px solid #d8e4f2 !important;
+    background: #fff;
+    box-shadow: none !important;
+}
+#step-2 .step2-main-body { overflow-y: auto; padding: 12px 14px; }
+.step2-total-summary { padding: 8px 11px; border-radius: 12px; background: #f3f8ff; }
+.step2-total-summary .resumen-total { margin-top: 5px; padding-top: 8px; border-top: 1px dashed #b9cae0; }
+.step2-total-summary .resumen-total .resumen-value { color: #168248; font-size: 1.12rem; }
+.step2-payment-state,
+.step2-print-row {
+    display: grid;
+    grid-template-columns: 145px minmax(220px, 360px);
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.step2-payment-state .form-label,
+.step2-print-row .form-label { margin: 0; }
+.step2-payment-state .form-select,
+.step2-print-row .form-select { min-height: 39px; }
+.step2-extra-disclosure { margin: 12px 0 0; }
+
+@media (min-width: 992px) {
+    #step-2.is-active,
+    #step-3.is-active {
+        position: fixed;
+        inset: 0;
+        z-index: 1060;
+        align-items: center;
+        justify-content: center;
+        height: auto;
+        padding: 24px;
+        overflow: auto;
+        background: rgba(4, 14, 30, .68);
+        backdrop-filter: blur(4px);
+    }
+    #step-2 .step2-dialog { width: min(760px, calc(100vw - 48px)); max-height: calc(100dvh - 48px); }
+    #step-2 .step2-main-card { flex: 1 1 auto; }
+    #step-3 .step3-checkout-card {
+        width: min(600px, calc(100vw - 48px));
+        max-height: calc(100dvh - 48px);
+        overflow: hidden;
+        border-radius: 18px !important;
+        box-shadow: 0 26px 80px rgba(0, 0, 0, .32) !important;
+    }
+    #step-3 .step3-checkout-card > .card-body { overflow-y: auto; }
+}
+
+:root[data-theme='dark'] .step2-dialog { border-color: #294970; background: #0b1e35; box-shadow: 0 26px 80px rgba(0, 0, 0, .48); }
+:root[data-theme='dark'] .step2-dialog-header { background: linear-gradient(135deg, #244873 0%, #19375d 100%); }
+:root[data-theme='dark'] .step2-disclosure,
+:root[data-theme='dark'] #step-2 .step2-main-card { border-color: #294970 !important; background: #10243e !important; }
+:root[data-theme='dark'] .step2-disclosure-body { border-color: #294970; }
+:root[data-theme='dark'] .step2-summary-icon { color: #7db4ff; background: #17345a; }
+:root[data-theme='dark'] .step2-summary-copy small { color: #90a8c4; }
+:root[data-theme='dark'] .step2-summary-copy strong { color: #e6eef8; }
+:root[data-theme='dark'] .step2-summary-action { color: #83b8fa; }
+:root[data-theme='dark'] .step2-total-summary { background: #0b1d34; }
+:root[data-theme='dark'] .step2-section-label,
+:root[data-theme='dark'] .step2-tax-caption { color: #8fa7c3; }
+:root[data-theme='dark'] .step2-voucher-option { color: #c4d3e5; border-color: #294970; background: #10243e; }
+:root[data-theme='dark'] .step2-voucher-option:hover { border-color: #4774a8; background: #142d4c; }
+:root[data-theme='dark'] .step2-voucher-option.active { color: #fff; border-color: #3d8ef0; background: linear-gradient(135deg, #2f80ed, #205da7); }
+:root[data-theme='dark'] .step2-client-action { color: #8fc0ff; border-color: #315b8c; background: #142f51; }
+:root[data-theme='dark'] .step2-client-action-muted { color: #b7c7da; border-color: #294970; background: #10243e; }
+
+@media (max-width: 991.98px) {
+    #step-2 { height: 100%; padding: 0 !important; overflow: hidden !important; }
+    #step-2 .step2-dialog { height: 100%; border-radius: 14px; }
+    #step-2 .step2-main-card { flex: 1 1 auto; }
+}
+
+@media (max-width: 575.98px) {
+    .step2-dialog-header { padding: 11px 13px; }
+    .step2-dialog-header small { display: none; }
+    .step2-disclosure { margin: 9px 9px 0; }
+    .step2-disclosure > summary { min-height: 52px; padding: 8px 10px; }
+    #step-2 .step2-main-card { margin: 9px; }
+    #step-2 .step2-main-body { padding: 11px; }
+    .step2-payment-state,
+    .step2-print-row { grid-template-columns: 1fr; gap: 4px; }
+    .step2-summary-action { font-size: 0; }
+    .step2-summary-action i { font-size: .78rem; }
+    .step2-extra-disclosure { margin: 10px 0 0; }
+    .step2-client-actions { margin-left: auto; }
+    .step2-client-action { max-width: 132px; font-size: .66rem; }
+    .step2-client-action { flex: 1 1 0; padding-inline: 8px; }
+    .step2-voucher-picker { padding: 9px 9px 0; }
+    .step2-voucher-options { gap: 5px; }
+    .step2-voucher-option { min-height: 37px; padding-inline: 6px; font-size: .68rem; }
+    .step2-voucher-option i { display: none; }
+}
+
 #step-3 .step3-checkout-card {
     border: 1px solid #d8e4f2 !important;
     background: linear-gradient(180deg, #f8fbff 0%, #ffffff 38%);
@@ -1835,6 +2048,29 @@ select.form-select-sm,
     overflow: hidden;
     border: 1px solid rgba(88, 130, 184, 0.38);
     border-radius: 18px;
+}
+
+#clientModal { z-index: 1090 !important; }
+body.client-modal-over-sale .modal-backdrop.show { z-index: 1080 !important; }
+
+.venta-exitosa-dialog { max-width: 480px; }
+.venta-exitosa-content {
+    overflow: hidden;
+    padding: 18px 20px;
+    border: 1px solid rgba(73, 111, 160, .38);
+    border-radius: 18px;
+}
+.venta-exitosa-content .modal-body { padding: 14px 16px; }
+.venta-exitosa-icon { margin-bottom: 12px; font-size: 3.35rem; }
+.venta-exitosa-content h4 { font-size: 1.25rem; }
+.venta-exitosa-content p { margin-bottom: 0; font-size: .9rem; }
+.venta-exitosa-actions .btn { min-width: 104px; }
+
+@media (max-width: 575.98px) {
+    .venta-exitosa-dialog { max-width: none; margin: 14px; }
+    .venta-exitosa-content { padding: 14px 10px; }
+    .venta-exitosa-content .modal-body { padding: 12px; }
+    .venta-exitosa-icon { font-size: 2.9rem; }
 }
 
 .client-quick-modal .modal-header {

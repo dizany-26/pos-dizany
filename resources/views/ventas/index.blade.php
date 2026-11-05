@@ -141,128 +141,112 @@ Nueva venta
             <!-- █████████████████████████████ -->
             <!-- ==================== FASE 2 ==================== -->
             <div id="step-2" class="step-panel step2-scroll">
-                <!-- CLIENTE Y COMPROBANTE -->
-                <div class="card shadow-sm mb-3">
-                    <div class="card-header bg-primary text-white">
-                        Cliente y Comprobante
+                <div class="step2-dialog" role="dialog" aria-modal="true" aria-labelledby="step2-title">
+                <div class="step2-dialog-header">
+                    <span class="step2-dialog-icon"><i class="fas fa-receipt"></i></span>
+                    <div>
+                        <strong id="step2-title">Preparar venta</strong>
+                        <small>Paso 2 de 3 · Datos y forma de pago</small>
                     </div>
+                </div>
 
-                    <div class="card-body small">
+                <div class="step2-voucher-picker">
+                    <span class="step2-section-label">Comprobante</span>
+                    <div class="step2-voucher-options" role="group" aria-label="Tipo de comprobante">
+                        @if(!$taxProfile || in_array('issue_boleta', $taxCapabilities, true))
+                            <button type="button" class="step2-voucher-option" data-comprobante="boleta"><i class="fas fa-receipt"></i> Boleta</button>
+                        @endif
+                        @if(!$taxProfile || in_array('issue_factura', $taxCapabilities, true))
+                            <button type="button" class="step2-voucher-option" data-comprobante="factura"><i class="fas fa-file-invoice"></i> Factura</button>
+                        @endif
+                        <button type="button" class="step2-voucher-option" data-comprobante="nota_venta"><i class="fas fa-note-sticky"></i> Nota de venta</button>
+                    </div>
+                    <select id="tipo_comprobante" class="visually-hidden" data-native-select aria-label="Tipo de comprobante">
+                        @if(!$taxProfile || in_array('issue_boleta', $taxCapabilities, true))<option value="boleta">Boleta</option>@endif
+                        @if(!$taxProfile || in_array('issue_factura', $taxCapabilities, true))<option value="factura">Factura</option>@endif
+                        <option value="nota_venta">Nota de Venta</option>
+                    </select>
+                    @if($taxProfile)
+                        <small class="step2-tax-caption">{{ strtoupper(str_replace('_',' ', $taxProfile->emission_system)) }} · {{ $taxProfile->default_tax_treatment === 'nrus_no_desglosado' ? 'Nuevo RUS · IGV no desglosado' : ucfirst($taxProfile->default_tax_treatment) }}</small>
+                    @endif
+                </div>
+
+                <!-- CLIENTE -->
+                <details class="step2-disclosure" id="step2-cliente-disclosure">
+                    <summary>
+                        <span class="step2-summary-icon"><i class="fas fa-user-check"></i></span>
+                        <span class="step2-summary-copy">
+                            <small id="step2-cliente-estado">Cliente</small>
+                            <strong id="step2-cliente-resumen">Público general</strong>
+                        </span>
+                        <span class="step2-client-actions">
+                            <button type="button" id="step2-agregar-documento" class="step2-client-action">
+                                <i class="fas fa-id-card"></i>
+                                <span>Agregar documento</span>
+                            </button>
+                        </span>
+                    </summary>
+                    <div class="step2-disclosure-body small">
                         <div class="row g-3">
-
-                            <div class="col-12">
-                                <label class="form-label fw-bold mb-1" for="tipo_comprobante">Tipo de comprobante</label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text"><i class="fas fa-file-invoice"></i></span>
-                                    <select id="tipo_comprobante" class="form-select" data-native-select>
-                                        @if(!$taxProfile || in_array('issue_boleta', $taxCapabilities, true))<option value="boleta">Boleta</option>@endif
-                                        @if(!$taxProfile || in_array('issue_factura', $taxCapabilities, true))<option value="factura">Factura</option>@endif
-                                        <option value="nota_venta">Nota de Venta</option>
-                                    </select>
-                                </div>
-                                @if($taxProfile)
-                                    <small class="text-muted d-block mt-1">
-                                        {{ strtoupper(str_replace('_',' ', $taxProfile->emission_system)) }} · {{ $taxProfile->default_tax_treatment === 'nrus_no_desglosado' ? 'Nuevo RUS · IGV no desglosado' : ucfirst($taxProfile->default_tax_treatment) }}
-                                    </small>
-                                @endif
-                            </div>
 
                             <!-- ========= COLUMNA IZQUIERDA: CLIENTE ========= -->
                             <div class="col-12">
                                 <h6 class="fw-bold text-secondary mb-2">Cliente</h6>
 
-                                <div class="cliente-documento-modo mb-2" role="group" aria-label="Identificación del cliente">
+                                <div class="cliente-documento-modo visually-hidden" role="group" aria-label="Identificación del cliente">
                                     <input type="radio" class="btn-check" name="cliente_documento_modo" id="cliente-sin-documento" value="sin_documento" checked>
                                     <label class="btn btn-sm btn-outline-primary" for="cliente-sin-documento">Sin documento</label>
                                     <input type="radio" class="btn-check" name="cliente_documento_modo" id="cliente-con-documento" value="con_documento">
                                     <label class="btn btn-sm btn-outline-primary" for="cliente-con-documento">Con documento</label>
                                 </div>
 
-                                <!-- DOCUMENTO -->
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                    <select id="tipo_documento_cliente" class="form-select cliente-tipo-documento" data-native-select aria-label="Tipo de documento">
-                                        <option value="dni">DNI</option>
-                                        <option value="ruc">RUC</option>
-                                    </select>
-                                    <input type="text" id="documento" class="form-control" placeholder="DNI" inputmode="numeric" autocomplete="off">
-                                    <button id="btn-cliente-accion" class="btn btn-outline-secondary" type="button">
-                                        <i class="fas fa-plus-circle" id="icono-plus"></i>
-                                        <i class="fas fa-save d-none" id="icono-save"></i>
-                                    </button>
-                                </div>
-
-                                <p id="estado_ruc" class="text-success small mb-1"></p>
-
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                            <input type="text" id="razon_social" class="form-control" placeholder="Razón Social" readonly>
-                                        </div>
+                                <div id="cliente-documento-campos" hidden>
+                                    <!-- DOCUMENTO -->
+                                    <div class="input-group input-group-sm mb-2">
+                                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                        <select id="tipo_documento_cliente" class="form-select cliente-tipo-documento" data-native-select aria-label="Tipo de documento">
+                                            <option value="dni">DNI</option>
+                                            <option value="ruc">RUC</option>
+                                        </select>
+                                        <input type="text" id="documento" class="form-control" placeholder="DNI" inputmode="numeric" autocomplete="off">
+                                        <button id="btn-cliente-accion" class="btn btn-outline-secondary" type="button">
+                                            <i class="fas fa-plus-circle" id="icono-plus"></i>
+                                            <i class="fas fa-save d-none" id="icono-save"></i>
+                                        </button>
                                     </div>
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                            <input type="text" id="direccion" class="form-control" placeholder="Dirección" readonly>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- ========= COLUMNA DERECHA: COMPROBANTE ========= -->
-                            <div class="col-12">
-                                <h6 class="fw-bold text-secondary mb-2">Datos de la venta</h6>
+                                    <p id="estado_ruc" class="text-success small mb-1"></p>
 
-                                <div class="row g-2">
-                                    <div class="col-4">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text"><i class="fas fa-money-bill-wave"></i></span>
-                                            <select id="estado_pago" class="form-select" data-native-select>
-                                                <option value="pagado">Pagado</option>
-                                                <option value="pendiente">Pendiente</option>
-                                                <option value="credito">Credito</option>
-                                            </select>
+                                    <div class="row g-2">
+                                        <div class="col-12 col-sm-6">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                                <input type="text" id="razon_social" class="form-control" placeholder="Razón Social" readonly>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                            <input type="text" class="form-control" value="{{ date('d/m/Y') }}" aria-label="Fecha de emisión" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                            <input type="time"
-                                                id="hora_actual"
-                                                class="form-control"
-                                                value="{{ date('H:i') }}"
-                                                readonly>
+                                        <div class="col-12 col-sm-6">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                                <input type="text" id="direccion" class="form-control" placeholder="Dirección" readonly>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label fw-bold mb-1" for="informacion_adicional">Información adicional <span class="text-muted fw-normal">(opcional)</span></label>
-                                <textarea id="informacion_adicional" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Referencia, indicaciones de entrega u otra observación para el comprobante"></textarea>
-                                <small class="text-muted">Solo aparecerá en el comprobante cuando escribas algo.</small>
                             </div>
 
                         </div>
                     </div>
-                </div>
+                </details>
 
                 <!-- ===== RESUMEN + MÉTODOS DE PAGO ===== -->
-                <div class="card shadow-sm mb-3">
-                    <div class="card-body">
+                <div class="card shadow-sm step2-main-card">
+                    <div class="card-body step2-main-body">
 
                         <!-- IGV desde configuración global -->
                         <input type="hidden" id="igv-config" value="{{ $taxProfile?->default_tax_treatment === 'gravada' ? $taxProfile->igv_rate : 0 }}">
                         <input type="hidden" id="tax-treatment" value="{{ $taxProfile?->default_tax_treatment ?? 'nrus_no_desglosado' }}">
 
-                        <div class="resumen-box mb-3">
+                        <div class="resumen-box step2-total-summary mb-3">
                             <div class="resumen-row" id="resumen-descuento-row" style="display:none">
                                 <div class="resumen-label">Descuento total:</div>
                                 <div class="resumen-value text-success" id="resumen-descuento-monto">- S/ 0.00</div>
@@ -289,6 +273,15 @@ Nueva venta
                         <input type="hidden" name="op_gravadas" value="0">
                         <input type="hidden" name="total" value="0">
                         <input type="hidden" name="monto_pagado" value="0">
+
+                        <div class="step2-payment-state mb-3">
+                            <label class="form-label fw-bold mb-1" for="estado_pago">Condición de pago</label>
+                            <select id="estado_pago" class="form-select" data-native-select>
+                                <option value="pagado">Pagado</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="credito">Crédito</option>
+                            </select>
+                        </div>
 
                         <!-- MÉTODOS DE PAGO BONITOS -->
                         <label class="fw-bold mb-2">Método de pago:</label>
@@ -317,7 +310,7 @@ Nueva venta
 
                         <input type="hidden" id="metodo_pago" name="metodo_pago" value="">
 
-                        <div class="mt-3">
+                        <div class="step2-print-row mt-3">
                             <label class="form-label fw-bold" for="formato_pdf">Formato de impresión:</label>
                             <select id="formato_pdf" class="form-select" data-native-select>
                                 <option value="a4">A4</option>
@@ -325,6 +318,37 @@ Nueva venta
                                 <option value="ticket_58">Ticket 58 mm</option>
                             </select>
                         </div>
+
+                        <details class="step2-disclosure step2-extra-disclosure mt-3" id="step2-extra-disclosure">
+                            <summary>
+                                <span class="step2-summary-icon"><i class="fas fa-sliders-h"></i></span>
+                                <span class="step2-summary-copy"><strong>Más datos de la venta</strong><small>Fecha, hora y observaciones</small></span>
+                                <span class="step2-summary-action"><i class="fas fa-chevron-down"></i></span>
+                            </summary>
+                            <div class="step2-disclosure-body">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small" for="fecha-emision-resumen">Fecha</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                            <input id="fecha-emision-resumen" type="text" class="form-control" value="{{ date('d/m/Y') }}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small" for="hora_actual">Hora</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                            <input type="time" id="hora_actual" class="form-control" value="{{ date('H:i') }}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <label class="form-label fw-bold mb-1" for="informacion_adicional">Información adicional <span class="text-muted fw-normal">(opcional)</span></label>
+                                        <textarea id="informacion_adicional" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Referencia, entrega u otra observación"></textarea>
+                                        <small class="text-muted">Solo aparecerá en el comprobante cuando escribas algo.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
                     </div>
 
                     <div class="card-footer d-flex justify-content-between">
@@ -341,7 +365,7 @@ Nueva venta
                         </button>
                     </div>
                 </div>
-
+                </div>
             </div>
 
             <!-- █████████████████████████████ -->
@@ -355,7 +379,7 @@ Nueva venta
                         <span class="step3-header-icon"><i class="fas fa-cash-register"></i></span>
                         <div>
                             <strong id="step3-titulo">Calcula el cambio de tu venta</strong>
-                            <small>Revisa los importes antes de confirmar</small>
+                            <small>Paso 3 de 3 · Revisa los importes y confirma</small>
                         </div>
                     </div>
 
@@ -657,14 +681,14 @@ Nueva venta
 </div>
 <!-- Modal de Venta Exitosa -->
 <div class="modal fade" id="modalVentaExitosa" tabindex="-1" aria-labelledby="modalVentaExitosaLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content text-center p-4">
+  <div class="modal-dialog modal-dialog-centered venta-exitosa-dialog">
+    <div class="modal-content text-center venta-exitosa-content">
       <div class="modal-body">
-        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
-        <h4 class="mb-3">¡Venta registrada con éxito!</h4>
+        <i class="fas fa-check-circle venta-exitosa-icon text-success"></i>
+        <h4 class="mb-2">¡Venta registrada con éxito!</h4>
         <p class="text-muted">Puedes imprimir o descargar el comprobante.</p>
 
-        <div class="d-flex justify-content-center gap-3 my-4">
+        <div class="d-flex justify-content-center gap-2 my-3 venta-exitosa-actions">
             <a id="btnImprimir" target="_blank" class="btn btn-primary">
                 <i class="fas fa-print"></i> Imprimir
             </a>
@@ -672,7 +696,7 @@ Nueva venta
 
         </div>
 
-        <button id="btnNuevaVenta" class="btn btn-success mt-3">
+        <button id="btnNuevaVenta" class="btn btn-success mt-2">
           <i class="fas fa-plus-circle"></i> Continuar vendiendo
         </button>
       </div>

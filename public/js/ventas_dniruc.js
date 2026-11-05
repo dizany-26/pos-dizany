@@ -14,8 +14,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const iconoPlus = document.getElementById("icono-plus");
     const iconoSave = document.getElementById("icono-save");
     const informacion = document.getElementById("informacion_adicional");
+    const camposDocumento = document.getElementById("cliente-documento-campos");
+    const clienteDisclosure = document.getElementById("step2-cliente-disclosure");
     const modalEl = document.getElementById("clientModal");
     const modalCliente = modalEl && window.bootstrap ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
+
+    modalEl?.addEventListener("show.bs.modal", () => {
+        document.body.classList.add("client-modal-over-sale");
+    });
+    modalEl?.addEventListener("hidden.bs.modal", () => {
+        document.body.classList.remove("client-modal-over-sale");
+    });
 
     if (!tipoComprobante || !tipoDocumento || !documento || !razon || !direccion) return;
 
@@ -38,6 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
         venta.informacion_adicional = (informacion?.value || "").trim();
         if (cliente) venta.cliente = cliente;
         window.actualizarAliasVentaDesdeCliente?.();
+        window.actualizarResumenClienteFase2?.();
         if (typeof window.snapshotPOS === "function") posSaveDebounced(snapshotPOS, 30);
     }
 
@@ -104,6 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const conDocumento = modoActual() === "con_documento";
+        if (camposDocumento) camposDocumento.hidden = !conDocumento;
         documento.disabled = !conDocumento;
         btnAccion.disabled = !conDocumento;
         configurarDocumento();
@@ -184,9 +195,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    tipoComprobante.addEventListener("change", () => aplicarFlujo(false));
-    modoSin?.addEventListener("change", () => aplicarFlujo(false));
-    modoCon?.addEventListener("change", () => aplicarFlujo(false));
+    tipoComprobante.addEventListener("change", () => {
+        const documentoActual = documento.value.trim();
+        const teniaClienteIdentificado = modoActual() === "con_documento"
+            && !!documentoActual
+            && (tipoComprobante.value !== "factura" || documentoActual.length === 11);
+        aplicarFlujo(true);
+
+        // Al pasar de Público general a Factura se necesita un RUC nuevo.
+        // Si ya existía un cliente identificado, se conserva al cambiar entre
+        // Boleta, Factura y Nota de venta.
+        if (tipoComprobante.value === "factura" && !teniaClienteIdentificado) {
+            limpiarCliente();
+        }
+    });
+    modoSin?.addEventListener("change", () => {
+        aplicarFlujo(false);
+        if (modoSin.checked && clienteDisclosure) clienteDisclosure.open = false;
+    });
+    modoCon?.addEventListener("change", () => {
+        aplicarFlujo(false);
+        if (modoCon.checked && clienteDisclosure) clienteDisclosure.open = true;
+    });
     tipoDocumento.addEventListener("change", () => {
         configurarDocumento();
         limpiarCliente();
