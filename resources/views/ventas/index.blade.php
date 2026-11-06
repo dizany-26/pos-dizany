@@ -17,6 +17,11 @@ Nueva venta
 
 @section('header-buttons')
 
+<button type="button" id="btn-atajos-venta" class="btn-soft btn-soft-info btn-soft-icon d-none d-md-inline-flex"
+        data-tooltip="Atajos de teclado (F1)" aria-label="Ver atajos de teclado">
+    <span class="fw-bold">F1</span>
+</button>
+
 <div class="pos-espera-wrapper">
     <button id="btn-pos-espera" class="btn-pos-espera btn-soft btn-soft-info">
         <i class="fas fa-receipt"></i>

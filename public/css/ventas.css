@@ -1232,9 +1232,49 @@ select.form-select-sm,
 
 .product-card.agregar-carrito:focus-visible,
 .carrito-item:focus-visible,
+.step2-voucher-option:focus-visible,
 .metodo-pago-item:focus-visible {
     outline: 3px solid #2f80ed;
     outline-offset: 2px;
+}
+
+.venta-step-btn:focus-visible,
+#btn-ir-step2:focus-visible {
+    position: relative;
+    z-index: 2;
+    outline: 2px solid rgba(47, 128, 237, .72);
+    outline-offset: 2px;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(15, 35, 65, .16);
+    filter: brightness(1.06);
+}
+
+.venta-step-btn-back:focus-visible {
+    border-color: #83afe1 !important;
+    background: #f2f7ff !important;
+}
+
+.venta-step-btn-primary:focus-visible {
+    color: #08752e !important;
+    border-color: #55bd78 !important;
+    background: #ecfdf3 !important;
+}
+
+:root[data-theme='dark'] .venta-step-btn:focus-visible,
+:root[data-theme='dark'] #btn-ir-step2:focus-visible {
+    outline-color: #659ee3;
+    box-shadow: 0 10px 18px rgba(2, 8, 20, .38);
+}
+
+:root[data-theme='dark'] .venta-step-btn-back:focus-visible {
+    border-color: #527caf !important;
+    background: #193656 !important;
+}
+
+:root[data-theme='dark'] .venta-step-btn-primary:focus-visible {
+    color: #9bf5b4 !important;
+    border-color: #3f9b64 !important;
+    background: #123d2c !important;
 }
 
 .keyboard-help-grid {

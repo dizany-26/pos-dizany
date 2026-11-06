@@ -141,6 +141,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const v = ventaActiva();
+        // Conservar la identidad exacta de la venta enviada. La respuesta del
+        // servidor es asincrona y, si la venta activa cambia mientras llega,
+        // nunca debemos eliminar otra venta que estaba en espera.
+        const idVentaEnviada = v.id;
+        const pedidoCatalogoEnviado = Number(v.pedido_catalogo_id || 0) || null;
 
         const { total } = calcularTotal();
 
@@ -292,13 +297,23 @@ document.addEventListener("DOMContentLoaded", () => {
     configurarBotonesComprobante(data);
 
     // 🔥 LIMPIEZA CORRECTA POS
-    const idConfirmada = POS.ventaActivaId;
-    delete POS.ventas[idConfirmada];
-    // La siguiente venta debe tener su propio ID: asegurarVentaActiva() elegiría
-    // una venta en espera y el reinicio posterior sobrescribiría sus productos.
-    const idNuevaVenta = uidVenta();
-    POS.ventas[idNuevaVenta] = crearVentaVacia(idNuevaVenta);
-    POS.ventaActivaId = idNuevaVenta;
+    const idActivaAlResponder = POS.ventaActivaId;
+    delete POS.ventas[idVentaEnviada];
+
+    // En el flujo normal se abre una venta vacia nueva sin reutilizar ninguna
+    // que estuviera en espera. Si el usuario ya habia cambiado de venta antes
+    // de recibir la respuesta, se conserva esa seleccion y todos sus productos.
+    if (idActivaAlResponder === idVentaEnviada || !POS.ventas[idActivaAlResponder]) {
+        const idNuevaVenta = uidVenta();
+        POS.ventas[idNuevaVenta] = crearVentaVacia(idNuevaVenta);
+        POS.ventaActivaId = idNuevaVenta;
+    }
+
+    if (data.pedido_catalogo_atendido && pedidoCatalogoEnviado) {
+        document.dispatchEvent(new CustomEvent("venta:catalogo-atendida", {
+            detail: { pedidoId: pedidoCatalogoEnviado }
+        }));
+    }
 
     guardarPOSAhora();
 

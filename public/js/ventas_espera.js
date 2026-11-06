@@ -454,6 +454,18 @@ document.addEventListener("DOMContentLoaded", () => {
     window.renderVentasEsperaPanel = renderVentasEsperaPanel;
     window.actualizarContadorVentasEspera = actualizarContadorVentasEspera;
 
+    document.addEventListener('venta:catalogo-atendida', event => {
+        const pedidoId = Number(event.detail?.pedidoId || 0);
+        if (!pedidoId) return;
+        pedidosCatalogo = pedidosCatalogo.filter(
+            pedido => Number(pedido.id) !== pedidoId
+        );
+        actualizarContadorVentasEspera();
+        if (!posEsperaPanel?.classList.contains('d-none')) {
+            renderVentasEsperaPanel();
+        }
+    });
+
     cargarPedidosCatalogo();
     window.setInterval(() => {
         if (!document.hidden) cargarPedidosCatalogo(true);

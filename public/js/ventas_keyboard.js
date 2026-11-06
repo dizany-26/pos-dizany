@@ -109,6 +109,19 @@
         });
     }
 
+    function comprobantesVisibles() {
+        return $$(".step2-voucher-option").filter(visible);
+    }
+
+    function prepararComprobantes() {
+        const comprobantes = comprobantesVisibles();
+        const activo = comprobantes.findIndex(item => item.classList.contains("active"));
+        comprobantes.forEach((item, indice) => {
+            item.setAttribute("aria-pressed", item.classList.contains("active") ? "true" : "false");
+            item.tabIndex = indice === (activo >= 0 ? activo : 0) ? 0 : -1;
+        });
+    }
+
     function prepararOrdenFoco() {
         ["vuelto-total-venta", "vuelto-mostrar"].forEach(id => {
             const campo = document.getElementById(id);
@@ -126,6 +139,7 @@
         });
         prepararProductos();
         prepararCarrito();
+        prepararComprobantes();
         prepararMetodos();
     }
 
@@ -137,7 +151,9 @@
                 return;
             }
             if (paso === "step-2") {
-                enfocar(document.getElementById("tipo_comprobante"));
+                const comprobante = comprobantesVisibles().find(item => item.classList.contains("active"))
+                    || comprobantesVisibles()[0];
+                enfocar(comprobante);
                 return;
             }
 
@@ -162,6 +178,15 @@
         return true;
     }
 
+    function seleccionarComprobante(valor) {
+        const boton = $(`.step2-voucher-option[data-comprobante="${valor}"]`);
+        if (!visible(boton)) return false;
+        boton.click();
+        prepararComprobantes();
+        enfocar(boton);
+        return true;
+    }
+
     function seleccionarValor(select, valor) {
         if (!select || !Array.from(select.options).some(opcion => opcion.value === valor)) return false;
         select.value = valor;
@@ -176,12 +201,18 @@
             title: "Atajos de venta",
             width: 620,
             html: `<div class="text-start small keyboard-help-grid">
-                <strong>Generales</strong><span>F2 buscar · F3 carrito · F4 cliente · F8 continuar · F9 confirmar · Esc volver</span>
-                <strong>Productos</strong><span>↑/↓ seleccionar · Enter agregar</span>
+                <strong>Accesos</strong><span>F1 ayuda · F2 productos · F3 carrito · F4 cliente · F5 comprobante · F6 condición · F7 método</span>
+                <strong>Avanzar</strong><span>F8 enfoca Continuar · F9 enfoca Confirmar · pulsa Enter para ejecutar · Esc vuelve</span>
+                <strong>Navegación</strong><span>Tab avanza · Shift + Tab retrocede · Enter activa el control enfocado</span>
+                <strong>Productos</strong><span>↑/↓/←/→ seleccionar · Enter agregar</span>
                 <strong>Carrito</strong><span>↑/↓ recorrer · +/− cantidad · P presentación · D descuento · Supr eliminar</span>
-                <strong>Venta</strong><span>B boleta · N nota · F factura · 1 pagado · 2 fiado · 3 crédito</span>
+                <strong>Comprobante</strong><span>B boleta · F factura · N nota de venta</span>
+                <strong>Cliente</strong><span>C con documento · S sin documento / público general</span>
+                <strong>Condición</strong><span>1 pagado · 2 pendiente · 3 crédito</span>
                 <strong>Pago</strong><span>E efectivo · Y Yape · P Plin · T tarjeta · R transferencia · M mixto · O otro</span>
                 <strong>Formato</strong><span>A A4 · 8 ticket 80 mm · 5 ticket 58 mm</span>
+                <strong>Al terminar</strong><span>I imprime desde la ventana de venta registrada</span>
+                <strong>Seguridad</strong><span>Las letras rápidas no se activan mientras escribes en un campo</span>
             </div>`,
             confirmButtonText: "Cerrar"
         });
@@ -191,12 +222,14 @@
         evento.preventDefault();
         const paso = pasoActivo();
         if (paso === "step-1") {
-            document.getElementById("btn-ir-step2")?.click();
+            enfocar(document.getElementById("btn-ir-step2"));
         } else if (paso === "step-2") {
             const continuar = document.getElementById("btn-ir-step3");
             const confirmarDirecto = document.getElementById("btn-confirmar-venta-directo");
-            if (visible(continuar)) continuar.click();
+            if (visible(continuar)) enfocar(continuar);
             else enfocar(confirmarDirecto);
+        } else {
+            enfocar(document.getElementById("btn-confirmar-venta"));
         }
     }
 
@@ -205,7 +238,41 @@
         const boton = pasoActivo() === "step-3"
             ? document.getElementById("btn-confirmar-venta")
             : document.getElementById("btn-confirmar-venta-directo");
-        if (visible(boton) && !boton.disabled) boton.click();
+        if (visible(boton) && !boton.disabled) enfocar(boton);
+    }
+
+    function enfocarCliente() {
+        if (pasoActivo() !== "step-2") {
+            return enfocar(document.getElementById("btn-ir-step2"));
+        }
+
+        const disclosure = document.getElementById("step2-cliente-disclosure");
+        const documento = document.getElementById("documento");
+        const accion = document.getElementById("step2-agregar-documento");
+        const focoDentroDelEditor = Boolean(
+            disclosure?.open
+            && document.activeElement?.closest?.(".step2-disclosure-body")
+        );
+
+        // F4 funciona como un conmutador: desde los campos del cliente vuelve
+        // a la accion contextual (p. ej. "Usar publico general") y desde esa
+        // accion regresa al documento para continuar escribiendo.
+        if (focoDentroDelEditor && visible(accion)) return enfocar(accion);
+        if (disclosure?.open && visible(documento)) return enfocar(documento, true);
+        return enfocar(accion || disclosure?.querySelector("summary"));
+    }
+
+    function enfocarComprobante() {
+        const comprobantes = comprobantesVisibles();
+        const activo = comprobantes.find(item => item.classList.contains("active")) || comprobantes[0];
+        return enfocar(activo);
+    }
+
+    function enfocarMetodo() {
+        prepararMetodos();
+        const metodos = metodosVisibles();
+        const activo = metodos.find(item => item.classList.contains("active")) || metodos[0];
+        return enfocar(activo);
     }
 
     function manejarCarrito(evento) {
@@ -289,10 +356,23 @@
         }
         if (tecla === "F4") {
             evento.preventDefault();
-            if (pasoActivo() === "step-2") {
-                document.getElementById("cliente-con-documento")?.click();
-                enfocar(document.getElementById("documento"), true);
-            }
+            enfocarCliente();
+            return;
+        }
+        if (tecla === "F5") {
+            if (pasoActivo() !== "step-2") return;
+            evento.preventDefault();
+            enfocarComprobante();
+            return;
+        }
+        if (tecla === "F6") {
+            evento.preventDefault();
+            if (pasoActivo() === "step-2") enfocar(document.getElementById("estado_pago"));
+            return;
+        }
+        if (tecla === "F7") {
+            evento.preventDefault();
+            if (pasoActivo() === "step-2") enfocarMetodo();
             return;
         }
         if (tecla === "F8") return manejarF8(evento);
@@ -305,18 +385,16 @@
         }
         if (tecla === "Tab") {
             if (!evento.shiftKey && foco?.id === "formato_pdf") {
-                const continuar = document.getElementById("btn-ir-step3");
-                const confirmarDirecto = document.getElementById("btn-confirmar-venta-directo");
-                const destino = visible(continuar) ? continuar : confirmarDirecto;
+                const destino = document.getElementById("btn-volver-step1");
                 if (visible(destino)) {
                     evento.preventDefault();
                     enfocar(destino);
                 }
             } else if (!evento.shiftKey && foco?.id === "vuelto-paga") {
-                const confirmar = document.getElementById("btn-confirmar-venta");
-                if (visible(confirmar)) {
+                const volver = document.getElementById("btn-volver-step2");
+                if (visible(volver)) {
                     evento.preventDefault();
-                    enfocar(confirmar);
+                    enfocar(volver);
                 }
             }
             return;
@@ -368,6 +446,26 @@
             }
         }
 
+        const comprobante = foco?.closest?.(".step2-voucher-option");
+        if (comprobante) {
+            const comprobantes = comprobantesVisibles();
+            const indice = comprobantes.indexOf(comprobante);
+            if (["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown"].includes(tecla)) {
+                evento.preventDefault();
+                const avance = tecla === "ArrowRight" || tecla === "ArrowDown" ? 1 : -1;
+                const siguiente = (indice + avance + comprobantes.length) % comprobantes.length;
+                comprobantes.forEach((item, i) => item.tabIndex = i === siguiente ? 0 : -1);
+                enfocar(comprobantes[siguiente]);
+                return;
+            }
+            if (tecla === "Enter" || tecla === " ") {
+                evento.preventDefault();
+                comprobante.click();
+                prepararComprobantes();
+                return;
+            }
+        }
+
         if (escribiendo(foco)) return;
 
         if (pasoActivo() !== "step-2") return;
@@ -379,7 +477,7 @@
 
         if (comprobantes[key]) {
             evento.preventDefault();
-            seleccionarValor(document.getElementById("tipo_comprobante"), comprobantes[key]);
+            seleccionarComprobante(comprobantes[key]);
         } else if (condiciones[key]) {
             evento.preventDefault();
             seleccionarValor(document.getElementById("estado_pago"), condiciones[key]);
@@ -407,6 +505,10 @@
     document.addEventListener("DOMContentLoaded", () => {
         prepararOrdenFoco();
 
+        document.getElementById("btn-atajos-venta")?.addEventListener("click", () => {
+            if (!modalVisible()) ayuda();
+        });
+
         const observer = new MutationObserver(() => prepararOrdenFoco());
         [document.getElementById("resultados-busqueda"), document.getElementById("carrito-lista"), document.querySelector(".venta-steps")]
             .filter(Boolean)
@@ -426,11 +528,11 @@
 
         ["btn-ir-step2", "btn-ir-step3"].forEach(id => {
             const boton = document.getElementById(id);
-            if (boton) boton.title = `${boton.title ? boton.title + " · " : ""}Atajo F8`;
+            if (boton) boton.title = `${boton.title ? boton.title + " · " : ""}F8 y Enter`;
         });
         ["btn-confirmar-venta", "btn-confirmar-venta-directo"].forEach(id => {
             const boton = document.getElementById(id);
-            if (boton) boton.title = `${boton.title ? boton.title + " · " : ""}Atajo F9`;
+            if (boton) boton.title = `${boton.title ? boton.title + " · " : ""}F9 y Enter`;
         });
     });
 })();
