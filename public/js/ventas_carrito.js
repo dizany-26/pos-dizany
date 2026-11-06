@@ -223,8 +223,19 @@ document.addEventListener("DOMContentLoaded", () => {
         let unidadesRestantes = cantidad * factor;
         let subtotal = 0;
         const tramosPrecio = [];
+        const lotesAsignacion = [...lotes];
 
-        for (const lote of lotes) {
+        if (tipoVenta !== "unidad") {
+            const indiceLoteCompleto = lotesAsignacion.findIndex(
+                lote => (parseInt(lote.stock) || 0) >= unidadesRestantes
+            );
+            if (indiceLoteCompleto > 0) {
+                const [loteCompleto] = lotesAsignacion.splice(indiceLoteCompleto, 1);
+                lotesAsignacion.unshift(loteCompleto);
+            }
+        }
+
+        for (const lote of lotesAsignacion) {
             if (unidadesRestantes <= 0) break;
 
             const stockUnidades = parseInt(lote.stock || 0);
@@ -262,7 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
             throw new Error("Stock insuficiente");
         }
 
-        const primerLote = lotes[0];
+        const primerLote = lotesAsignacion[0];
 
         return [{
             id: Number(producto.id),
@@ -390,7 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /**
  * Recalcula y reemplaza TODAS las filas del grupo (mismo producto + tipo_venta)
- * usando descomponerFIFO (FEFO real por presentación).
+ * usando descomponerFIFO (FEFO con presentaciones completas cuando es posible).
  */
 async function recalcularYReemplazarGrupo(items, indexBase, totalDeseado, nuevoTipo) {
   const grupo = recolectarGrupoFIFO(items, indexBase);

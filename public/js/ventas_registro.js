@@ -336,7 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
         const sonidoExito = new Audio("/sonidos/success.mp3");
-        sonidoExito.play().catch(() => {});
+        window.DizanySound?.play(sonidoExito);
     } catch {}
 
     renderTodo();

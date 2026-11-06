@@ -56,6 +56,26 @@ class SaleLineCalculatorTest extends TestCase
         $this->assertSame([9.0, 9.0], array_column($result['allocations'], 'subtotal'));
     }
 
+    public function test_a_package_prefers_one_complete_lot_over_older_loose_units(): void
+    {
+        $product = $this->product();
+        $product->precio_paquete = 35;
+        $lots = collect([
+            $this->lot(1, 'LOTE-ANTERIOR', 4, 5, 6, 35, 70),
+            $this->lot(2, 'LOTE-ACTUAL', 18, 28 / 6, 6, 35, 70),
+        ]);
+
+        $result = $this->calculator->calculate($product, $lots, 1, 'paquete');
+
+        $this->assertSame(6, $result['required_units']);
+        $this->assertSame(35.0, $result['subtotal']);
+        $this->assertSame(28.0, $result['cost']);
+        $this->assertSame(7.0, $result['profit']);
+        $this->assertCount(1, $result['allocations']);
+        $this->assertSame(2, $result['allocations'][0]['lot']->id);
+        $this->assertSame(6, $result['allocations'][0]['units']);
+    }
+
     public function test_direct_units_per_box_take_precedence(): void
     {
         $product = $this->product();

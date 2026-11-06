@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Lote;
 use App\Models\Producto;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
@@ -33,8 +34,13 @@ class SaleLineCalculator
         $subtotal = 0.0;
         $cost = 0.0;
         $allocations = [];
+        $allocationLots = $this->prioritizeCompletePresentation(
+            $lots,
+            $requiredUnits,
+            $presentation
+        );
 
-        foreach ($lots as $lot) {
+        foreach ($allocationLots as $lot) {
             if ($remainingUnits <= 0) {
                 break;
             }
@@ -119,5 +125,33 @@ class SaleLineCalculator
             'caja' => (float) $product->precio_caja,
             default => 0.0,
         };
+    }
+
+    private function prioritizeCompletePresentation(
+        Collection $lots,
+        int $requiredUnits,
+        string $presentation
+    ): Collection {
+        if ($presentation === 'unidad') {
+            return $lots;
+        }
+
+        // Los lotes llegan ordenados por FEFO/FIFO. Para paquetes y cajas se
+        // conserva ese orden entre los lotes capaces de entregar toda la
+        // presentación. Así no se desarma un paquete nuevo para completar
+        // unidades sueltas de un lote anterior.
+        $completeLotIndex = $lots->search(
+            fn (Lote $lot) => (int) $lot->stock_actual >= $requiredUnits
+        );
+
+        if ($completeLotIndex === false || $completeLotIndex === 0) {
+            return $lots;
+        }
+
+        $completeLot = $lots->get($completeLotIndex);
+
+        return collect([$completeLot])->concat(
+            $lots->except([$completeLotIndex])->values()
+        );
     }
 }

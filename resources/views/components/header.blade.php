@@ -145,6 +145,12 @@
                             </a>
                         </li>
                     @endif
+                    <li>
+                        <button type="button" class="dropdown-item user-menu-sound" id="btnToggleSound" aria-pressed="false">
+                            <i class="fas fa-volume-high me-2" id="headerSoundIcon" aria-hidden="true"></i>
+                            <span id="headerSoundLabel">Silenciar sonidos</span>
+                        </button>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                     <li class="px-3 pt-1 pb-2">
                         <button type="button" class="btn-soft btn-soft-danger user-menu-logout w-100 justify-content-center" id="btnHeaderLogout">
@@ -227,6 +233,28 @@ function cargarNotificaciones() {
 
 document.addEventListener("DOMContentLoaded", function () {
     cargarNotificaciones();
+
+    const btnToggleSound = document.getElementById('btnToggleSound');
+    const headerSoundIcon = document.getElementById('headerSoundIcon');
+    const headerSoundLabel = document.getElementById('headerSoundLabel');
+    const renderSoundPreference = () => {
+        const muted = window.DizanySound?.isMuted() || false;
+        btnToggleSound?.classList.toggle('is-muted', muted);
+        btnToggleSound?.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        if (headerSoundIcon) {
+            headerSoundIcon.className = `fas ${muted ? 'fa-volume-xmark' : 'fa-volume-high'} me-2`;
+        }
+        if (headerSoundLabel) {
+            headerSoundLabel.textContent = muted ? 'Activar sonidos' : 'Silenciar sonidos';
+        }
+    };
+
+    renderSoundPreference();
+    btnToggleSound?.addEventListener('click', () => {
+        window.DizanySound?.setMuted(!window.DizanySound.isMuted());
+        renderSoundPreference();
+    });
+    document.addEventListener('dizany:sound-changed', renderSoundPreference);
 
     const headerChangePasswordForm = document.getElementById('headerChangePasswordForm');
     if (headerChangePasswordForm) {

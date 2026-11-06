@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            if (window.DizanySound?.isMuted()) return;
             const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
             if (!AudioContextCtor) return;
 

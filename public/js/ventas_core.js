@@ -69,7 +69,7 @@ function mostrarAlerta(msg) {
     });
 
     try {
-        sonidoError.play().catch(() => {});
+        window.DizanySound?.play(sonidoError);
     } catch {}
 }
 

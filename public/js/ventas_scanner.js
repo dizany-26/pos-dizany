@@ -91,13 +91,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const playCartSuccessFeedback = async () => {
         try {
+            if (window.DizanySound?.isMuted()) return;
             if (!successAudio) {
                 successAudio = new Audio('/sonidos/success.mp3');
                 successAudio.preload = 'auto';
             }
 
             successAudio.currentTime = 0;
-            await successAudio.play();
+            await window.DizanySound?.play(successAudio);
         } catch (error) {
             console.warn('No se pudo reproducir el sonido de éxito al agregar al carrito:', error);
         }

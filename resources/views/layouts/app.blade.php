@@ -149,6 +149,7 @@
         }
     </style>
     <link rel="stylesheet" href="{{ asset('css/light-theme-customizer.css') }}?v={{ filemtime(public_path('css/light-theme-customizer.css')) }}">
+    <script src="{{ asset('js/sound-preferences.js') }}?v={{ filemtime(public_path('js/sound-preferences.js')) }}"></script>
 </head>
 
 <body class="theme-shell {{ !empty($systemTheme['enabled']) ? 'custom-light-theme' : '' }}">
