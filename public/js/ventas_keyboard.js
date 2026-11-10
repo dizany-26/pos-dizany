@@ -165,7 +165,12 @@
 
             const efectivoRapido = $("#step3-quick-cash .step3-quick-cash-btn.is-selected");
             if (visible(efectivoRapido)) {
-                enfocar(efectivoRapido);
+                const usaTecladoFisico = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+                if (usaTecladoFisico) {
+                    enfocar(document.getElementById("vuelto-paga"), true);
+                } else {
+                    enfocar(efectivoRapido);
+                }
                 return;
             }
 
@@ -397,10 +402,11 @@
                     enfocar(destino);
                 }
             } else if (!evento.shiftKey && foco?.id === "vuelto-paga") {
-                const volver = document.getElementById("btn-volver-step2");
-                if (visible(volver)) {
+                const primerMontoRapido = $$("#step3-quick-cash .step3-quick-cash-btn")
+                    .find(boton => visible(boton) && !boton.classList.contains("is-exact"));
+                if (primerMontoRapido) {
                     evento.preventDefault();
-                    enfocar(volver);
+                    enfocar(primerMontoRapido);
                 }
             }
             return;
