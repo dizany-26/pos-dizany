@@ -1651,6 +1651,15 @@ body.dark-mode .movement-swal .form-control:focus {
 .monthly-method-list { margin-top: .8rem; }
 .monthly-method-list > div { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-top: 1px dashed var(--ui-border, #d9e2ef); }
 .monthly-method-list > div:first-child { border-top: 0; }
+.monthly-purchases-row {
+    margin: 0 -.45rem;
+    padding-right: .45rem !important;
+    padding-left: .45rem !important;
+    border-radius: 8px;
+    color: #16a34a;
+    background: rgba(34, 197, 94, .1);
+    font-weight: 800;
+}
 .monthly-net-row { color: #087443; font-weight: 800; }
 .monthly-note { display: flex; gap: .45rem; margin: .75rem 0 0; padding: .65rem; border-radius: 10px; color: #285a9f; background: rgba(59, 130, 246, .09); font-size: .78rem; }
 .monthly-form { padding: 1rem; }

@@ -551,7 +551,17 @@ class MovimientoController extends Controller
             ->sum('monto');
 
         $ventasCobradasDirecto = max(0, round(array_sum($porMetodo) - $cobrosFiados, 2));
-        $comprasPagadas = (float) CompraPago::whereBetween('fecha', [$inicio, $fin])->sum('monto');
+        // Las compras al contado no generan registros en compra_pagos: su pago
+        // se reconoce por la fecha de ingreso del lote. Los abonos de compras a
+        // credito, en cambio, se reconocen en el mes en que fueron pagados.
+        $comprasContado = (float) Lote::query()
+            ->where('condicion_pago', 'contado')
+            ->whereBetween('fecha_ingreso', [$inicio, $fin])
+            ->selectRaw('COALESCE(SUM(stock_inicial * precio_compra), 0) AS total')
+            ->value('total');
+
+        $abonosComprasCredito = (float) CompraPago::whereBetween('fecha', [$inicio, $fin])->sum('monto');
+        $comprasPagadas = $comprasContado + $abonosComprasCredito;
         $operaciones = CajaOperacion::whereBetween('created_at', [$inicio, $fin])
             ->selectRaw('tipo, SUM(monto) as total')->groupBy('tipo')->pluck('total', 'tipo');
         $porCobrar = (float) Venta::where('activo', 1)
@@ -570,7 +580,7 @@ class MovimientoController extends Controller
             'retiros' => round((float) ($operaciones['retiro'] ?? 0), 2),
             'refuerzos' => round((float) ($operaciones['refuerzo'] ?? 0), 2),
             'por_cobrar' => round($porCobrar, 2),
-            'disponible_despues_salidas' => round(array_sum($porMetodo) - array_sum($gastosPorMetodo) - $comprasPagadas, 2),
+            'disponible_despues_salidas' => round(array_sum($porMetodo) - array_sum($gastosPorMetodo), 2),
         ];
     }
 
