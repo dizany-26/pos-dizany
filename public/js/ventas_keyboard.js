@@ -163,6 +163,12 @@
                 return;
             }
 
+            const efectivoRapido = $("#step3-quick-cash .step3-quick-cash-btn.is-selected");
+            if (visible(efectivoRapido)) {
+                enfocar(efectivoRapido);
+                return;
+            }
+
             if (!enfocar(document.getElementById("vuelto-paga"), true)) {
                 enfocar(document.getElementById("credito-vencimiento"));
             }

@@ -429,7 +429,7 @@ function limpiarFlujoVentaConfirmada() {
         vencimiento.value = "";
         vencimiento.required = false;
     }
-    if (inputPaga) inputPaga.placeholder = "Opcional: importe exacto";
+    if (inputPaga) inputPaga.placeholder = "Opcional";
     if (tituloFase3) tituloFase3.textContent = "Calcula el cambio de tu venta";
     if (pagoLabel) pagoLabel.textContent = "Efectivo recibido";
     if (resultadoLabel) resultadoLabel.textContent = "Vuelto";
@@ -518,6 +518,47 @@ function actualizarBotonCarrito() {
     `;
 }
 
+function actualizarMontosRapidosEfectivo(total) {
+    const contenedor = document.getElementById("step3-quick-cash");
+    const metodo = document.getElementById("metodo_pago")?.value;
+    if (!contenedor) return;
+
+    if (metodo !== "efectivo" || !Number.isFinite(total) || total <= 0) {
+        contenedor.classList.add("d-none");
+        contenedor.replaceChildren();
+        return;
+    }
+
+    const candidatos = [
+        (Math.floor(total / 10) + 1) * 10,
+        (Math.floor(total / 20) + 1) * 20,
+        (Math.floor(total / 50) + 1) * 50,
+        (Math.floor(total / 100) + 1) * 100
+    ];
+    const montos = [...new Set(candidatos)]
+        .filter(monto => monto > total + 0.001 && monto !== 100)
+        .slice(0, 3);
+
+    const opciones = [
+        { etiqueta: "Exacto", monto: total, exacto: true },
+        ...montos.map(monto => ({ etiqueta: `S/ ${monto.toFixed(0)}`, monto, exacto: false })),
+        { etiqueta: "S/ 100", monto: 100, exacto: false }
+    ];
+
+    contenedor.replaceChildren(...opciones.map(opcion => {
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = `step3-quick-cash-btn${opcion.exacto ? " is-exact is-selected" : ""}`;
+        boton.textContent = opcion.etiqueta;
+        boton.dataset.amount = opcion.monto.toFixed(2);
+        boton.setAttribute("aria-label", opcion.exacto
+            ? `Pagar importe exacto de S/ ${formatPrecioDinamico(opcion.monto)}`
+            : `Efectivo recibido S/ ${opcion.monto.toFixed(0)}`);
+        return boton;
+    }));
+    contenedor.classList.remove("d-none");
+}
+
 // ============================
 // Preparar fase 3: PAGADO (vuelto)
 // ============================
@@ -530,6 +571,7 @@ function prepararFase3() {
     const { total } = calcularTotal();
 
     if (document.getElementById("metodo_pago")?.value === "mixto") {
+        document.getElementById("step3-quick-cash")?.classList.add("d-none");
         window.prepararPagoMixto?.(total);
         return;
     }
@@ -539,9 +581,10 @@ function prepararFase3() {
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
     if (inputPaga) {
         inputPaga.value = "";
-        inputPaga.placeholder = "Opcional: importe exacto";
+        inputPaga.placeholder = "Opcional";
     }
     if (inputVuelto) inputVuelto.value = "S/ 0.00";
+    actualizarMontosRapidosEfectivo(total);
 
     document.getElementById("step3-titulo").textContent = "Calcula el cambio de tu venta";
     document.getElementById("step3-pago-wrap")?.classList.remove("d-none");
@@ -569,6 +612,7 @@ function prepararFase3Credito() {
     const { total } = calcularTotal();
     const estado = (document.getElementById("estado_pago")?.value || "pendiente").toLowerCase();
     document.getElementById("step-3")?.setAttribute("data-payment-state", estado);
+    document.getElementById("step3-quick-cash")?.classList.add("d-none");
 
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
 
@@ -747,6 +791,20 @@ if (estado === "pagado") {
 // DOM
 // ============================
 document.addEventListener("DOMContentLoaded", () => {
+
+    document.getElementById("step3-quick-cash")?.addEventListener("click", event => {
+        const boton = event.target.closest(".step3-quick-cash-btn");
+        if (!boton) return;
+
+        const inputPaga = document.getElementById("vuelto-paga");
+        if (!inputPaga) return;
+
+        boton.parentElement?.querySelectorAll(".step3-quick-cash-btn")
+            .forEach(item => item.classList.toggle("is-selected", item === boton));
+        inputPaga.value = boton.classList.contains("is-exact") ? "" : (boton.dataset.amount || "");
+        inputPaga.dispatchEvent(new Event("input", { bubbles: true }));
+        if (!boton.classList.contains("is-exact")) inputPaga.focus();
+    });
 
     // Estado pago dinámica
     const estadoPagoSelect = document.getElementById("estado_pago");
@@ -952,6 +1010,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const monto = parseFloat(inputPaga.value || 0);
         const total = parseFloat(inputTotalVenta?.value || 0);
         const estado = (estadoPagoSelect?.value || "pagado").toLowerCase();
+
+        document.querySelectorAll("#step3-quick-cash .step3-quick-cash-btn").forEach(boton => {
+            const esExactoVacio = boton.classList.contains("is-exact") && inputPaga.value === "";
+            const coincideMonto = !boton.classList.contains("is-exact")
+                && Math.abs(Number(boton.dataset.amount) - monto) < 0.001;
+            boton.classList.toggle("is-selected", esExactoVacio || coincideMonto);
+        });
 
         if (estado === "credito") {
             let saldo = total - monto;

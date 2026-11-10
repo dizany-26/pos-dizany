@@ -408,8 +408,9 @@ Nueva venta
                             </div>
                             <div class="step3-money-input">
                                 <span>S/</span>
-                                <input type="number" id="vuelto-paga" class="form-control" min="0" step="0.01" placeholder="Opcional: importe exacto">
+                                <input type="number" id="vuelto-paga" class="form-control" min="0" step="0.01" placeholder="Opcional">
                             </div>
+                            <div id="step3-quick-cash" class="step3-quick-cash d-none" aria-label="Montos rápidos de efectivo"></div>
                         </div>
 
                         <div id="step3-resultado-wrap" class="step3-field-card step3-result-card">
