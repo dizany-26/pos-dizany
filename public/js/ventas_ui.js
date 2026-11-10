@@ -792,6 +792,10 @@ if (estado === "pagado") {
 // ============================
 document.addEventListener("DOMContentLoaded", () => {
 
+    ["btn-cerrar-step2", "btn-cerrar-step3"].forEach(id => {
+        document.getElementById(id)?.addEventListener("click", () => showStep(1));
+    });
+
     document.getElementById("step3-quick-cash")?.addEventListener("click", event => {
         const boton = event.target.closest(".step3-quick-cash-btn");
         if (!boton) return;

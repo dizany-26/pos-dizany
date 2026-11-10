@@ -1347,6 +1347,30 @@ select.form-select-sm,
 .step2-summary-copy { display: grid; gap: 1px; min-width: 0; }
 .step2-dialog-header strong { font-size: 1.05rem; }
 .step2-dialog-header small { color: rgba(255, 255, 255, .76); font-size: .74rem; }
+.sale-flow-close {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    margin-left: auto;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 10px;
+    color: #fff;
+    background: rgba(5, 20, 40, .16);
+    font-size: 1rem;
+    transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+.sale-flow-close:hover,
+.sale-flow-close:focus-visible {
+    color: #fff;
+    border-color: rgba(255, 255, 255, .55);
+    background: rgba(5, 20, 40, .32);
+    outline: 2px solid rgba(255, 255, 255, .5);
+    outline-offset: 2px;
+    transform: translateY(-1px);
+}
 .step2-dialog-icon,
 .step2-summary-icon {
     display: grid;
@@ -1586,17 +1610,6 @@ select.form-select-sm,
     border-radius: 15px;
     background: linear-gradient(135deg, #edfff3 0%, #dff8e8 100%);
     box-shadow: 0 10px 24px rgba(22, 163, 74, .10);
-}
-
-.step3-total-card::after {
-    content: '';
-    position: absolute;
-    width: 95px;
-    height: 95px;
-    right: -38px;
-    top: -48px;
-    border-radius: 50%;
-    background: rgba(22, 163, 74, .09);
 }
 
 .step3-total-label { display: flex; align-items: center; gap: 10px; min-width: 0; }

@@ -153,6 +153,9 @@ Nueva venta
                         <strong id="step2-title">Preparar venta</strong>
                         <small>Paso 2 de 3 · Datos y forma de pago</small>
                     </div>
+                    <button type="button" id="btn-cerrar-step2" class="sale-flow-close" aria-label="Cerrar y volver al carrito" title="Cerrar">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
                 </div>
 
                 <div class="step2-voucher-picker">
@@ -386,6 +389,9 @@ Nueva venta
                             <strong id="step3-titulo">Calcula el cambio de tu venta</strong>
                             <small>Paso 3 de 3 · Revisa los importes y confirma</small>
                         </div>
+                        <button type="button" id="btn-cerrar-step3" class="sale-flow-close" aria-label="Cerrar y volver al carrito" title="Cerrar">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
                     </div>
 
                     <div class="card-body">
