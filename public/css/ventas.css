@@ -1678,7 +1678,6 @@ select.form-select-sm,
     outline: 0;
     transform: translateY(-1px);
 }
-.step3-quick-cash-btn.is-exact,
 .step3-quick-cash-btn.is-selected {
     border-color: #8bd2a4;
     color: #087436;
@@ -1727,7 +1726,6 @@ select.form-select-sm,
 :root[data-theme='dark'] .step3-quick-cash-btn { border-color: #31557f; color: #b9d6f8; background: #132b49; }
 :root[data-theme='dark'] .step3-quick-cash-btn:hover,
 :root[data-theme='dark'] .step3-quick-cash-btn:focus-visible { border-color: #5597e6; color: #fff; background: #1a3a61; }
-:root[data-theme='dark'] .step3-quick-cash-btn.is-exact,
 :root[data-theme='dark'] .step3-quick-cash-btn.is-selected { border-color: #35a866; color: #8cf0aa; background: #124a31; }
 :root[data-theme='dark'] #step-3 .step3-result-value { border-color: #246444 !important; color: #78e69c !important; background: #102f23 !important; box-shadow: none !important; }
 :root[data-theme='dark'] #step-3[data-payment-state='credito'] .step3-total-card,

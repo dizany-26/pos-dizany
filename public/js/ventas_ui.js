@@ -803,7 +803,12 @@ document.addEventListener("DOMContentLoaded", () => {
             .forEach(item => item.classList.toggle("is-selected", item === boton));
         inputPaga.value = boton.classList.contains("is-exact") ? "" : (boton.dataset.amount || "");
         inputPaga.dispatchEvent(new Event("input", { bubbles: true }));
-        if (!boton.classList.contains("is-exact")) inputPaga.focus();
+        const usaTecladoFisico = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+        if (!boton.classList.contains("is-exact") && usaTecladoFisico) {
+            inputPaga.focus();
+        } else if (!usaTecladoFisico) {
+            inputPaga.blur();
+        }
     });
 
     // Estado pago dinámica
