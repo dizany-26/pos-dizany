@@ -85,6 +85,41 @@ body {
     color: #1f2937;
 }
 
+.login-brand-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 100%;
+    margin-bottom: 6px;
+}
+
+.login-brand-line .login-title {
+    margin: 0;
+    min-width: 0;
+    max-width: 100%;
+    font-size: clamp(1.35rem, 5vw, 2rem);
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+}
+
+.login-version {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 7px;
+    border: 1px solid #93c5fd;
+    border-radius: 999px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    font-size: .62rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
 .login-subtitle {
     font-size: 0.95rem;
     color: #6b7280;
@@ -294,10 +329,12 @@ body::after {
 }
 
 .login-title {
-    margin-bottom: 3px;
-    font-size: 1.6rem;
+    margin-bottom: 0;
+    font-size: clamp(1.3rem, 5vw, 1.6rem);
     letter-spacing: .01em;
 }
+
+.login-brand-line { margin-bottom: 3px; }
 
 .login-subtitle {
     margin-bottom: 15px;
@@ -408,9 +445,10 @@ body::after {
         <div class="logo-divider"></div>
 
         {{-- Nombre de empresa dinámico --}}
-        <h1 class="login-title">
-            {{ $config->nombre_empresa ?? 'Dizany' }}
-        </h1>
+        <div class="login-brand-line">
+            <h1 class="login-title">{{ $config->nombre_empresa ?? 'Dizany' }}</h1>
+            <span class="login-version">v{{ config('app.version') }}</span>
+        </div>
 
         <p class="login-subtitle">
             Inicia sesión con tus credenciales

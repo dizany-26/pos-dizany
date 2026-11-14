@@ -1059,3 +1059,35 @@
 #content table thead > tr:first-child > th:last-child {
     border-radius: 0 12px 12px 0 !important;
 }
+/* Marca del encabezado: permite nombres comerciales largos sin truncarlos. */
+header#header .brand-container {
+    min-width: 0;
+    max-width: 390px;
+    flex: 0 1 auto;
+}
+
+header#header .brand-name {
+    display: -webkit-box;
+    min-width: 0;
+    max-width: 245px;
+    font-size: clamp(.92rem, 1.5vw, 1.18rem);
+    line-height: 1.08;
+    white-space: normal;
+    overflow: hidden;
+    overflow-wrap: normal;
+    word-break: normal;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+@media (max-width: 768px) {
+    header#header .brand-container { max-width: min(210px, 48vw); }
+    header#header .brand-logo { height: 42px; max-width: 86px; }
+    header#header .brand-name {
+        max-width: 132px;
+        font-size: .78rem;
+        line-height: 1.08;
+    }
+}

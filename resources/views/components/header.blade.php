@@ -19,7 +19,7 @@
             class="brand-logo me-2"
         >
 
-        <span class="brand-name text-white fw-bold">
+        <span class="brand-name text-white fw-bold" title="{{ $config->nombre_empresa ?? 'Dizany' }}">
             {{ $config->nombre_empresa ?? 'Dizany' }}
         </span>
     </div>

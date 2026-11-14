@@ -521,7 +521,9 @@ footer {
 
 /*logo y nombre*/
 .brand-container {
-    max-width: 360px; /* evita que una marca gigante rompa el header */
+    min-width: 0;
+    max-width: 390px; /* evita que una marca gigante rompa el header */
+    flex: 0 1 auto;
 }
 
 .brand-logo {
@@ -532,10 +534,27 @@ footer {
 }
 
 .brand-name {
-    font-size: 1.25rem; /* más balanceado que h3 */
-    line-height: 1;
-    white-space: nowrap;
+    display: -webkit-box;
+    min-width: 0;
+    max-width: 245px;
+    font-size: clamp(.92rem, 1.5vw, 1.18rem);
+    line-height: 1.08;
+    white-space: normal;
     overflow: hidden;
+    overflow-wrap: normal;
+    word-break: normal;
     text-overflow: ellipsis;
-    max-width: 200px;   /* evita desbordes */
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+@media (max-width: 768px) {
+    .brand-container { max-width: min(210px, 48vw); }
+    .brand-logo { height: 42px; max-width: 86px; }
+    .brand-name {
+        max-width: 132px;
+        font-size: .78rem;
+        line-height: 1.08;
+    }
 }
