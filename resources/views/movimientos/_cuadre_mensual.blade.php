@@ -57,13 +57,14 @@
             </div>
             <div class="monthly-method-list monthly-control-list">
                 <div><span>Gastos operativos</span><strong>S/ {{ number_format($cuadreMensual['gastos'], 2) }}</strong></div>
+                <div><span>Reembolsos por devoluciones</span><strong class="text-danger">S/ {{ number_format($cuadreMensual['devoluciones'] ?? 0, 2) }}</strong></div>
                 <div class="monthly-purchases-row"><span>Compras de mercadería pagadas</span><strong>S/ {{ number_format($cuadreMensual['compras_pagadas'], 2) }}</strong></div>
                 <div><span>Retiros de caja</span><strong>S/ {{ number_format($cuadreMensual['retiros'], 2) }}</strong></div>
                 <div><span>Refuerzos de caja</span><strong>S/ {{ number_format($cuadreMensual['refuerzos'], 2) }}</strong></div>
-                <div class="monthly-net-row"><span>Disponible después de gastos operativos</span><strong>S/ {{ number_format($cuadreMensual['disponible_despues_salidas'], 2) }}</strong></div>
+                <div class="monthly-net-row"><span>Disponible después de gastos y devoluciones</span><strong>S/ {{ number_format($cuadreMensual['disponible_despues_salidas'], 2) }}</strong></div>
                 <div><span>Ganancia reconocida</span><strong>S/ {{ number_format($ganancias ?? 0, 2) }}</strong></div>
             </div>
-            <p class="monthly-note"><i class="fas fa-circle-info"></i> Las compras de mercadería son informativas y no reducen los ingresos del mes. Los retiros solo cambian la ubicación del efectivo.</p>
+            <p class="monthly-note"><i class="fas fa-circle-info"></i> Las devoluciones reducen lo disponible en el periodo en que se reembolsa el dinero. Las compras de mercadería son informativas y los retiros solo cambian la ubicación del efectivo.</p>
         </section>
         </div>
     </details>

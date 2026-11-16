@@ -47,7 +47,7 @@
     </form>
 
     <section class="reports-kpis">
-        <article class="report-kpi kpi-sales"><span class="kpi-icon"><i class="fas fa-cash-register"></i></span><div><small>Ventas</small><strong>{{ $money($kpis['ventasTotal']) }}</strong><em>{{ $kpis['operaciones'] }} operaciones</em></div></article>
+        <article class="report-kpi kpi-sales"><span class="kpi-icon"><i class="fas fa-cash-register"></i></span><div><small>Ventas netas</small><strong>{{ $money($kpis['ventasTotal']) }}</strong><em>Brutas {{ $money($kpis['ventasBrutas']) }} · Dev. {{ $money($kpis['devolucionesTotal']) }}</em></div></article>
         @if($filtros['es_admin'])
             <article class="report-kpi kpi-cost"><span class="kpi-icon"><i class="fas fa-boxes-stacked"></i></span><div><small>Costo vendido</small><strong>{{ $money($kpis['costoVentas']) }}</strong><em>Mercadería despachada</em></div></article>
             <article class="report-kpi kpi-profit"><span class="kpi-icon"><i class="fas fa-chart-line"></i></span><div><small>Utilidad bruta</small><strong>{{ $money($kpis['utilidadBruta']) }}</strong><em>Antes de gastos</em></div></article>
@@ -89,7 +89,7 @@
     </nav>
 
     <section class="report-tab-pane active" data-report-pane="ventas">
-        @include('reportes.partials.table', ['title' => 'Detalle de ventas', 'icon' => 'fa-cart-shopping', 'headers' => ['Fecha','Comprobante','Cliente','Responsable','Método','Estado','Total'], 'rows' => $ventasDetalle, 'type' => 'ventas'])
+        @include('reportes.partials.table', ['title' => 'Detalle de ventas', 'icon' => 'fa-cart-shopping', 'headers' => ['Fecha','Comprobante','Cliente','Responsable','Método','Estado','Venta','Devuelto','Neto'], 'rows' => $ventasDetalle, 'type' => 'ventas'])
     </section>
     @if($filtros['es_admin'])
     <section class="report-tab-pane" data-report-pane="productos">

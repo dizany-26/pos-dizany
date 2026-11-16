@@ -97,6 +97,7 @@ body {
     background: #ffffff;
     border-radius: 18px;
     padding: 18px 22px 18px 46px;
+    overflow: hidden;
     box-shadow: 0 8px 22px rgba(0,0,0,0.08);
     transition: all .25s ease;
 
@@ -107,15 +108,12 @@ body {
     justify-content: center;
 }
 
-/* Barra curva */
+/* Barra lateral integrada, igual que en Reportes */
 .kpi-card::before {
     content: "";
     position: absolute;
-    left: 14px;
-    top: 12px;
-    bottom: 12px;
-    width: 6px;
-    border-radius: 999px;
+    inset: 0 auto 0 0;
+    width: 4px;
 }
 
 /* Contenido centrado */

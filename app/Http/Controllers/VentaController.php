@@ -828,6 +828,11 @@ $pdf = Pdf::setOptions([
             $venta = Venta::whereKey($venta->id)->lockForUpdate()->firstOrFail();
             abort_if(! $venta->activo || $venta->estado === 'anulada', 422, 'La venta ya se encuentra anulada.');
             abort_if(
+                $venta->devoluciones()->exists(),
+                422,
+                'Esta venta ya tiene una devolución registrada. No puede anularse porque duplicaría la reposición de stock y el ajuste de caja.'
+            );
+            abort_if(
                 $venta->electronicDocument()->whereIn('status', ['accepted', 'observed'])->exists()
                     || $venta->manualTaxDocument()->exists(),
                 422,

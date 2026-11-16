@@ -58,6 +58,11 @@ class Venta extends Model
     {
         return $this->hasMany(PagoVenta::class, 'venta_id');
     }
+
+    public function devoluciones()
+    {
+        return $this->hasMany(Devolucion::class)->where('estado', 'registrada');
+    }
     protected $casts = [
         'fecha' => 'datetime',
         'credit_due_date' => 'date',

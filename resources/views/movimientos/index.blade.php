@@ -44,7 +44,7 @@ Movimientos
     </button>
 @endif
 
-@if(auth()->user()->esAdmin() || auth()->user()->tienePermiso('reportes'))
+@if($tipo !== 'devoluciones' && (auth()->user()->esAdmin() || auth()->user()->tienePermiso('reportes')))
     @php
         $reporteFiltros = array_merge(request()->except(['page', 'cajas_page']), [
             'caja_id' => $cajaId,
@@ -99,6 +99,10 @@ Movimientos
             </a>
 
             @if(auth()->user()->esAdmin())
+            <a href="{{ route('movimientos.index', ['tipo' => 'devoluciones', 'rango' => request('rango', 'diario'), 'fecha' => request('fecha', now()->format('Y-m-d'))]) }}"
+               class="btn-soft {{ $tipo === 'devoluciones' ? 'btn-soft-primary' : 'btn-soft-info' }} flex-fill text-center">
+                Devoluciones
+            </a>
             <a href="{{ route('movimientos.index', ['tipo' => 'cuadre', 'rango' => 'mensual', 'fecha' => $tipo === 'cuadre' ? $fecha : now()->format('Y-m')]) }}"
                class="btn-soft {{ $tipo === 'cuadre' ? 'btn-soft-primary' : 'btn-soft-info' }} flex-fill text-center">
                 Cuadre mensual
@@ -315,10 +319,10 @@ Movimientos
 
         @if($tipo === 'transacciones')
         {{-- ================= KPIs ================= --}}
-        <div class="row mb-4 g-3">
+        <div class="row mb-4 g-2 movement-kpi-row">
 
-            <div class="{{ auth()->user()->esAdmin() ? 'col-md-3' : 'col-md-6' }}">
-                <div class="card ui-card dashboard-card rounded-4 h-100">
+            <div class="{{ auth()->user()->esAdmin() ? 'col-xl col-md-6' : 'col-md-6' }}">
+                <div class="card ui-card dashboard-card movement-kpi movement-kpi-income rounded-4 h-100">
                     <div class="card-body d-flex align-items-center gap-3">
                         <div class="icon-soft icon-soft-primary">
                             <i class="fas fa-chart-line"></i>
@@ -334,8 +338,8 @@ Movimientos
             </div>
 
             @if(auth()->user()->esAdmin())
-            <div class="col-md-3">
-                <div class="card ui-card dashboard-card rounded-4 h-100">
+            <div class="col-xl col-md-6">
+                <div class="card ui-card dashboard-card movement-kpi movement-kpi-sales rounded-4 h-100">
                     <div class="card-body d-flex align-items-center gap-3">
                         <div class="icon-soft icon-soft-success">
                             <i class="fas fa-cash-register"></i>
@@ -350,8 +354,26 @@ Movimientos
                 </div>
             </div>
 
-            <div class="col-md-3">
-                <div class="card ui-card dashboard-card rounded-4 h-100">
+            <div class="col-xl col-md-6">
+                <div class="card ui-card dashboard-card movement-kpi movement-kpi-net rounded-4 h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-soft icon-soft-success"><i class="fas fa-chart-column"></i></div>
+                        <div><small class="text-muted">Ventas netas</small><h5 class="fw-bold text-success mb-0">S/ {{ number_format($ventasNetas ?? 0, 2) }}</h5></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl col-md-6">
+                <div class="card ui-card dashboard-card movement-kpi movement-kpi-returns rounded-4 h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-soft icon-soft-danger"><i class="fas fa-rotate-left"></i></div>
+                        <div><small class="text-muted">Devoluciones</small><h5 class="fw-bold text-danger mb-0">S/ {{ number_format($importeDevoluciones ?? 0, 2) }}</h5></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl col-md-6">
+                <div class="card ui-card dashboard-card movement-kpi movement-kpi-expenses rounded-4 h-100">
                     <div class="card-body d-flex align-items-center gap-3">
                         <div class="icon-soft icon-soft-danger">
                             <i class="fas fa-coins"></i>
@@ -366,8 +388,8 @@ Movimientos
                 </div>
             </div>
 
-            <div class="col-md-3">
-                <div class="card ui-card dashboard-card rounded-4 h-100">
+            <div class="col-xl col-md-6">
+                <div class="card ui-card dashboard-card movement-kpi movement-kpi-profit rounded-4 h-100">
                     <div class="card-body d-flex align-items-center gap-3">
                         <div class="icon-soft icon-soft-warning">
                             <i class="fas fa-sack-dollar"></i>
@@ -422,6 +444,8 @@ Movimientos
         <div class="card ui-card rounded-4">
             @if($tipo === 'cuadre')
                 @include('movimientos._cuadre_mensual')
+            @elseif($tipo === 'devoluciones')
+                @include('movimientos._devoluciones')
             @elseif($tipo === 'transacciones')
             <div class="table-responsive ui-scroll">
                 <table class="table ui-table align-middle mb-0">
@@ -488,6 +512,15 @@ Movimientos
                                 @elseif ($movimiento->estado === 'anulado')
                                     <span class="ui-badge ui-badge-danger">Anulado</span>
                                 @endif
+                                @if($movimiento->referencia_tipo === 'venta' && $movimiento->venta?->devoluciones?->isNotEmpty())
+                                    @php
+                                        $cantidadVendida = (int) $movimiento->venta->detalleVentas->sum('cantidad');
+                                        $cantidadDevuelta = (int) $movimiento->venta->devoluciones->sum(fn ($devolucion) => $devolucion->detalles->sum('cantidad'));
+                                    @endphp
+                                    <span class="ui-badge {{ $cantidadDevuelta >= $cantidadVendida ? 'ui-badge-danger' : 'ui-badge-warning' }} d-block mt-1">
+                                        {{ $cantidadDevuelta >= $cantidadVendida ? 'Devuelta total' : 'Devuelta parcial' }}
+                                    </span>
+                                @endif
                             </td>
 
                             <td data-label="Monto"
@@ -511,6 +544,11 @@ Movimientos
                                     <button type="button" class="btn-soft btn-soft-primary btn-soft-icon btn-sm js-open-movement-detail" title="Ver detalle" aria-label="Ver detalle">
                                         <i class="fas fa-eye"></i>
                                     </button>
+                                    @if(auth()->user()->esAdmin() && $movimiento->referencia_tipo === 'venta' && $movimiento->venta?->activo && $movimiento->venta?->estado !== 'anulada')
+                                        <a href="{{ route('movimientos.index', ['tipo' => 'devoluciones', 'rango' => 'diario', 'fecha' => now()->format('Y-m-d'), 'venta_id' => $movimiento->venta->id]) }}" class="btn-soft btn-soft-success btn-soft-icon btn-sm" title="Registrar devolución" aria-label="Registrar devolución">
+                                            <i class="fas fa-rotate-left"></i>
+                                        </a>
+                                    @endif
                                     @if(auth()->user()->esAdmin() && $movimiento->referencia_tipo === 'venta' && $movimiento->estado === 'pagado' && $movimiento->venta?->activo && $movimiento->venta?->estado === 'pagado')
                                         <form method="POST"
                                               action="{{ route('ventas.cambiar-metodo-pago', $movimiento->venta) }}"
@@ -680,6 +718,10 @@ Movimientos
 
     </div>
 </div>
+
+@if($tipo === 'devoluciones' && auth()->user()->esAdmin())
+    @include('movimientos._devolucion_modal')
+@endif
 
 @if(auth()->user()->esAdmin())
 @foreach($cajas as $cajaDetalle)
@@ -977,6 +1019,9 @@ Movimientos
 
 @push('scripts')
 <script src="{{ asset('js/movimientos.js') }}?v={{ filemtime(public_path('js/movimientos.js')) }}"></script>
+@if(auth()->user()->esAdmin())
+<script src="{{ asset('js/devoluciones.js') }}?v={{ filemtime(public_path('js/devoluciones.js')) }}"></script>
+@endif
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const selector = document.getElementById('movimiento-buscar-en');

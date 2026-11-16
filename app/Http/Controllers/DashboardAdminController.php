@@ -33,8 +33,15 @@ class DashboardAdminController extends Controller
 
         $totalEgresos = Movimiento::where('tipo', 'egreso')
             ->where('estado', 'pagado')
-            ->where('subtipo', 'gasto')
-            ->where('referencia_tipo', 'gasto')
+            ->where(function ($query) {
+                $query->where(function ($gasto) {
+                    $gasto->where('subtipo', 'gasto')
+                        ->where('referencia_tipo', 'gasto');
+                })->orWhere(function ($devolucion) {
+                    $devolucion->where('subtipo', 'devolucion')
+                        ->where('referencia_tipo', 'devolucion');
+                });
+            })
             ->activos()
             ->sum('monto');
 
@@ -60,7 +67,7 @@ class DashboardAdminController extends Controller
             // ================= FLUJO 7 DÍAS =================
         $flujo = Movimiento::selectRaw('DATE(fecha) as dia')
             ->selectRaw("SUM(CASE WHEN tipo='ingreso' AND estado='pagado' THEN monto ELSE 0 END) as ingresos")
-            ->selectRaw("SUM(CASE WHEN tipo='egreso' AND subtipo='gasto' AND referencia_tipo='gasto' AND estado='pagado' THEN monto ELSE 0 END) as egresos")
+            ->selectRaw("SUM(CASE WHEN tipo='egreso' AND estado='pagado' AND ((subtipo='gasto' AND referencia_tipo='gasto') OR (subtipo='devolucion' AND referencia_tipo='devolucion')) THEN monto ELSE 0 END) as egresos")
             ->activos()
             ->whereDate('fecha', '>=', now()->subDays(6))
             ->groupBy('dia')

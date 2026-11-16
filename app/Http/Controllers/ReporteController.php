@@ -66,9 +66,9 @@ class ReporteController extends Controller
             }
             fputcsv($out, [], ';');
             fputcsv($out, ['VENTAS'], ';');
-            fputcsv($out, ['Fecha', 'Comprobante', 'Cliente', 'Responsable', 'Método', 'Estado', 'Total'], ';');
+            fputcsv($out, ['Fecha', 'Comprobante', 'Cliente', 'Responsable', 'Método', 'Estado', 'Venta', 'Devuelto', 'Neto'], ';');
             foreach ($reporte['ventasDetalle'] as $venta) {
-                fputcsv($out, [$venta->fecha, $venta->comprobante, $venta->cliente, $venta->responsable, $venta->metodo_pago, $venta->estado, $venta->total], ';');
+                fputcsv($out, [$venta->fecha, $venta->comprobante, $venta->cliente, $venta->responsable, $venta->metodo_pago, $venta->estado, $venta->total, $venta->devuelto, $venta->total_neto], ';');
             }
             if ($filtros['es_admin']) {
                 fputcsv($out, [], ';');
@@ -141,17 +141,49 @@ class ReporteController extends Controller
             ->when(! $f['estado'], fn ($q) => $q->whereNotIn(DB::raw("LOWER(COALESCE(v.estado, ''))"), ['anulada', 'anulado']));
     }
 
+    private function aplicarDevolucionFiltros(Builder $query, array $f): Builder
+    {
+        return $query->where('d.estado', 'registrada')
+            ->whereBetween('d.fecha', [$f['desde_obj'], $f['hasta_obj']])
+            // Para reportes comerciales la devolución pertenece al vendedor
+            // original; el usuario de d es quien procesó administrativamente.
+            ->when($f['usuario_id'], fn ($q) => $q->where('v.usuario_id', $f['usuario_id']))
+            ->when($f['metodo'], fn ($q) => $q->whereRaw('LOWER(d.metodo_reembolso) = ?', [$f['metodo']]))
+            ->when($f['estado'] === 'anulada', fn ($q) => $q->whereRaw('1 = 0'))
+            ->when($f['estado'] && $f['estado'] !== 'anulada', fn ($q) => $q->whereRaw('LOWER(v.estado) = ?', [$f['estado']]))
+            ->when(! $f['estado'], fn ($q) => $q->whereNotIn(DB::raw("LOWER(COALESCE(v.estado, ''))"), ['anulada', 'anulado']));
+    }
+
     private function construirReporte(array $f): array
     {
         $ventasBase = $this->aplicarVentaFiltros(DB::table('ventas as v'), $f);
-        $ventasTotal = (float) (clone $ventasBase)->sum('v.total');
+        $ventasBrutas = (float) (clone $ventasBase)->sum('v.total');
         $operaciones = (int) (clone $ventasBase)->count();
         $porCobrar = (float) (clone $ventasBase)->where('v.saldo', '>', 0)->sum('v.saldo');
 
+        $devolucionesBase = $this->aplicarDevolucionFiltros(
+            DB::table('devoluciones as d')->join('ventas as v', 'v.id', '=', 'd.venta_id'),
+            $f
+        );
+        $devolucionesTotal = (float) (clone $devolucionesBase)->sum('d.importe_total');
+        $reembolsos = (float) (clone $devolucionesBase)->sum('d.monto_reembolsado');
+        $ventasTotal = round($ventasBrutas - $devolucionesTotal, 2);
+
         $detalleBase = DB::table('detalle_ventas as dv')->join('ventas as v', 'v.id', '=', 'dv.venta_id');
         $this->aplicarVentaFiltros($detalleBase, $f);
-        $utilidadBruta = (float) (clone $detalleBase)->sum('dv.ganancia');
-        $costoVentas = max(0, $ventasTotal - $utilidadBruta);
+        $utilidadBrutaOriginal = (float) (clone $detalleBase)->sum('dv.ganancia');
+        $costoVentasOriginal = (float) (clone $detalleBase)
+            ->selectRaw('SUM(GREATEST(0, dv.subtotal - dv.ganancia)) total')
+            ->value('total');
+        $ajusteDevoluciones = (clone $devolucionesBase)
+            ->join('devolucion_detalles as dd_ajuste', 'dd_ajuste.devolucion_id', '=', 'd.id')
+            ->selectRaw('COALESCE(SUM(dd_ajuste.ganancia_revertida), 0) utilidad_revertida')
+            ->selectRaw('COALESCE(SUM(CASE WHEN dd_ajuste.reintegra_stock = 1 THEN dd_ajuste.costo ELSE 0 END), 0) costo_reintegrado')
+            ->first();
+        $utilidadRevertida = (float) ($ajusteDevoluciones->utilidad_revertida ?? 0);
+        $costoReintegrado = (float) ($ajusteDevoluciones->costo_reintegrado ?? 0);
+        $utilidadBruta = round($utilidadBrutaOriginal - $utilidadRevertida, 2);
+        $costoVentas = max(0, round($costoVentasOriginal - $costoReintegrado, 2));
 
         $gastosBase = DB::table('gastos as g')->whereBetween('g.fecha', [$f['desde_obj'], $f['hasta_obj']])
             ->whereNotIn(DB::raw("LOWER(COALESCE(g.estado, ''))"), ['anulada', 'anulado'])
@@ -161,21 +193,84 @@ class ReporteController extends Controller
         $utilidadNeta = $utilidadBruta - $gastos;
         $ticketPromedio = $operaciones ? $ventasTotal / $operaciones : 0;
 
-        $ventasDetalle = (clone $ventasBase)->leftJoin('clientes as c', 'c.id', '=', 'v.cliente_id')
+        $devolucionesPorVenta = (clone $devolucionesBase)
+            ->selectRaw('d.venta_id, SUM(d.importe_total) devuelto')
+            ->groupBy('d.venta_id');
+
+        $ventasDetalle = (clone $ventasBase)->leftJoinSub($devolucionesPorVenta, 'dev_venta', 'dev_venta.venta_id', '=', 'v.id')
+            ->leftJoin('clientes as c', 'c.id', '=', 'v.cliente_id')
             ->leftJoin('usuarios as u', 'u.id', '=', 'v.usuario_id')
-            ->selectRaw("v.id, DATE_FORMAT(v.fecha, '%d/%m/%Y %H:%i') fecha, CONCAT(COALESCE(v.serie, 'S/S'), '-', LPAD(COALESCE(v.correlativo, 0), 6, '0')) comprobante, COALESCE(c.nombre, 'Público general') cliente, COALESCE(u.nombre, '—') responsable, COALESCE(v.metodo_pago, '—') metodo_pago, COALESCE(v.estado, '—') estado, v.total")
+            ->selectRaw("v.id, DATE_FORMAT(v.fecha, '%d/%m/%Y %H:%i') fecha, CONCAT(COALESCE(v.serie, 'S/S'), '-', LPAD(COALESCE(v.correlativo, 0), 6, '0')) comprobante, COALESCE(c.nombre, 'Público general') cliente, COALESCE(u.nombre, '—') responsable, COALESCE(v.metodo_pago, '—') metodo_pago, COALESCE(v.estado, '—') estado, v.total, COALESCE(dev_venta.devuelto, 0) devuelto, v.total - COALESCE(dev_venta.devuelto, 0) total_neto")
             ->orderByDesc('v.fecha')->limit(200)->get();
 
         $productosVendidos = (clone $detalleBase)->join('productos as p', 'p.id', '=', 'dv.producto_id')
             ->leftJoin('categorias as cat', 'cat.id', '=', 'p.categoria_id')
-            ->selectRaw("p.nombre producto, COALESCE(cat.nombre, 'Sin categoría') categoria, SUM(COALESCE(dv.unidades_afectadas, dv.cantidad)) unidades, SUM(dv.subtotal) ventas, SUM(dv.ganancia) utilidad")
+            ->selectRaw("p.id producto_id, p.nombre producto, COALESCE(cat.nombre, 'Sin categoría') categoria, SUM(COALESCE(dv.unidades_afectadas, dv.cantidad)) unidades, SUM(dv.subtotal) ventas, SUM(dv.ganancia) utilidad")
             ->groupBy('p.id', 'p.nombre', 'cat.nombre')->orderByDesc('unidades')->limit(100)->get();
 
+        $productosDevueltos = (clone $devolucionesBase)
+            ->join('devolucion_detalles as dd_producto', 'dd_producto.devolucion_id', '=', 'd.id')
+            ->join('detalle_ventas as dv_producto', 'dv_producto.id', '=', 'dd_producto.detalle_venta_id')
+            ->join('productos as p_producto', 'p_producto.id', '=', 'dv_producto.producto_id')
+            ->leftJoin('categorias as cat_producto', 'cat_producto.id', '=', 'p_producto.categoria_id')
+            ->selectRaw("p_producto.id producto_id, p_producto.nombre producto, COALESCE(cat_producto.nombre, 'Sin categoría') categoria, SUM(dd_producto.unidades_afectadas) unidades, SUM(dv_producto.subtotal * dd_producto.cantidad / GREATEST(1, dv_producto.cantidad)) ventas, SUM(dd_producto.ganancia_revertida) utilidad")
+            ->groupBy('p_producto.id', 'p_producto.nombre', 'cat_producto.nombre')
+            ->get();
+        $productosVendidos = $productosVendidos->keyBy('producto_id');
+        foreach ($productosDevueltos as $devuelto) {
+            $producto = $productosVendidos->get($devuelto->producto_id) ?? (object) [
+                'producto_id' => $devuelto->producto_id,
+                'producto' => $devuelto->producto,
+                'categoria' => $devuelto->categoria,
+                'unidades' => 0,
+                'ventas' => 0,
+                'utilidad' => 0,
+            ];
+            $producto->unidades = (float) $producto->unidades - (float) $devuelto->unidades;
+            $producto->ventas = round((float) $producto->ventas - (float) $devuelto->ventas, 2);
+            $producto->utilidad = round((float) $producto->utilidad - (float) $devuelto->utilidad, 2);
+            $productosVendidos->put($devuelto->producto_id, $producto);
+        }
+        $productosVendidos = $productosVendidos->sortByDesc('unidades')->values();
+
         $metodosPago = $this->resumenMetodosPago($ventasBase, $f);
+        $reembolsosPorMetodo = (clone $devolucionesBase)
+            ->where('d.monto_reembolsado', '>', 0)
+            ->selectRaw("LOWER(COALESCE(d.metodo_reembolso, 'otro')) metodo, SUM(d.monto_reembolsado) total")
+            ->groupByRaw("LOWER(COALESCE(d.metodo_reembolso, 'otro'))")
+            ->get();
+        foreach ($reembolsosPorMetodo as $reembolsoMetodo) {
+            $metodoPago = $metodosPago->firstWhere('metodo', $reembolsoMetodo->metodo);
+            if ($metodoPago) {
+                $metodoPago->total = round((float) $metodoPago->total - (float) $reembolsoMetodo->total, 2);
+            } else {
+                $metodosPago->push((object) ['metodo' => $reembolsoMetodo->metodo, 'total' => -(float) $reembolsoMetodo->total, 'operaciones' => 0]);
+            }
+        }
+        $metodosPago = $metodosPago->sortByDesc('total')->values();
 
         $clientes = (clone $ventasBase)->leftJoin('clientes as c', 'c.id', '=', 'v.cliente_id')
-            ->selectRaw("COALESCE(c.nombre, 'Público general') cliente, COUNT(*) compras, SUM(v.total) consumo, MAX(v.fecha) ultima_compra, SUM(COALESCE(v.saldo, 0)) deuda")
+            ->selectRaw("COALESCE(v.cliente_id, 0) cliente_id, COALESCE(c.nombre, 'Público general') cliente, COUNT(*) compras, SUM(v.total) consumo, MAX(v.fecha) ultima_compra, SUM(COALESCE(v.saldo, 0)) deuda")
             ->groupBy('v.cliente_id', 'c.nombre')->orderByDesc('consumo')->limit(100)->get();
+        $devolucionesPorCliente = (clone $devolucionesBase)
+            ->leftJoin('clientes as c_devolucion', 'c_devolucion.id', '=', 'v.cliente_id')
+            ->selectRaw("COALESCE(v.cliente_id, 0) cliente_id, COALESCE(c_devolucion.nombre, 'Público general') cliente, SUM(d.importe_total) devuelto, MAX(d.fecha) ultima_devolucion")
+            ->groupBy('v.cliente_id', 'c_devolucion.nombre')
+            ->get();
+        $clientes = $clientes->keyBy('cliente_id');
+        foreach ($devolucionesPorCliente as $clienteDevuelto) {
+            $cliente = $clientes->get($clienteDevuelto->cliente_id) ?? (object) [
+                'cliente_id' => $clienteDevuelto->cliente_id,
+                'cliente' => $clienteDevuelto->cliente,
+                'compras' => 0,
+                'consumo' => 0,
+                'ultima_compra' => $clienteDevuelto->ultima_devolucion,
+                'deuda' => 0,
+            ];
+            $cliente->consumo = round((float) $cliente->consumo - (float) $clienteDevuelto->devuelto, 2);
+            $clientes->put($clienteDevuelto->cliente_id, $cliente);
+        }
+        $clientes = $clientes->sortByDesc('consumo')->values();
 
         $gastosDetalle = (clone $gastosBase)->leftJoin('usuarios as u', 'u.id', '=', 'g.usuario_id')
             ->selectRaw("DATE_FORMAT(g.fecha, '%d/%m/%Y') fecha, g.descripcion, COALESCE(g.metodo_pago, '—') metodo, COALESCE(u.nombre, '—') responsable, g.monto")
@@ -213,11 +308,11 @@ class ReporteController extends Controller
             ->orderByDesc('ca.abierta_en')->limit(100)->get();
 
         $reporte = [
-            'kpis' => compact('ventasTotal', 'costoVentas', 'utilidadBruta', 'gastos', 'utilidadNeta', 'ticketPromedio', 'porCobrar', 'comprasTotal', 'operaciones'),
+            'kpis' => compact('ventasBrutas', 'devolucionesTotal', 'reembolsos', 'ventasTotal', 'costoVentas', 'utilidadBruta', 'gastos', 'utilidadNeta', 'ticketPromedio', 'porCobrar', 'comprasTotal', 'operaciones'),
             'ventasDetalle' => $ventasDetalle, 'productosVendidos' => $productosVendidos,
             'metodosPago' => $metodosPago, 'clientes' => $clientes, 'gastosDetalle' => $gastosDetalle,
             'inventario' => $inventario, 'stockBajo' => $stockBajo, 'vencimientos' => $vencimientos,
-            'compras' => $compras, 'cajas' => $cajas, 'flujo' => $this->flujoDiario($f, $gastosBase),
+            'compras' => $compras, 'cajas' => $cajas, 'flujo' => $this->flujoDiario($f, $gastosBase, $devolucionesBase),
         ];
 
         if (! $f['es_admin']) {
@@ -262,16 +357,17 @@ class ReporteController extends Controller
             ->get();
     }
 
-    private function flujoDiario(array $f, Builder $gastosBase): Collection
+    private function flujoDiario(array $f, Builder $gastosBase, Builder $devolucionesBase): Collection
     {
         $ventas = $this->aplicarVentaFiltros(DB::table('ventas as v'), $f)
             ->selectRaw('DATE(v.fecha) dia, SUM(v.total) total')->groupByRaw('DATE(v.fecha)')->pluck('total', 'dia');
         $gastos = (clone $gastosBase)->selectRaw('DATE(g.fecha) dia, SUM(g.monto) total')->groupByRaw('DATE(g.fecha)')->pluck('total', 'dia');
+        $devoluciones = (clone $devolucionesBase)->selectRaw('DATE(d.fecha) dia, SUM(d.importe_total) total')->groupByRaw('DATE(d.fecha)')->pluck('total', 'dia');
         $dias = collect();
         $cursor = $f['desde_obj']->copy();
         while ($cursor->lte($f['hasta_obj']) && $dias->count() < 62) {
             $key = $cursor->format('Y-m-d');
-            $dias->push(['dia' => $cursor->format('d/m'), 'ventas' => (float) ($ventas[$key] ?? 0), 'gastos' => (float) ($gastos[$key] ?? 0)]);
+            $dias->push(['dia' => $cursor->format('d/m'), 'ventas' => round((float) ($ventas[$key] ?? 0) - (float) ($devoluciones[$key] ?? 0), 2), 'gastos' => (float) ($gastos[$key] ?? 0)]);
             $cursor->addDay();
         }
         return $dias;

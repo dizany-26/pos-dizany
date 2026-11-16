@@ -44,4 +44,9 @@ class DetalleVenta extends Model
     return $this->hasMany(DetalleLoteVenta::class);
 }
 
+    public function devoluciones()
+    {
+        return $this->hasMany(DevolucionDetalle::class, 'detalle_venta_id');
+    }
+
 }

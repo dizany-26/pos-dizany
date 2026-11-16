@@ -667,19 +667,46 @@
     position: relative;
     border-radius: 18px !important;
     overflow: hidden;
-    padding-left: 6px;
 }
 
 .container-card .dashboard-card::before {
     content: "";
     position: absolute;
-    left: 10px;
-    top: 12px;
-    bottom: 12px;
-    width: 5px;
-    border-radius: 999px;
+    inset: 0 auto 0 0;
+    width: 4px;
     background: #4b82f1;
 }
+
+.container-card .movement-kpi .card-body {
+    min-height: 102px;
+    gap: .7rem !important;
+    padding: .9rem .8rem .9rem 1.05rem;
+}
+
+.container-card .movement-kpi small {
+    display: block;
+    margin-bottom: .12rem;
+    font-size: .76rem;
+}
+
+.container-card .movement-kpi h5 {
+    font-size: 1.18rem;
+    line-height: 1.2;
+}
+
+.container-card .movement-kpi .icon-soft {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    font-size: .9rem;
+}
+
+.container-card .movement-kpi-income::before { background: #3b82f6; }
+.container-card .movement-kpi-sales::before { background: #22c55e; }
+.container-card .movement-kpi-net::before { background: #14b8a6; }
+.container-card .movement-kpi-returns::before { background: #f97316; }
+.container-card .movement-kpi-expenses::before { background: #ef4444; }
+.container-card .movement-kpi-profit::before { background: #f59e0b; }
 
 .container-card .row.mb-4.g-3 > .col-md-3:nth-child(1) .dashboard-card::before { background: #3b82f6; }
 .container-card .row.mb-4.g-3 > .col-md-3:nth-child(2) .dashboard-card::before { background: #22c55e; }
@@ -1749,3 +1776,16 @@ body.dark-mode .monthly-money-input,
     .monthly-form-row label { grid-column: 1 / -1; font-weight: 800; }
     .monthly-form-footer { grid-template-columns: 1fr; }
 }
+.return-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:18px}.return-summary-card{padding:16px;border:1px solid var(--border-color,#2b4d73);border-radius:14px;background:rgba(30,98,170,.08);display:flex;flex-direction:column;gap:5px}.return-summary-card span{font-size:.78rem;color:var(--text-muted,#8fa6c2)}.return-summary-card strong{font-size:1.25rem}.return-summary-card.is-refund strong{color:#ff6b6b}.return-toolbar{display:flex;justify-content:space-between;align-items:center;padding:6px 18px 18px}.return-modal .modal-header{background:var(--primary-dark,#173b68);color:#fff}.return-modal .btn-close{filter:invert(1)}.return-sale-header{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.return-sale-header>div{border:1px solid var(--border-color,#d8e2ee);border-radius:12px;padding:12px}.return-sale-header span{display:block;font-size:.75rem;color:#789}.return-sale-header strong{display:block;margin-top:3px}.return-total{display:flex;justify-content:flex-end;align-items:center;gap:20px;margin-top:18px;padding:14px;border-radius:12px;background:rgba(22,163,74,.1)}.return-total strong{font-size:1.35rem;color:#16a34a}.return-items-table .form-check{white-space:nowrap}@media(max-width:767px){.return-summary-grid{grid-template-columns:repeat(2,1fr);padding:12px}.return-toolbar{align-items:flex-start;gap:12px;flex-direction:column}.return-sale-header{grid-template-columns:1fr}.return-search-row .input-group{flex-wrap:wrap}.return-search-row input{min-width:calc(100% - 42px)}.return-search-row button{width:100%;margin-top:8px}}
+
+#modalDevolucion .modal-dialog{height:auto;max-height:calc(100dvh - 3rem);margin-top:1.5rem;margin-bottom:1.5rem}
+#modalDevolucion .modal-content{height:auto;max-height:calc(100dvh - 3rem);display:flex;flex-direction:column;overflow:hidden}
+#modalDevolucion .modal-content>form{display:flex;flex:1 1 auto;flex-direction:column;min-height:0;max-height:inherit;width:100%}
+#modalDevolucion .modal-header,#modalDevolucion .modal-footer{flex:0 0 auto}
+#modalDevolucion .modal-body{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+#modalDevolucion .modal-body::-webkit-scrollbar{width:8px}
+#modalDevolucion .modal-body::-webkit-scrollbar-thumb{border-radius:8px;background:rgba(96,165,250,.55)}
+#modalDevolucion .modal-footer{position:relative;z-index:2;min-height:58px;justify-content:flex-end;gap:8px}
+#modalDevolucion .return-search-button{width:46px;display:inline-flex;align-items:center;justify-content:center;padding:0}
+#modalDevolucion .modal-footer .btn-soft{min-height:34px;padding:7px 14px;font-size:.82rem}
+@media(max-width:767px){#modalDevolucion .modal-dialog{max-height:calc(100dvh - 1rem);margin:.5rem}#modalDevolucion .modal-content{max-height:calc(100dvh - 1rem)}#modalDevolucion .return-search-row .input-group{flex-wrap:nowrap}#modalDevolucion .return-search-row input{min-width:0}#modalDevolucion .return-search-row button{width:44px;margin-top:0}}

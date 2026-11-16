@@ -133,7 +133,7 @@ Resumen de Inventario
 
         {{-- Tarjeta financiera --}}
         <div class="col-12 col-md-5">
-            <div class="card border-0 shadow-sm rounded-4 finance-summary-card text-white h-100">
+            <div class="card border-0 shadow-sm rounded-4 finance-summary-card h-100">
                 <div class="card-body py-3 px-4">
 
                     <div class="d-flex justify-content-between align-items-center">

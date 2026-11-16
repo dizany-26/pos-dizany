@@ -11,6 +11,7 @@ use App\Http\Controllers\SunatConfigurationController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ConsultaDocumentoController;
 use App\Http\Controllers\DashboardAdminController;
+use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\EmpleadoController;
 use App\Http\Controllers\GastoController;
 use App\Http\Controllers\InventarioController;
@@ -380,6 +381,12 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
         Route::post('/cajas/{caja}/solicitar-cierre', [CajaController::class, 'solicitarCierre'])
             ->name('cajas.solicitar-cierre');
         Route::middleware('role:Administrador')->group(function () {
+            Route::get('/devoluciones/ventas/buscar', [DevolucionController::class, 'searchSale'])
+                ->name('devoluciones.ventas.buscar');
+            Route::post('/devoluciones', [DevolucionController::class, 'store'])
+                ->name('devoluciones.store');
+            Route::get('/devoluciones/{devolucion}', [DevolucionController::class, 'show'])
+                ->name('devoluciones.show');
             Route::post('/ventas/{venta}/anular', [VentaController::class, 'anular'])
                 ->name('ventas.anular');
             Route::post('/ventas/{venta}/cambiar-metodo-pago', [VentaController::class, 'cambiarMetodoPago'])

@@ -15,6 +15,8 @@ use App\Models\Configuracion;
 use App\Models\ConciliacionMensual;
 use App\Models\CajaOperacion;
 use App\Models\PagoVenta;
+use App\Models\Devolucion;
+use App\Models\DevolucionDetalle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -35,10 +37,10 @@ class MovimientoController extends Controller
             $tab = 'ingresos';
         }
         $tipo  = $request->get('tipo', 'transacciones');
-        if (! in_array($tipo, ['transacciones', 'cierres', 'cuadre'], true)) {
+        if (! in_array($tipo, ['transacciones', 'cierres', 'cuadre', 'devoluciones'], true)) {
             $tipo = 'transacciones';
         }
-        if ($tipo === 'cuadre' && ! $esAdmin) {
+        if (in_array($tipo, ['cuadre', 'devoluciones'], true) && ! $esAdmin) {
             $tipo = 'transacciones';
         }
         $rango = $request->get('rango', 'diario');
@@ -77,7 +79,13 @@ class MovimientoController extends Controller
         /* ==========================
         QUERY BASE
         ========================== */
-        $query = Movimiento::query()->with(['usuario', 'venta.pagos', 'venta.cliente']);
+        $query = Movimiento::query()->with([
+            'usuario',
+            'venta.pagos',
+            'venta.cliente',
+            'venta.detalleVentas',
+            'venta.devoluciones.detalles',
+        ]);
         if (! $esAdmin) {
             $query->where('usuario_id', $usuarioActual->id);
         }
@@ -406,6 +414,68 @@ class MovimientoController extends Controller
             $ganancias = round($gananciaDirecta + $gananciaMixta, 2);
         }
 
+        // Las devoluciones son una salida independiente: no modifican la venta
+        // histórica ni se mezclan con gastos operativos.
+        $reembolsosQuery = Movimiento::egresos()->pagados()->activos()
+            ->where('subtipo', 'devolucion')
+            ->where('referencia_tipo', 'devolucion')
+            ->when(! $esAdmin, fn ($q) => $q->whereExists(function ($saleReturn) use ($usuarioActual) {
+                $saleReturn->selectRaw('1')
+                    ->from('devoluciones as dev_usuario')
+                    ->join('ventas as venta_usuario', 'venta_usuario.id', '=', 'dev_usuario.venta_id')
+                    ->whereColumn('dev_usuario.id', 'movimientos.referencia_id')
+                    ->where('venta_usuario.usuario_id', $usuarioActual->id);
+            }))
+            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) => $q->whereBetween('fecha', [$inicio, $fin]))
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_pago) = ?', [$metodo]));
+        $reembolsos = (float) $reembolsosQuery->sum('monto');
+        $importeDevoluciones = (float) Devolucion::query()
+            ->where('estado', 'registrada')
+            ->when(! $esAdmin, fn ($q) => $q->whereHas('venta', fn ($sale) => $sale->where('usuario_id', $usuarioActual->id)))
+            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) => $q->whereBetween('fecha', [$inicio, $fin]))
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_reembolso) = ?', [$metodo]))
+            ->sum('importe_total');
+        $ventasNetas = round($ventas - $importeDevoluciones, 2);
+        $balance = round($balance - $reembolsos, 2);
+
+        $gananciaRevertida = (float) DevolucionDetalle::query()
+            ->join('devoluciones as dev_ganancia', 'dev_ganancia.id', '=', 'devolucion_detalles.devolucion_id')
+            ->join('ventas as venta_dev_ganancia', 'venta_dev_ganancia.id', '=', 'dev_ganancia.venta_id')
+            ->where('dev_ganancia.estado', 'registrada')
+            ->when(! $esAdmin, fn ($q) => $q->where('venta_dev_ganancia.usuario_id', $usuarioActual->id))
+            ->when($cajaSeleccionada, fn ($q) => $q->where('dev_ganancia.caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) => $q->whereBetween('dev_ganancia.fecha', [$inicio, $fin]))
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(dev_ganancia.metodo_reembolso) = ?', [$metodo]))
+            ->sum('devolucion_detalles.ganancia_revertida');
+        $ganancias = round($ganancias - $gananciaRevertida, 2);
+
+        $devolucionesQuery = Devolucion::query()
+            ->with(['venta.cliente', 'usuario', 'detalles.detalleVenta.producto'])
+            ->where('estado', 'registrada')
+            ->when($cajaSeleccionada, fn ($q) => $q->where('caja_id', $cajaSeleccionada->id))
+            ->when(! $cajaSeleccionada && $inicio && $fin, fn ($q) => $q->whereBetween('fecha', [$inicio, $fin]))
+            ->when($metodo !== '', fn ($q) => $q->whereRaw('LOWER(metodo_reembolso) = ?', [$metodo]));
+        if ($request->filled('buscar')) {
+            $buscarDevolucion = trim((string) $request->buscar);
+            $devolucionesQuery->where(function ($q) use ($buscarDevolucion) {
+                $q->where('id', ctype_digit($buscarDevolucion) ? (int) $buscarDevolucion : 0)
+                    ->orWhereHas('venta', fn ($sale) => $sale
+                        ->whereRaw("CONCAT(serie, '-', LPAD(correlativo, 6, '0')) LIKE ?", ["%{$buscarDevolucion}%"]));
+            });
+        }
+        // Calcular el resumen antes de paginar. paginate() agrega LIMIT/OFFSET
+        // al builder y MariaDB no permite esos límites dentro de un IN subquery.
+        $resumenDevoluciones = [
+            'operaciones' => (clone $devolucionesQuery)->count(),
+            'productos' => (int) DevolucionDetalle::whereIn('devolucion_id', (clone $devolucionesQuery)->select('id'))->sum('cantidad'),
+            'importe' => (float) (clone $devolucionesQuery)->sum('importe_total'),
+            'reembolsado' => (float) (clone $devolucionesQuery)->sum('monto_reembolsado'),
+        ];
+        $devoluciones = $devolucionesQuery->orderByDesc('fecha')->orderByDesc('id')
+            ->paginate(15, ['*'], 'devoluciones_page');
+
         /* ==========================
         VISTA
         ========================== */
@@ -441,6 +511,11 @@ class MovimientoController extends Controller
             , 'buscarEn'
             , 'cuadreMensual'
             , 'conciliacionMensual'
+            , 'reembolsos'
+            , 'importeDevoluciones'
+            , 'ventasNetas'
+            , 'devoluciones'
+            , 'resumenDevoluciones'
         ));
     }
 
@@ -545,6 +620,20 @@ class MovimientoController extends Controller
                 }
             });
 
+        $devolucionesPorMetodo = array_fill_keys($medios, 0.0);
+        Movimiento::egresos()->pagados()->activos()
+            ->where('subtipo', 'devolucion')
+            ->whereBetween('fecha', [$inicio, $fin])
+            ->selectRaw('LOWER(metodo_pago) as medio, SUM(monto) as total')
+            ->groupByRaw('LOWER(metodo_pago)')
+            ->get()
+            ->each(function ($fila) use (&$devolucionesPorMetodo) {
+                $medio = Caja::normalizarMetodo($fila->medio);
+                if ($medio !== 'pendiente') {
+                    $devolucionesPorMetodo[$medio] = round(($devolucionesPorMetodo[$medio] ?? 0) + (float) $fila->total, 2);
+                }
+            });
+
         $cobrosFiados = (float) Movimiento::ingresos()->pagados()->activos()
             ->whereIn('subtipo', ['cobro_fiado', 'cobro_credito'])
             ->whereBetween('fecha', [$inicio, $fin])
@@ -572,15 +661,17 @@ class MovimientoController extends Controller
             'periodo' => $inicio->format('Y-m'),
             'por_metodo' => array_map(fn ($monto) => round((float) $monto, 2), $porMetodo),
             'gastos_por_metodo' => array_map(fn ($monto) => round((float) $monto, 2), $gastosPorMetodo),
+            'devoluciones_por_metodo' => array_map(fn ($monto) => round((float) $monto, 2), $devolucionesPorMetodo),
             'ventas_cobradas_directo' => $ventasCobradasDirecto,
             'cobros_fiados' => round($cobrosFiados, 2),
             'total_recibido' => round(array_sum($porMetodo), 2),
             'gastos' => round(array_sum($gastosPorMetodo), 2),
+            'devoluciones' => round(array_sum($devolucionesPorMetodo), 2),
             'compras_pagadas' => round($comprasPagadas, 2),
             'retiros' => round((float) ($operaciones['retiro'] ?? 0), 2),
             'refuerzos' => round((float) ($operaciones['refuerzo'] ?? 0), 2),
             'por_cobrar' => round($porCobrar, 2),
-            'disponible_despues_salidas' => round(array_sum($porMetodo) - array_sum($gastosPorMetodo), 2),
+            'disponible_despues_salidas' => round(array_sum($porMetodo) - array_sum($gastosPorMetodo) - array_sum($devolucionesPorMetodo), 2),
         ];
     }
 
