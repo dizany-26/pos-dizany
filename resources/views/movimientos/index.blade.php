@@ -87,7 +87,7 @@ Movimientos
     <div class="card-body">
 
         {{-- ================= TABS PRINCIPALES ================= --}}
-        <div class="d-flex gap-2 mb-4">
+        <div class="d-flex gap-2 mb-4 movimientos-main-tabs">
             <a href="{{ route('movimientos.index', array_merge(request()->query(), ['tipo' => 'transacciones'])) }}"
                class="btn-soft {{ request('tipo','transacciones') === 'transacciones' ? 'btn-soft-primary' : 'btn-soft-info' }} flex-fill text-center">
                 Transacciones
@@ -197,7 +197,7 @@ Movimientos
         @else
         <form method="GET"
               action="{{ route('movimientos.index') }}"
-              class="row g-3 mb-4">
+              class="row g-3 mb-4 movement-filter-form {{ $tipo === 'transacciones' ? 'movement-filter-form-transactions' : '' }}">
 
             <input type="hidden" name="tipo" value="{{ request('tipo','transacciones') }}">
             <input type="hidden" name="tab" value="{{ $tab }}">
@@ -540,7 +540,63 @@ Movimientos
                             </td>
 
                             <td data-label="Acciones" class="text-center">
-                                <div class="movement-row-actions">
+                                <div class="movement-row-actions d-none d-lg-flex">
+                                    <button type="button" class="btn-soft btn-soft-primary btn-soft-icon btn-sm js-open-movement-detail" title="Ver detalle" aria-label="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    @if(auth()->user()->esAdmin() && $movimiento->referencia_tipo === 'venta' && $movimiento->venta?->activo && $movimiento->venta?->estado !== 'anulada')
+                                        <div class="dropdown movement-actions-dropdown">
+                                            <button type="button"
+                                                    class="btn-soft btn-soft-icon btn-sm movement-actions-trigger"
+                                                    data-bs-toggle="dropdown"
+                                                    data-bs-boundary="viewport"
+                                                    aria-expanded="false"
+                                                    title="Más acciones"
+                                                    aria-label="Más acciones">
+                                                <i class="fas fa-ellipsis-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end movement-actions-menu">
+                                                <li>
+                                                    <a href="{{ route('movimientos.index', ['tipo' => 'devoluciones', 'rango' => 'diario', 'fecha' => now()->format('Y-m-d'), 'venta_id' => $movimiento->venta->id]) }}"
+                                                       class="dropdown-item movement-action-item movement-action-return">
+                                                        <i class="fas fa-rotate-left"></i>
+                                                        <span>Registrar devolución</span>
+                                                    </a>
+                                                </li>
+                                                @if($movimiento->estado === 'pagado' && $movimiento->venta?->estado === 'pagado')
+                                                <li>
+                                                    <form method="POST"
+                                                          action="{{ route('ventas.cambiar-metodo-pago', $movimiento->venta) }}"
+                                                          class="js-change-payment-form"
+                                                          data-current-method="{{ $metodoPago }}"
+                                                          data-total="{{ number_format((float) $movimiento->venta->total, 2, '.', '') }}"
+                                                          data-document="{{ $movimiento->venta->serie }}-{{ str_pad((string) $movimiento->venta->correlativo, 6, '0', STR_PAD_LEFT) }}">
+                                                        @csrf
+                                                        <input type="hidden" name="metodo_pago" value="">
+                                                        <input type="hidden" name="motivo" value="">
+                                                        <button type="submit" class="dropdown-item movement-action-item movement-action-edit">
+                                                            <i class="fas fa-pen"></i>
+                                                            <span>Corregir método de pago</span>
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                @endif
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <form method="POST" action="{{ route('ventas.anular', $movimiento->venta) }}" class="js-annul-sale-form">
+                                                        @csrf
+                                                        <input type="hidden" name="motivo" value="">
+                                                        <button type="submit" class="dropdown-item movement-action-item movement-action-annul">
+                                                            <i class="fas fa-ban"></i>
+                                                            <span>Anular venta</span>
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="movement-row-actions d-flex d-lg-none">
                                     <button type="button" class="btn-soft btn-soft-primary btn-soft-icon btn-sm js-open-movement-detail" title="Ver detalle" aria-label="Ver detalle">
                                         <i class="fas fa-eye"></i>
                                     </button>
@@ -1183,6 +1239,7 @@ flatpickr.localize(flatpickr.l10ns.es);
     if (rango === "diario") {
         window.__mov_fp = flatpickr("#picker-wrapper", {
             wrap: true,
+            disableMobile: true,
             dateFormat: "Y-m-d",
             altInput: true,
             altFormat: "j M Y",
@@ -1199,6 +1256,7 @@ flatpickr.localize(flatpickr.l10ns.es);
 
     window.__mov_fp = flatpickr("#picker-wrapper", {
         wrap: true,
+        disableMobile: true,
         mode: "range",
         locale: "es",
 
@@ -1357,7 +1415,7 @@ flatpickr.localize(flatpickr.l10ns.es);
 
         // En móvil vertical mostramos un solo mes; en pantallas amplias
         // conservamos la vista doble para elegir el rango cómodamente.
-        showMonths: window.matchMedia('(max-width: 767px)').matches ? 1 : 2,
+        showMonths: window.matchMedia('(max-width: 991.98px)').matches ? 1 : 2,
         disableMobile: true,
         allowInput: false,
 
@@ -1378,6 +1436,18 @@ flatpickr.localize(flatpickr.l10ns.es);
             }
         }
     });
+}
+
+// La fecha se elige desde el calendario: evita abrir el teclado táctil.
+if (window.__mov_fp) {
+    [window.__mov_fp.input, window.__mov_fp.altInput]
+        .filter(Boolean)
+        .forEach((dateInput) => {
+            dateInput.readOnly = true;
+            dateInput.setAttribute('readonly', 'readonly');
+            dateInput.setAttribute('inputmode', 'none');
+            dateInput.setAttribute('autocomplete', 'off');
+        });
 }
 
 })();
