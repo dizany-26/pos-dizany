@@ -623,7 +623,9 @@ $pdf = Pdf::setOptions([
             if (!is_dir($ruta)) mkdir($ruta, 0775, true);
 
             $pdf->save("$ruta/$nombreArchivo");
-            $pdfUrl = asset("comprobantes/$nombreArchivo");
+            // Una ruta relativa funciona en localhost, IP local, ngrok o cualquier
+            // dominio futuro sin conservar el host donde se creó la venta.
+            $pdfUrl = "/comprobantes/{$nombreArchivo}";
             $venta->pdf_url = $pdfUrl;
             $venta->save();
 
@@ -799,14 +801,15 @@ $pdf = Pdf::setOptions([
     private function saleSuccessResponse(Venta $venta, bool $pedidoCatalogoAtendido = false, bool $recovered = false)
     {
         $venta->loadMissing('pagos');
-        $archivo = $venta->pdf_url ? basename((string) parse_url($venta->pdf_url, PHP_URL_PATH)) : null;
+        $pdfUrl = $this->comprobanteUrl($venta);
+        $archivo = $pdfUrl ? basename((string) parse_url($pdfUrl, PHP_URL_PATH)) : null;
 
         return response()->json([
             'success' => true,
             'message' => 'Venta registrada correctamente.',
             'serie' => $venta->serie,
             'correlativo' => str_pad((string) $venta->correlativo, 6, '0', STR_PAD_LEFT),
-            'pdf_url' => $venta->pdf_url,
+            'pdf_url' => $pdfUrl,
             'nombre_archivo' => $archivo,
             'estado' => $venta->estado,
             'saldo' => (float) $venta->saldo,
@@ -1095,7 +1098,7 @@ public function detalle(Request $request, $id)
         'ganancia_movimiento_etiqueta' => auth()->user()->esAdmin() ? $etiquetaGananciaMovimiento : null,
 
         // === Archivos FE ===
-        'pdf_url' => $venta->pdf_url ?? null,
+        'pdf_url' => $this->comprobanteUrl($venta),
         'xml_url' => $venta->xml_url ?? null,
         'cdr_url' => $venta->cdr_url ?? null,
 
@@ -1522,6 +1525,26 @@ public function descargarComprobante($filename)
     return response()->download($path, $filename, [
         'Content-Type' => 'application/pdf'
     ]);
+}
+
+private function comprobanteUrl(Venta $venta): ?string
+{
+    $storedPath = (string) ($venta->getRawOriginal('pdf_url') ?? '');
+    $filename = basename((string) parse_url($storedPath, PHP_URL_PATH));
+
+    if ($filename === '' || ! str_ends_with(strtolower($filename), '.pdf')) {
+        if (blank($venta->serie) || blank($venta->correlativo)) {
+            return null;
+        }
+
+        $filename = $venta->serie.'-'.str_pad((string) $venta->correlativo, 6, '0', STR_PAD_LEFT).'.pdf';
+    }
+
+    if (! is_file(public_path('comprobantes'.DIRECTORY_SEPARATOR.$filename))) {
+        return null;
+    }
+
+    return '/comprobantes/'.rawurlencode($filename);
 }
 
 

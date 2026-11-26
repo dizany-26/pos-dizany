@@ -1,11 +1,10 @@
 (() => {
     if (!('serviceWorker' in navigator)) return;
 
-    let installPrompt = null;
+    let installPrompt = window.__dizanyInstallPrompt || null;
     let installContainer = null;
+    let installButton = null;
     const INSTALLED_KEY = 'dizany-catalog-pwa-installed';
-    const DISMISSED_KEY = 'dizany-catalog-pwa-install-dismissed-at';
-    const DISMISS_TIME = 7 * 24 * 60 * 60 * 1000;
 
     const isStandalone = () =>
         window.matchMedia('(display-mode: standalone)').matches ||
@@ -15,11 +14,9 @@
         document.documentElement.classList.add('catalog-pwa-standalone');
     }
 
-    const installationHidden = () => {
-        if (isStandalone() || localStorage.getItem(INSTALLED_KEY) === '1') return true;
-        const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);
-        return dismissedAt > 0 && Date.now() - dismissedAt < DISMISS_TIME;
-    };
+    // Una instalación anterior puede haber sido eliminada sin que la página lo
+    // sepa. El modo standalone es la única señal fiable para ocultar el botón.
+    const installationHidden = () => isStandalone();
 
     const hidePrompt = () => {
         if (installContainer) installContainer.hidden = true;
@@ -32,11 +29,12 @@
         installContainer.className = 'pwa-install-prompt';
         installContainer.hidden = true;
 
-        const installButton = document.createElement('button');
+        installButton = document.createElement('button');
         installButton.type = 'button';
         installButton.className = 'pwa-install-button';
         installButton.innerHTML = '<span aria-hidden="true">↓</span><span>Instalar Catálogo DIZANY</span>';
         installButton.addEventListener('click', async () => {
+            installPrompt = installPrompt || window.__dizanyInstallPrompt;
             if (!installPrompt) return;
             installPrompt.prompt();
             const choice = await installPrompt.userChoice;
@@ -51,7 +49,6 @@
         closeButton.setAttribute('aria-label', 'Cerrar invitación para instalar el catálogo');
         closeButton.textContent = '×';
         closeButton.addEventListener('click', () => {
-            localStorage.setItem(DISMISSED_KEY, String(Date.now()));
             hidePrompt();
         });
 
@@ -66,6 +63,12 @@
         if (installContainer && !installationHidden()) installContainer.hidden = false;
     });
 
+    window.addEventListener('dizany-install-ready', () => {
+        installPrompt = window.__dizanyInstallPrompt || installPrompt;
+        ensureInstallPrompt();
+        if (installContainer && !installationHidden()) installContainer.hidden = false;
+    });
+
     window.addEventListener('appinstalled', () => {
         installPrompt = null;
         localStorage.setItem(INSTALLED_KEY, '1');
@@ -76,5 +79,10 @@
         navigator.serviceWorker.register('/sw.js').catch(error => {
             console.error('No se pudo activar la PWA del catálogo DIZANY.', error);
         });
+        installPrompt = installPrompt || window.__dizanyInstallPrompt;
+        if (installPrompt) {
+            ensureInstallPrompt();
+            if (installContainer && !installationHidden()) installContainer.hidden = false;
+        }
     });
 })();

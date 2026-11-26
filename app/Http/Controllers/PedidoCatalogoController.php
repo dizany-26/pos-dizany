@@ -126,8 +126,12 @@ class PedidoCatalogoController extends Controller
     public function pending()
     {
         return PedidoCatalogo::where('estado', 'pendiente')
+            ->leftJoin('usuarios as usuario_atencion', 'usuario_atencion.id', '=', 'pedidos_catalogo.atendido_por_usuario_id')
             ->latest('enviado_en')
-            ->get()
+            ->get([
+                'pedidos_catalogo.*',
+                'usuario_atencion.nombre as atendido_por_nombre',
+            ])
             ->map(fn (PedidoCatalogo $order) => [
                 'id' => $order->id,
                 'codigo' => $order->codigo,
@@ -138,7 +142,53 @@ class PedidoCatalogoController extends Controller
                 'items' => $order->items,
                 'total' => (float) $order->total,
                 'enviado_en' => optional($order->enviado_en)->toIso8601String(),
+                'en_atencion' => $order->atendido_por_usuario_id !== null,
+                'atendido_por' => $order->atendido_por_nombre,
+                'atendido_por_mi' => (int) $order->atendido_por_usuario_id === (int) auth()->id(),
+                'tomado_en' => optional($order->tomado_en)->toIso8601String(),
             ])->values();
+    }
+
+    public function claim(Request $request, PedidoCatalogo $pedido)
+    {
+        $data = $request->validate([
+            'forzar' => ['sometimes', 'boolean'],
+        ]);
+
+        $resultado = DB::transaction(function () use ($pedido, $request, $data) {
+            $lockedOrder = PedidoCatalogo::whereKey($pedido->id)->lockForUpdate()->firstOrFail();
+            if ($lockedOrder->estado !== 'pendiente') {
+                return ['error' => 'Este pedido ya fue atendido o cancelado.', 'status' => 422];
+            }
+
+            $otroUsuario = $lockedOrder->atendido_por_usuario_id !== null
+                && (int) $lockedOrder->atendido_por_usuario_id !== (int) $request->user()->id;
+
+            if ($otroUsuario && ! ($data['forzar'] ?? false)) {
+                $nombre = User::whereKey($lockedOrder->atendido_por_usuario_id)->value('nombre') ?: 'otro usuario';
+                return [
+                    'error' => "Este pedido está siendo atendido por {$nombre}.",
+                    'atendido_por' => $nombre,
+                    'status' => 409,
+                ];
+            }
+
+            $lockedOrder->update([
+                'atendido_por_usuario_id' => $request->user()->id,
+                'tomado_en' => now(),
+            ]);
+
+            return [
+                'success' => true,
+                'atendido_por' => $request->user()->nombre,
+            ];
+        });
+
+        if (isset($resultado['error'])) {
+            return response()->json($resultado, $resultado['status']);
+        }
+
+        return response()->json($resultado);
     }
 
     public function cancel(PedidoCatalogo $pedido, PedidoCatalogoNotificationService $notifications)

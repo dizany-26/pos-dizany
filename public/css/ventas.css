@@ -1346,7 +1346,7 @@ select.form-select-sm,
 .step2-dialog-header > div,
 .step2-summary-copy { display: grid; gap: 1px; min-width: 0; }
 .step2-dialog-header strong { font-size: 1.05rem; }
-.step2-dialog-header small { color: rgba(255, 255, 255, .76); font-size: .74rem; }
+.step2-dialog-header small { color: rgba(255, 255, 255, .82) !important; font-size: .74rem; }
 .sale-flow-close {
     display: grid;
     place-items: center;
@@ -1574,6 +1574,7 @@ select.form-select-sm,
     align-items: center;
     gap: 12px;
     padding: 13px 16px;
+    background: linear-gradient(135deg, #315f92 0%, #244b78 100%) !important;
 }
 
 .step3-checkout-header > div {
@@ -1582,7 +1583,22 @@ select.form-select-sm,
 }
 
 .step3-checkout-header strong { font-size: 1rem; line-height: 1.2; }
-.step3-checkout-header small { color: rgba(255, 255, 255, .76); font-size: .72rem; }
+.step3-checkout-header small { color: rgba(255, 255, 255, .82) !important; font-size: .72rem; }
+
+/* Los estilos globales de texto suave no deben oscurecer las cabeceras azules. */
+html[data-theme='light'] #content .step2-dialog-header strong,
+html[data-theme='light'] #content .step3-checkout-header strong,
+html[data-theme='dark'] #content .step2-dialog-header strong,
+html[data-theme='dark'] #content .step3-checkout-header strong {
+    color: #ffffff !important;
+}
+
+html[data-theme='light'] #content .step2-dialog-header small,
+html[data-theme='light'] #content .step3-checkout-header small,
+html[data-theme='dark'] #content .step2-dialog-header small,
+html[data-theme='dark'] #content .step3-checkout-header small {
+    color: rgba(255, 255, 255, .82) !important;
+}
 .step3-header-icon {
     display: grid;
     place-items: center;
@@ -1724,7 +1740,7 @@ select.form-select-sm,
 #step-3[data-payment-state='pendiente'] .step3-total-label strong { color: #70420b; }
 
 :root[data-theme='dark'] #step-3 .step3-checkout-card { border-color: #294970 !important; background: linear-gradient(180deg, #102844 0%, #0b1e35 40%) !important; }
-:root[data-theme='dark'] #step-3 .step3-checkout-header { background: linear-gradient(135deg, #244873 0%, #1a385f 100%) !important; }
+:root[data-theme='dark'] #step-3 .step3-checkout-header { background: linear-gradient(135deg, #244873 0%, #19375d 100%) !important; }
 :root[data-theme='dark'] .step3-total-card { border-color: #246444; background: linear-gradient(135deg, #103425 0%, #123b2a 100%); }
 :root[data-theme='dark'] .step3-total-label > span { color: #77e49b; background: rgba(255, 255, 255, .07); }
 :root[data-theme='dark'] .step3-total-label small { color: #91c9a5; }

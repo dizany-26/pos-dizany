@@ -712,6 +712,76 @@
     color: var(--dm-text) !important;
 }
 
+/* =========================================================
+   Header notifications + incoming notification toast
+========================================================= */
+.notification-menu .dropdown-header,
+.notification-menu .notification-title,
+.notification-menu .dropdown-item {
+    color: #172033 !important;
+}
+
+.notification-menu .notification-message {
+    color: #64748b !important;
+}
+
+.notification-menu .dropdown-item:hover,
+.notification-menu .dropdown-item:focus {
+    background: #eef4ff !important;
+    color: #0f172a !important;
+}
+
+#header .notification-menu .notification-label {
+    color: #172033 !important;
+    opacity: 1 !important;
+}
+
+.dizany-notification-toast .dizany-notification-toast-title {
+    color: #172033 !important;
+}
+
+.dizany-notification-toast .dizany-notification-toast-message {
+    color: #526079 !important;
+}
+
+:root[data-theme='dark'] .notification-menu .dropdown-header,
+:root[data-theme='dark'] .notification-menu .notification-title,
+:root[data-theme='dark'] .notification-menu .dropdown-item {
+    color: #edf4ff !important;
+}
+
+:root[data-theme='dark'] .notification-menu .notification-message {
+    color: #b7c8e1 !important;
+}
+
+html[data-theme='dark'] #header .notification-menu .notification-label,
+html[data-theme='dark'] #header .notification-menu .dropdown-item > .notification-label {
+    color: #eaf2ff !important;
+    opacity: 1 !important;
+}
+
+:root[data-theme='dark'] .notification-menu .dropdown-divider {
+    border-color: var(--dm-divider) !important;
+}
+
+:root[data-theme='dark'] .notification-menu .dropdown-item:hover,
+:root[data-theme='dark'] .notification-menu .dropdown-item:focus {
+    background: rgba(96, 165, 250, .14) !important;
+    color: #ffffff !important;
+}
+
+:root[data-theme='dark'] .dizany-notification-toast .dizany-notification-toast-title {
+    color: #f4f8ff !important;
+}
+
+:root[data-theme='dark'] .dizany-notification-toast .dizany-notification-toast-message {
+    color: #bfd0e8 !important;
+}
+
+:root[data-theme='dark'] .dizany-notification-toast .swal2-timer-progress-bar {
+    background: #60a5fa !important;
+}
+
 
 :root[data-theme='dark'] .card,
 :root[data-theme='dark'] .table-responsive {

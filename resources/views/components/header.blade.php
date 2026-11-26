@@ -64,7 +64,7 @@
                     @endif
                 </a>
 
-                <ul class="dropdown-menu dropdown-menu-end shadow"
+                <ul class="dropdown-menu dropdown-menu-end shadow notification-menu"
                     aria-labelledby="notificacionesDropdown"
                     style="min-width: 320px;">
                     @if($notificacionesCaja->isNotEmpty())
@@ -75,8 +75,8 @@
                                    href="{{ route('notificaciones.abrir', $notificacion->id) }}">
                                     <i class="fas {{ $notificacion->data['icono'] ?? 'fa-cash-register' }} text-{{ $notificacion->data['color'] ?? 'primary' }} mt-1"></i>
                                     <span class="text-wrap">
-                                        <strong class="d-block">{{ $notificacion->data['titulo'] ?? 'Alerta de caja' }}</strong>
-                                        <small class="text-muted">{{ $notificacion->data['mensaje'] ?? '' }}</small>
+                                        <strong class="d-block notification-title">{{ $notificacion->data['titulo'] ?? 'Alerta de caja' }}</strong>
+                                        <small class="notification-message">{{ $notificacion->data['mensaje'] ?? '' }}</small>
                                     </span>
                                 </a>
                             </li>
@@ -86,7 +86,7 @@
                     <li>
                         <a class="dropdown-item d-flex justify-content-between align-items-center"
                            href="{{ route('inventario.resumen') }}">
-                            <span>
+                            <span class="notification-label">
                                 <i class="fas fa-boxes text-danger me-2"></i> Bajo stock
                             </span>
                             <span class="badge bg-danger">{{ $alertaStockBajo }}</span>
@@ -96,7 +96,7 @@
                     <li>
                         <a class="dropdown-item d-flex justify-content-between align-items-center"
                            href="{{ route('inventario.resumen') }}">
-                            <span>
+                            <span class="notification-label">
                                 <i class="fas fa-calendar-alt text-warning me-2"></i> Por vencer
                             </span>
                             <span class="badge bg-warning text-dark">{{ $alertaPorVencer }}</span>
@@ -303,7 +303,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     showConfirmButton: true,
                     confirmButtonText: 'Ver',
                     timer: 9000,
-                    timerProgressBar: true
+                    timerProgressBar: true,
+                    customClass: {
+                        popup: 'dizany-notification-toast',
+                        title: 'dizany-notification-toast-title',
+                        htmlContainer: 'dizany-notification-toast-message'
+                    }
                 }).then(result => {
                     if (result.isConfirmed) window.location.href = nueva.url;
                 });

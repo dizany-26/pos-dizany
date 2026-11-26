@@ -26,6 +26,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\PublicElectronicDocumentController;
 use App\Http\Controllers\PedidoCatalogoController;
+use App\Http\Controllers\VentaBorradorController;
 use App\Models\Categoria;
 use App\Models\Configuracion;
 use App\Models\ConfiguracionCatalogo;
@@ -321,7 +322,11 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     | Ventas
     */
     Route::middleware('permission:ventas')->group(function () {
+        Route::get('/ventas/borradores', [VentaBorradorController::class, 'index']);
+        Route::put('/ventas/borradores', [VentaBorradorController::class, 'sync']);
+        Route::delete('/ventas/borradores/{uuid}', [VentaBorradorController::class, 'destroy']);
         Route::get('/ventas/pedidos-catalogo', [PedidoCatalogoController::class, 'pending']);
+        Route::post('/ventas/pedidos-catalogo/{pedido}/atender', [PedidoCatalogoController::class, 'claim']);
         Route::delete('/ventas/pedidos-catalogo/{pedido}', [PedidoCatalogoController::class, 'cancel']);
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
         Route::get('/ventas/lista', [VentaController::class, 'listar'])->name('ventas.listar');

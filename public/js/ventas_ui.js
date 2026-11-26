@@ -232,7 +232,9 @@ function actualizarResumenClienteFase2() {
     if (documentoAction) {
         documentoAction.textContent = esFactura
             ? "RUC obligatorio"
-            : (conDocumento ? "Usar público general" : "Agregar documento");
+            : (pendienteGuardar
+                ? "Guardar cliente"
+                : (conDocumento ? "Usar público general" : "Agregar documento"));
     }
     if (documentoButton) {
         documentoButton.disabled = esFactura;
@@ -271,6 +273,9 @@ function volcarUIaVentaActiva() {
     const tipoComprobante = document.getElementById("tipo_comprobante");
     const tipoDocumento = document.getElementById("tipo_documento_cliente");
     const informacionAdicional = document.getElementById("informacion_adicional");
+    const formatoPdf = document.getElementById("formato_pdf");
+    const efectivoRecibido = document.getElementById("vuelto-paga");
+    const vencimientoCredito = document.getElementById("credito-vencimiento");
     const clienteModo = document.querySelector('input[name="cliente_documento_modo"]:checked');
 
     if (!v.cliente) {
@@ -290,6 +295,9 @@ function volcarUIaVentaActiva() {
 
     v.metodo_pago = hiddenMetodoPago?.value || "";
     v.estado_pago = (estadoPago?.value || "pagado").toLowerCase();
+    v.formato_pdf = formatoPdf?.value || "a4";
+    v.efectivo_recibido = efectivoRecibido?.value || "";
+    v.credit_due_date = vencimientoCredito?.value || "";
 
     if (window.actualizarAliasVentaDesdeCliente) {
         actualizarAliasVentaDesdeCliente();
@@ -319,6 +327,9 @@ function restaurarVentaActivaEnUI() {
     const tipoComprobante = document.getElementById("tipo_comprobante");
     const tipoDocumento = document.getElementById("tipo_documento_cliente");
     const informacionAdicional = document.getElementById("informacion_adicional");
+    const formatoPdf = document.getElementById("formato_pdf");
+    const efectivoRecibido = document.getElementById("vuelto-paga");
+    const vencimientoCredito = document.getElementById("credito-vencimiento");
 
     v.tipo_comprobante = v.tipo_comprobante || "boleta";
     v.cliente_modo = v.cliente_modo || (v.cliente?.documento ? "con_documento" : "sin_documento");
@@ -334,6 +345,9 @@ function restaurarVentaActivaEnUI() {
     if (razonInput)     razonInput.value     = v.cliente?.razon || "";
     if (direccionInput) direccionInput.value = v.cliente?.direccion || "";
     if (informacionAdicional) informacionAdicional.value = v.informacion_adicional;
+    if (formatoPdf) formatoPdf.value = v.formato_pdf || "a4";
+    if (efectivoRecibido) efectivoRecibido.value = v.efectivo_recibido || "";
+    if (vencimientoCredito) vencimientoCredito.value = v.credit_due_date || "";
 
     if (typeof window.actualizarFlujoClienteComprobante === "function") {
         window.actualizarFlujoClienteComprobante(true);
@@ -580,7 +594,7 @@ function prepararFase3() {
 
     if (inputTotalVenta) inputTotalVenta.value = formatPrecioDinamico(total);
     if (inputPaga) {
-        inputPaga.value = "";
+        inputPaga.value = ventaActiva()?.efectivo_recibido || "";
         inputPaga.placeholder = "Opcional";
     }
     if (inputVuelto) inputVuelto.value = "S/ 0.00";
@@ -597,8 +611,9 @@ function prepararFase3() {
     dueWrap?.classList.add("d-none");
     if (dueInput) {
         dueInput.required = false;
-        dueInput.value = "";
+        dueInput.value = ventaActiva()?.credit_due_date || "";
     }
+    inputPaga?.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 // ============================
@@ -629,7 +644,7 @@ function prepararFase3Credito() {
     resultadoWrap?.classList.toggle("d-none", estado === "pendiente");
 
     if (inputPaga) {
-        inputPaga.value = "";
+        inputPaga.value = ventaActiva()?.efectivo_recibido || "";
         inputPaga.placeholder = "Ingresa el adelanto";
     }
     if (pagoLabel) pagoLabel.textContent = "Adelanto recibido";
@@ -645,8 +660,11 @@ function prepararFase3Credito() {
     dueWrap?.classList.remove("d-none");
     if (dueInput) {
         dueInput.required = true;
-        if (!dueInput.value) dueInput.value = new Date().toISOString().slice(0, 10);
+        dueInput.value = ventaActiva()?.credit_due_date || dueInput.value || new Date().toISOString().slice(0, 10);
+        ventaActiva().credit_due_date = dueInput.value;
+        guardarPOSAhora();
     }
+    inputPaga?.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 // ============================
@@ -838,9 +856,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const modoCon = document.getElementById("cliente-con-documento");
         const modoSin = document.getElementById("cliente-sin-documento");
         const esFactura = document.getElementById("tipo_comprobante")?.value === "factura";
+        const iconoGuardar = document.getElementById("icono-save");
+        const pendienteGuardar = iconoGuardar ? !iconoGuardar.classList.contains("d-none") : false;
         if (esFactura) return;
 
         if (modoCon?.checked) {
+            if (pendienteGuardar) {
+                if (disclosure) disclosure.open = true;
+                requestAnimationFrame(() => document.getElementById("btn-cliente-accion")?.focus());
+                return;
+            }
             if (modoSin) {
                 modoSin.checked = true;
                 modoSin.dispatchEvent(new Event("change", { bubbles: true }));
@@ -859,7 +884,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("#step2-cliente-disclosure > summary")?.addEventListener("click", event => {
         const iconoGuardar = document.getElementById("icono-save");
         const pendienteGuardar = iconoGuardar ? !iconoGuardar.classList.contains("d-none") : false;
-        if (!document.getElementById("cliente-con-documento")?.checked || pendienteGuardar) {
+        const disclosure = document.getElementById("step2-cliente-disclosure");
+        if (!document.getElementById("cliente-con-documento")?.checked) {
+            event.preventDefault();
+        } else if (pendienteGuardar && disclosure?.open) {
+            // Mientras falte guardar se puede abrir, pero no volver a ocultar
+            // accidentalmente el formulario y su acción principal.
             event.preventDefault();
         }
     });
@@ -1020,6 +1050,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const total = parseFloat(inputTotalVenta?.value || 0);
         const estado = (estadoPagoSelect?.value || "pagado").toLowerCase();
 
+        const venta = ventaActiva();
+        venta.efectivo_recibido = inputPaga.value || "";
+        posSaveDebounced(snapshotPOS, 50);
+
         document.querySelectorAll("#step3-quick-cash .step3-quick-cash-btn").forEach(boton => {
             const esExactoVacio = boton.classList.contains("is-exact") && inputPaga.value === "";
             const coincideMonto = !boton.classList.contains("is-exact")
@@ -1037,6 +1071,18 @@ document.addEventListener("DOMContentLoaded", () => {
         let vuelto = monto - total;
         if (vuelto < 0) vuelto = 0;
         if (inputVuelto) inputVuelto.value = `S/ ${formatPrecioDinamico(vuelto)}`;
+    });
+
+    document.getElementById("credito-vencimiento")?.addEventListener("change", event => {
+        const venta = ventaActiva();
+        venta.credit_due_date = event.target.value || "";
+        guardarPOSAhora();
+    });
+
+    document.getElementById("formato_pdf")?.addEventListener("change", event => {
+        const venta = ventaActiva();
+        venta.formato_pdf = event.target.value || "a4";
+        guardarPOSAhora();
     });
 
     // Inicial UI

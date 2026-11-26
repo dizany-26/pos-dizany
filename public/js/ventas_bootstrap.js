@@ -4,6 +4,11 @@
 
 document.addEventListener("DOMContentLoaded", () => {
 
+    window.cargarBorradoresDelServidor?.();
+    window.setInterval(() => {
+        if (!document.hidden) window.cargarBorradoresDelServidor?.();
+    }, 15000);
+
     // ============================
     // RENDER GENERAL
     // ============================
@@ -107,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================
     window.addEventListener("beforeunload", () => {
         try {
+            window.volcarUIaVentaActiva?.();
             posSave(snapshotPOS());
         } catch {}
     });

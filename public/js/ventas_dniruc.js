@@ -273,5 +273,25 @@ document.addEventListener("DOMContentLoaded", () => {
         modalCliente?.show();
     });
 
-    aplicarFlujo(false);
+    // Hidratar primero desde el borrador. Antes se ejecutaba aplicarFlujo(false)
+    // y se reemplazaban por Público General los datos recuperados al recargar.
+    const borradorInicial = ventaActual();
+    if (borradorInicial) {
+        tipoComprobante.value = borradorInicial.tipo_comprobante || "boleta";
+        const modoGuardado = borradorInicial.cliente_modo
+            || (borradorInicial.cliente?.documento ? "con_documento" : "sin_documento");
+        if (modoGuardado === "con_documento") modoCon.checked = true;
+        else modoSin.checked = true;
+        tipoDocumento.value = borradorInicial.tipo_documento
+            || (borradorInicial.cliente?.documento?.length === 11 ? "ruc" : "dni");
+        documento.value = borradorInicial.cliente?.documento || "";
+        razon.value = borradorInicial.cliente?.razon || "Público General";
+        direccion.value = borradorInicial.cliente?.direccion || "";
+        if (informacion) informacion.value = borradorInicial.informacion_adicional || "";
+        iconoGuardar(!!borradorInicial.cliente?.no_guardado);
+        window.estadoCliente = borradorInicial.cliente?.no_guardado
+            ? "nuevo_no_guardado"
+            : (modoGuardado === "con_documento" ? "ok" : "ninguno");
+        aplicarFlujo(true);
+    }
 });

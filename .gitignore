@@ -3,10 +3,14 @@
 /public/build
 /public/hot
 /public/comprobantes/*.pdf
+/public/uploads/productos/*
 /output/
+/tmp/
+mintty.*.png
 /storage/*.key
 /storage/logs/*
 /storage/app/backups/*
+/storage/app/sunat/*
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/framework/testing/*

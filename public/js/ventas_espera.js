@@ -61,6 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 border-radius:999px; background:#e8f2ff; color:#1469c9 !important;
                 font-size:10px !important; font-weight:800; letter-spacing:.06em;
             }
+            .pos-espera-attending{
+                display:inline-flex; margin-top:5px; margin-left:4px; padding:2px 7px;
+                border-radius:999px; background:#fff3cd; color:#8a5b00 !important;
+                font-size:10px !important; font-weight:800; letter-spacing:.03em;
+            }
             .pos-espera-item .delete{
                 border:none; background: rgba(220,53,69,.1);
                 color:#dc3545; width:34px; height:34px;
@@ -93,6 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
             :root[data-theme='dark'] .pos-espera-item .info span{ color:#adc7ea; }
             :root[data-theme='dark'] .pos-espera-origin{
                 background:rgba(37,99,235,.25); color:#8fc2ff !important;
+            }
+            :root[data-theme='dark'] .pos-espera-attending{
+                background:rgba(245,158,11,.2); color:#ffd37a !important;
             }
             :root[data-theme='dark'] .pos-espera-item .delete{
                 background: rgba(239,68,68,.2);
@@ -127,6 +135,87 @@ document.addEventListener("DOMContentLoaded", () => {
         return pedidosCatalogo.filter(pedido => !importados.has(Number(pedido.id)));
     }
 
+    async function limpiarPedidosCatalogoFinalizados() {
+        const idsPendientes = new Set(pedidosCatalogo.map(pedido => Number(pedido.id)));
+        const ventasFinalizadas = Object.values(POS.ventas || {}).filter(venta => {
+            const pedidoId = Number(venta.pedido_catalogo_id || 0);
+            return pedidoId > 0 && !idsPendientes.has(pedidoId);
+        });
+
+        if (ventasFinalizadas.length === 0) return;
+
+        for (const venta of ventasFinalizadas) {
+            delete POS.ventas[venta.id];
+            await window.eliminarBorradorDelServidor?.(venta.id);
+        }
+
+        asegurarVentaActiva();
+        guardarPOSAhora();
+        window.restaurarVentaActivaEnUI?.();
+        window.renderTodo?.();
+    }
+
+    async function reconocerPedidosCatalogoLocales() {
+        const importados = idsCatalogoImportados();
+        let datosRecuperados = false;
+
+        pedidosCatalogo.forEach(pedido => {
+            const venta = Object.values(POS.ventas || {}).find(
+                item => Number(item.pedido_catalogo_id || 0) === Number(pedido.id)
+            );
+            if (!venta) return;
+
+            const informacionOriginal = [
+                `Pedido del catálogo ${pedido.codigo}`,
+                `Teléfono: ${pedido.cliente_telefono}`,
+                pedido.tipo_entrega === 'domicilio'
+                    ? `Entrega a domicilio: ${pedido.direccion || ''}`
+                    : 'Recoger en tienda'
+            ].join(' | ');
+
+            if (!(venta.informacion_adicional || '').trim()) {
+                venta.informacion_adicional = informacionOriginal;
+                datosRecuperados = true;
+            }
+            if (!venta.alias || venta.alias === 'Público General') {
+                venta.alias = `${pedido.cliente_nombre} · ${pedido.codigo}`;
+                datosRecuperados = true;
+            }
+            venta.pedido_catalogo_codigo = pedido.codigo;
+            venta.pedido_catalogo_telefono = pedido.cliente_telefono;
+        });
+
+        if (datosRecuperados) {
+            guardarPOSAhora();
+            window.restaurarVentaActivaEnUI?.();
+        }
+
+        const sinAsignar = pedidosCatalogo.filter(pedido =>
+            importados.has(Number(pedido.id)) && !pedido.en_atencion
+        );
+
+        await Promise.all(sinAsignar.map(async pedido => {
+            try {
+                const response = await fetch(`/ventas/pedidos-catalogo/${pedido.id}/atender`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({ forzar: false })
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                pedido.en_atencion = true;
+                pedido.atendido_por_mi = true;
+                pedido.atendido_por = data.atendido_por;
+            } catch (error) {
+                console.warn('No se pudo reconocer el pedido local en atención:', error);
+            }
+        }));
+    }
+
     async function cargarPedidosCatalogo(renderizar = false) {
         if (consultandoPedidosCatalogo) return;
         consultandoPedidosCatalogo = true;
@@ -137,6 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             if (!response.ok) throw new Error('No se pudieron consultar los pedidos del catálogo.');
             pedidosCatalogo = await response.json();
+            await limpiarPedidosCatalogoFinalizados();
+            await reconocerPedidosCatalogoLocales();
             actualizarContadorVentasEspera();
             if (renderizar && !posEsperaPanel?.classList.contains('d-none')) {
                 renderVentasEsperaPanel();
@@ -149,6 +240,44 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function importarPedidoCatalogo(pedido) {
+        let claimResponse = await fetch(`/ventas/pedidos-catalogo/${pedido.id}/atender`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({ forzar: false })
+        });
+
+        if (claimResponse.status === 409) {
+            const conflicto = await claimResponse.json();
+            const confirmacion = await Swal.fire({
+                icon: 'warning',
+                title: 'Pedido en atención',
+                text: `${conflicto.error} ¿Deseas tomarlo de todas formas?`,
+                showCancelButton: true,
+                confirmButtonText: 'Sí, tomar pedido',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirmacion.isConfirmed) return;
+
+            claimResponse = await fetch(`/ventas/pedidos-catalogo/${pedido.id}/atender`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({ forzar: true })
+            });
+        }
+
+        if (!claimResponse.ok) {
+            const error = await claimResponse.json().catch(() => ({}));
+            throw new Error(error.error || error.message || 'No se pudo tomar el pedido.');
+        }
+
         const existente = Object.values(POS.ventas || {})
             .find(venta => Number(venta.pedido_catalogo_id) === Number(pedido.id));
         if (existente) {
@@ -225,10 +354,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         const data = await response.json();
+        if (response.status === 422 && /atendido|cancelado/i.test(data.message || '')) {
+            pedidosCatalogo = pedidosCatalogo.filter(pedido => Number(pedido.id) !== Number(id));
+            return { yaFinalizado: true };
+        }
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'No se pudo cancelar el pedido.');
         }
         pedidosCatalogo = pedidosCatalogo.filter(pedido => Number(pedido.id) !== Number(id));
+        return { yaFinalizado: false };
     }
 
     async function eliminarVenta(id) {
@@ -238,6 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await cancelarPedidoCatalogo(venta.pedido_catalogo_id);
         }
         delete POS.ventas[id];
+        window.eliminarBorradorDelServidor?.(id);
 
         guardarPOSAhora();   // 🔥 CLAVE
         asegurarVentaActiva();
@@ -293,6 +428,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     <strong>${escaparHtml(pedido.cliente_nombre)} · ${escaparHtml(pedido.codigo)}</strong>
                     <span>S/ ${formatPrecioDinamico(Number(pedido.total || 0))} • ${cantidad} ${cantidad === 1 ? 'producto' : 'productos'}</span>
                     <span class="pos-espera-origin"><i class="fas fa-shopping-cart"></i>&nbsp; CATÁLOGO</span>
+                    ${pedido.en_atencion
+                        ? `<span class="pos-espera-attending"><i class="fas fa-user-clock"></i>&nbsp; ${pedido.atendido_por_mi ? 'EN ATENCIÓN POR TI' : `EN ATENCIÓN: ${escaparHtml(pedido.atendido_por || 'OTRO USUARIO')}`}</span>`
+                        : ''}
                 </div>
                 <button class="delete" type="button" title="Cancelar pedido">
                     <i class="fas fa-trash"></i>
@@ -467,8 +605,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     cargarPedidosCatalogo();
+    // Sincronización casi en tiempo real entre dispositivos. El bloqueo evita
+    // solicitudes superpuestas cuando una respuesta tarda más de lo normal.
     window.setInterval(() => {
         if (!document.hidden) cargarPedidosCatalogo(true);
-    }, 30000);
+    }, 2000);
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) cargarPedidosCatalogo(true);
+    });
+
+    window.addEventListener('focus', () => cargarPedidosCatalogo(true));
 
 });

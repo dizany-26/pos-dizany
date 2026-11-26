@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
             estadoPagoSelect?.value || "pagado";
 
         const metodoPago = v.metodo_pago || "";
-        const formato = formatoSelect?.value || "a4";
+        const formato = v.formato_pdf || formatoSelect?.value || "a4";
 
         if (tipoComprobante === "factura" && (tipoDocumento !== "ruc" || documento.length !== 11 || !v.cliente?.id)) {
             return mostrarAlerta("La factura requiere seleccionar un cliente registrado con RUC de 11 dígitos.");
@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pedido_catalogo_id: v.pedido_catalogo_id || null,
         request_key: v.id,
         formato: formato,
-        credit_due_date: ["credito", "pendiente"].includes(estadoPago) ? document.getElementById("credito-vencimiento")?.value : null
+        credit_due_date: ["credito", "pendiente"].includes(estadoPago) ? (v.credit_due_date || document.getElementById("credito-vencimiento")?.value) : null
 })
 .then(data => {
 
@@ -299,6 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 🔥 LIMPIEZA CORRECTA POS
     const idActivaAlResponder = POS.ventaActivaId;
     delete POS.ventas[idVentaEnviada];
+    window.eliminarBorradorDelServidor?.(idVentaEnviada);
 
     // En el flujo normal se abre una venta vacia nueva sin reutilizar ninguna
     // que estuviera en espera. Si el usuario ya habia cambiado de venta antes

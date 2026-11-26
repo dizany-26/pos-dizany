@@ -140,9 +140,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <div class="product-img-wrapper">
                     <img src="${imgSrc}" alt="${prod.nombre}" class="product-img">
-                    <span class="product-price-badge">
-                        ${precioLabel}
-                    </span>
+                    ${disponible > 0
+                        ? `<span class="product-price-badge">${precioLabel}</span>`
+                        : ""
+                    }
                 </div>
 
                 <div class="product-info">

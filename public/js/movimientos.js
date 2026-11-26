@@ -1160,7 +1160,7 @@ function menuPdf(url) {
         icon: 'info',
         showCancelButton: true,
         showDenyButton: true,
-        confirmButtonText: 'Imprimir',
+        confirmButtonText: 'Abrir para imprimir',
         denyButtonText: 'Descargar',
         cancelButtonText: 'Cerrar',
         confirmButtonColor: '#0f172a'
@@ -1176,24 +1176,7 @@ function menuPdf(url) {
 function imprimirPdf(url) {
 
     url = fixUrlHost(url);
-    const w = window.open(url, '_blank');
-    if (!w) return;
-
-    // Intento de auto-print (en algunos navegadores no se permite; igual abre el PDF)
-    const timer = setInterval(() => {
-        try {
-            if (w.document && w.document.readyState === 'complete') {
-                clearInterval(timer);
-                w.focus();
-                w.print();
-            }
-        } catch (e) {
-            // Si el navegador bloquea acceso al documento del PDF, no pasa nada.
-            // El PDF queda abierto y el usuario imprime manual.
-        }
-    }, 300);
-
-    setTimeout(() => clearInterval(timer), 5000);
+    window.open(url, '_blank');
 }
 
 function descargarPdf(url) {
@@ -1213,6 +1196,12 @@ function fixUrlHost(url) {
     try {
         const currentOrigin = window.location.origin; // ej: http://192.168.1.50:8000
         const u = new URL(url, currentOrigin);
+
+        // Un comprobante restaurado puede conservar el dominio anterior.
+        // Siempre debe abrirse desde el servidor que el usuario está visitando.
+        if (u.pathname.startsWith('/comprobantes/')) {
+            return currentOrigin + u.pathname + u.search + u.hash;
+        }
 
         // Si viene con localhost, lo cambiamos por el origin actual
         if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {

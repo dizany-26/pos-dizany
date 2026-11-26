@@ -11,13 +11,14 @@ class PedidoCatalogo extends Model
     protected $fillable = [
         'codigo', 'cliente_nombre', 'cliente_telefono', 'tipo_entrega',
         'direccion', 'items', 'total', 'estado', 'venta_id',
-        'enviado_en', 'atendido_en',
+        'atendido_por_usuario_id', 'tomado_en', 'enviado_en', 'atendido_en',
     ];
 
     protected $casts = [
         'items' => 'array',
         'total' => 'decimal:2',
         'enviado_en' => 'datetime',
+        'tomado_en' => 'datetime',
         'atendido_en' => 'datetime',
     ];
 }

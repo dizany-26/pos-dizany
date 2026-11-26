@@ -949,6 +949,12 @@ carritoLista.addEventListener("blur", async (e) => {
             if (btnEliminar) {
                 const i = Number(btnEliminar.dataset.index);
                 v.productos.splice(i, 1);
+
+                if (v.productos.length === 0) {
+                    window.reiniciarVentaAbandonada?.(v.id);
+                    return;
+                }
+
                 posSaveDebounced(snapshotPOS, 10);
                 actualizarContadorVentasEspera();
                 renderCarritoTreinta();
@@ -998,9 +1004,7 @@ carritoLista.addEventListener("blur", async (e) => {
                 cancelButtonText: "Cancelar"
             }).then(r => {
                 if (!r.isConfirmed) return;
-                v.productos = [];
-                actualizarContadorVentasEspera();
-                renderCarritoTreinta();
+                window.reiniciarVentaAbandonada?.(v.id);
             });
         });
     }

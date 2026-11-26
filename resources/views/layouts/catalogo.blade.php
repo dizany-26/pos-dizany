@@ -9,8 +9,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Catálogo DIZANY">
-    <link rel="manifest" href="{{ asset('catalogo.webmanifest') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/pwa/apple-touch-icon.png') }}?v=2">
+    <link rel="icon" href="{{ asset('favicon.ico') }}?v={{ filemtime(public_path('favicon.ico')) }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('images/pwa/icon-192.png') }}?v={{ filemtime(public_path('images/pwa/icon-192.png')) }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v={{ filemtime(public_path('favicon.ico')) }}">
+    <link rel="manifest" href="{{ asset('catalogo.webmanifest') }}?v={{ filemtime(public_path('catalogo.webmanifest')) }}">
+    <script>
+        window.__dizanyInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', event => {
+            event.preventDefault();
+            window.__dizanyInstallPrompt = event;
+            window.dispatchEvent(new CustomEvent('dizany-install-ready'));
+        });
+    </script>
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/pwa/apple-touch-icon.png') }}?v={{ filemtime(public_path('images/pwa/apple-touch-icon.png')) }}">
     <link rel="stylesheet" href="{{ asset('css/pwa.css') }}?v={{ filemtime(public_path('css/pwa.css')) }}">
     <script src="{{ asset('js/catalogo-pwa.js') }}?v={{ filemtime(public_path('js/catalogo-pwa.js')) }}" defer></script>
     <script>
