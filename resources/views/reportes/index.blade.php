@@ -35,13 +35,13 @@
     </section>
 
     <form class="reports-filters" method="GET" action="{{ route('reportes.index') }}" id="reportFilters">
-        <label><span>Desde</span><input type="text" name="desde" value="{{ $filtros['desde'] }}" data-report-date></label>
-        <label><span>Hasta</span><input type="text" name="hasta" value="{{ $filtros['hasta'] }}" data-report-date></label>
+        <div class="report-filter-field"><label for="report-desde">Desde</label><input id="report-desde" type="text" name="desde" value="{{ $filtros['desde'] }}" data-report-date></div>
+        <div class="report-filter-field"><label for="report-hasta">Hasta</label><input id="report-hasta" type="text" name="hasta" value="{{ $filtros['hasta'] }}" data-report-date></div>
         @if($filtros['es_admin'])
-            <label><span>Responsable</span><select name="usuario_id"><option value="">Todos</option>@foreach($usuarios as $usuario)<option value="{{ $usuario->id }}" @selected($filtros['usuario_id'] === $usuario->id)>{{ $usuario->nombre }}</option>@endforeach</select></label>
+            <div class="report-filter-field"><label for="report-usuario">Responsable</label><select id="report-usuario" name="usuario_id"><option value="">Todos</option>@foreach($usuarios as $usuario)<option value="{{ $usuario->id }}" @selected($filtros['usuario_id'] === $usuario->id)>{{ $usuario->nombre }}</option>@endforeach</select></div>
         @endif
-        <label><span>Método</span><select name="metodo"><option value="">Todos</option>@foreach($metodos as $key => $nombre)<option value="{{ $key }}" @selected($filtros['metodo'] === $key)>{{ $nombre }}</option>@endforeach</select></label>
-        <label><span>Estado</span><select name="estado"><option value="">Vigentes</option><option value="pagado" @selected($filtros['estado'] === 'pagado')>Pagadas</option><option value="pendiente" @selected($filtros['estado'] === 'pendiente')>Pendientes</option><option value="anulada" @selected($filtros['estado'] === 'anulada')>Anuladas</option></select></label>
+        <div class="report-filter-field"><label for="report-metodo">Método</label><select id="report-metodo" name="metodo"><option value="">Todos</option>@foreach($metodos as $key => $nombre)<option value="{{ $key }}" @selected($filtros['metodo'] === $key)>{{ $nombre }}</option>@endforeach</select></div>
+        <div class="report-filter-field"><label for="report-estado">Estado</label><select id="report-estado" name="estado"><option value="">Vigentes</option><option value="pagado" @selected($filtros['estado'] === 'pagado')>Pagadas</option><option value="pendiente" @selected($filtros['estado'] === 'pendiente')>Pendientes</option><option value="anulada" @selected($filtros['estado'] === 'anulada')>Anuladas</option></select></div>
         <button type="submit" class="reports-filter-btn"><i class="fas fa-filter"></i> Aplicar</button>
         <a href="{{ route('reportes.index') }}" class="reports-clear" title="Limpiar filtros"><i class="fas fa-rotate-left"></i></a>
     </form>

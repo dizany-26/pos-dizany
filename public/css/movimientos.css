@@ -1193,17 +1193,69 @@
     }
 
     .cash-session-banner {
-        align-items: stretch;
-        flex-direction: column;
+        align-items: center;
+        flex-direction: row;
+        padding: .72rem .82rem;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
     }
 
     .cash-session-overview {
-        grid-template-columns: minmax(0, 1fr);
+        display: block;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        border: 1px solid #b9ecd1;
+        border-radius: 15px;
+        background: #effcf5;
+        box-shadow: 0 5px 14px rgba(15, 39, 71, .05);
     }
 
     .cash-session-banner > div:last-child {
-        padding-top: .6rem;
+        flex: 0 0 auto;
+        align-items: flex-end;
+        padding-top: 0;
+        border-top: 0;
+        text-align: right;
+    }
+
+    .cash-session-banner > div:first-child {
+        min-width: 0;
+    }
+
+    .cash-session-banner > div:first-child div {
+        min-width: 0;
+    }
+
+    .cash-session-banner > div:first-child small {
+        max-width: 100%;
+        line-height: 1.25;
+        white-space: normal;
+    }
+
+    .cash-session-filter-summary {
+        padding: .65rem .82rem;
+        border: 0;
         border-top: 1px solid #cdebdc;
+        border-radius: 0;
+        background: rgba(239, 246, 255, .72);
+    }
+
+    .cash-session-filter-summary strong,
+    .cash-session-filter-summary small {
+        line-height: 1.3;
+    }
+
+    :root[data-theme='dark'] .cash-session-overview,
+    [data-bs-theme='dark'] .cash-session-overview {
+        border-color: rgba(52, 211, 153, .25);
+        background: linear-gradient(135deg, rgba(6, 78, 59, .34), rgba(15, 23, 42, .82));
+    }
+
+    :root[data-theme='dark'] .cash-session-filter-summary,
+    [data-bs-theme='dark'] .cash-session-filter-summary {
+        border-top-color: rgba(96, 165, 250, .24);
+        background: rgba(17, 42, 71, .72);
     }
 
     .cash-table-scroll-hint {

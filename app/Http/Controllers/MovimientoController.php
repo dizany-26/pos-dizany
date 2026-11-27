@@ -60,14 +60,35 @@ class MovimientoController extends Controller
             ->orderByDesc('abierta_en')
             ->limit(100)
             ->get();
-        $cajaId = $request->integer('caja_id');
-        $filtroModo = strtolower(trim((string) $request->get('filtro_modo', '')));
+
+        $cajaSessionKey = 'movimientos.caja_seleccionada.' . $usuarioActual->id;
+        $filtroCajaExplicito = $request->has('caja_id') || $request->has('filtro_modo');
+
+        // Al volver desde otra sección, recuperar la última jornada elegida por
+        // este usuario. Un filtro enviado en la URL siempre tiene prioridad.
+        if ($tipo === 'transacciones' && ! $filtroCajaExplicito) {
+            $cajaId = (int) $request->session()->get($cajaSessionKey, 0);
+            $filtroModo = $cajaId > 0 ? 'caja' : 'fecha';
+        } else {
+            $cajaId = $request->integer('caja_id');
+            $filtroModo = strtolower(trim((string) $request->get('filtro_modo', '')));
+        }
+
         if (! in_array($filtroModo, ['caja', 'fecha'], true)) {
             $filtroModo = $cajaId > 0 ? 'caja' : 'fecha';
         }
         $cajaSeleccionada = $cajaId > 0 && $filtroModo === 'caja'
             ? $cajasFiltro->firstWhere('id', $cajaId)
             : null;
+
+        if ($tipo === 'transacciones' && $cajaSeleccionada) {
+            $request->session()->put($cajaSessionKey, $cajaSeleccionada->id);
+        } elseif ($tipo === 'transacciones' && ($filtroCajaExplicito || $cajaId > 0)) {
+            // Elegir "Filtrar por fecha" o encontrar una caja ya inaccesible
+            // también debe reemplazar la preferencia anterior.
+            $request->session()->forget($cajaSessionKey);
+        }
+
         if (! $cajaSeleccionada) {
             $cajaId = null;
             $filtroModo = 'fecha';

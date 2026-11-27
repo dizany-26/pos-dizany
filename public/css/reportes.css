@@ -9,6 +9,10 @@
 @media(max-width:1180px){.reports-kpis{grid-template-columns:repeat(3,1fr)}.reports-filters{grid-template-columns:repeat(3,1fr) auto 42px}}
 @media(max-width:760px){.reports-page{padding:16px 12px 35px}.reports-hero{align-items:flex-start}.reports-hero h1{font-size:25px}.reports-hero p{font-size:12px}.reports-period{display:none}.reports-filters{grid-template-columns:1fr 1fr;padding:12px}.reports-filters label:nth-child(3),.reports-filters label:nth-child(4),.reports-filters label:nth-child(5){grid-column:auto}.reports-filter-btn{grid-column:1/2}.reports-kpis{grid-template-columns:1fr 1fr;gap:9px}.report-kpi{padding:13px 11px;gap:9px}.kpi-icon{width:37px;height:37px;flex-basis:37px}.report-kpi strong{font-size:17px}.reports-overview-grid,.inventory-report-grid{grid-template-columns:1fr}.flow-chart{height:205px}.flow-bars{height:160px}.reports-tabs button{min-width:92px}.reports-tabs button span{font-size:11px}.report-table-scroll{max-height:none;overflow:visible}.report-table{min-width:0;display:block}.report-table thead{display:none}.report-table tbody{display:grid;gap:10px;padding:10px}.report-table tr{display:block;border:1px solid var(--rp-border);border-radius:13px;padding:8px 12px;background:var(--rp-card-soft)}.report-table td{display:flex;justify-content:space-between;gap:16px;text-align:right!important;padding:8px 0;border-bottom:1px dashed var(--rp-border);overflow-wrap:anywhere}.report-table td:last-child{border:0}.report-table td:before{content:attr(data-label);text-align:left;color:var(--rp-muted);font-size:11px;font-weight:800;min-width:82px}.report-table td[colspan]{display:block}.report-table td[colspan]:before{display:none}.tab-summary{align-items:flex-start;flex-direction:column;gap:5px}.report-header-action span{display:none}.report-header-action{width:39px;padding:0}}
 @media(max-width:430px){.reports-filters{grid-template-columns:1fr}.reports-filter-btn,.reports-clear{grid-column:auto}.reports-clear{display:none}.reports-kpis{grid-template-columns:1fr}.report-kpi em{display:block}.reports-hero h1{font-size:23px}}
+
+/* Evita que el label contenedor active el select nativo junto con Select2. */
+.report-filter-field{display:flex;min-width:0;flex-direction:column;gap:5px}
+.report-filter-field>label{font-size:11px;font-weight:800;color:var(--rp-muted);text-transform:uppercase;letter-spacing:.05em}
 :root[data-theme='dark']{--rp-bg:#081426;--rp-card:#0f2038;--rp-card-soft:#132943;--rp-text:#eef6ff;--rp-muted:#9db0c7;--rp-border:#294362;--rp-shadow:0 12px 30px rgba(0,0,0,.18)}
 :root[data-theme='dark'] .reports-page{color:var(--rp-text)}:root[data-theme='dark'] .reports-period>i,:root[data-theme='dark'] .panel-icon{background:#173b69}:root[data-theme='dark'] .report-table th{background:#19334f;color:#dbeafe}:root[data-theme='dark'] .payment-name,:root[data-theme='dark'] .method-badge{border:1px solid rgba(255,255,255,.08)}:root[data-theme='dark'] .status-pagado,:root[data-theme='dark'] .status-aprobada,:root[data-theme='dark'] .status-cerrada{background:#123d31;color:#70e4a8}:root[data-theme='dark'] .status-pendiente,:root[data-theme='dark'] .status-abierta,:root[data-theme='dark'] .status-pendiente-cierre{background:#493718;color:#ffd46b}:root[data-theme='dark'] .status-anulado,:root[data-theme='dark'] .status-rechazada{background:#49242b;color:#ff8d98}:root[data-theme='dark'] .method-efectivo{background:#123d31;color:#70e4a8}:root[data-theme='dark'] .method-yape{background:#36214d;color:#dca7ff}:root[data-theme='dark'] .method-plin{background:#123a45;color:#74e5f4}:root[data-theme='dark'] .method-tarjeta{background:#1b3157;color:#91b7ff}:root[data-theme='dark'] .method-transferencia{background:#2c2852;color:#aaa0ff}:root[data-theme='dark'] .method-otro{background:#26374c;color:#c4d1e1}
 
@@ -41,3 +45,31 @@
 .report-expandable{display:block}.report-expand-toggle{display:none;border:0;background:transparent;color:var(--rp-blue);font-size:11px;font-weight:800;padding:4px 0 0;cursor:pointer}
 @media(max-width:760px){.report-expandable{max-width:190px;white-space:normal}.report-expandable-value{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;line-height:1.35}.report-expandable.has-overflow .report-expand-toggle{display:inline-block}.report-expandable.expanded .report-expandable-value{-webkit-line-clamp:unset;line-clamp:unset;overflow:visible}}
 :root[data-theme='dark'] .report-expand-toggle{color:#70b4ff}
+
+/* KPI compactos: el valor tiene prioridad y el icono acompaña sin ocupar
+   un bloque completo, igual que en las tarjetas de Movimientos. */
+.report-kpi{
+    gap:8px;
+    padding:14px 11px 14px 15px;
+}
+.kpi-icon{
+    width:24px;
+    height:auto;
+    flex:0 0 24px;
+    border-radius:0;
+    background:transparent;
+    font-size:15px;
+}
+.report-kpi>div{
+    flex:1 1 auto;
+    overflow:hidden;
+}
+.report-kpi small{
+    line-height:1.2;
+}
+.report-kpi strong{
+    max-width:100%;
+    font-size:clamp(16px,1.35vw,19px);
+    letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+}

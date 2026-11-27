@@ -226,14 +226,29 @@
                     const icon = btn.querySelector('.toggle-icon');
                     if (!submenu) return;
 
-                    submenu.classList.toggle('show');
-                    if (icon) icon.classList.toggle('rotated');
+                    const willOpen = !submenu.classList.contains('show');
+
+                    // El menú lateral funciona como acordeón: solo un submenú
+                    // puede permanecer abierto a la vez.
+                    document.querySelectorAll('#sidebar .submenu-items.show').forEach(openSubmenu => {
+                        if (openSubmenu === submenu) return;
+                        openSubmenu.classList.remove('show');
+                        const openButton = openSubmenu.previousElementSibling;
+                        openButton?.querySelector('.toggle-icon')?.classList.remove('rotated');
+                        openButton?.setAttribute('aria-expanded', 'false');
+                    });
+
+                    submenu.classList.toggle('show', willOpen);
+                    if (icon) icon.classList.toggle('rotated', willOpen);
+                    btn.setAttribute('aria-expanded', String(willOpen));
                 });
             });
 
             document.querySelectorAll('.submenu-items.show').forEach(sub => {
-                const icon = sub.previousElementSibling?.querySelector('.toggle-icon');
+                const button = sub.previousElementSibling;
+                const icon = button?.querySelector('.toggle-icon');
                 if (icon) icon.classList.add('rotated');
+                button?.setAttribute('aria-expanded', 'true');
             });
         });
     </script>
